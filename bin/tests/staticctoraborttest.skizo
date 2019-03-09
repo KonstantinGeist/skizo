@@ -1,0 +1,21 @@
+import console;
+import domain;
+
+class Aborter {
+	static property value: string;
+
+	static ctor {
+		abort "AHA!"; /* must trigger type initialization error lazily afterwards */
+		g_value = "Hello, World!\n";
+	}
+}
+
+static class StaticCtorAbortTest {
+	[test]
+	static method (run) {
+		r: auto = (Domain try ^{
+			Console print (Aborter value);
+		});
+		assert ((r === null) not);
+	}
+}

@@ -1,0 +1,31 @@
+/*
+   This file contains a list of tests to include.
+   A test is a static parameterless method which returns nothing
+   and which is marked with [test] attribute.
+*/
+
+import stringtest;
+import stringbuildertest;
+import stopwatchtest;
+import pathtest;
+import ecalltest;
+import marshaltest;
+import maptest;
+import extendtest;
+import closuretest;
+import interfacetest;
+import capturedselftest;
+import floattest;
+import inlinetest;
+import eventtest;
+import eventtest2;
+import arraytest;
+import brainfucktest;
+import enumtest;
+import foreigntest;
+import qsorttest;
+import runmethodtest;
+import stringbuildertest;
+import staticctoraborttest;
+import reflectiontest;
+import factorialtest;

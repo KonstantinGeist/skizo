@@ -1,0 +1,33 @@
+import console;
+import domain;
+
+class Communicator {
+	method (getMagicValue1): int {
+		return 667;
+	}
+
+	method (getMagicValue2): int {
+		return 1;
+	}
+}
+
+class RunMethodTest {
+	static ctor {
+		((Domain isBaseDomain) not) then ^{
+			Domain exportObject "communicator" (Communicator createDefault);
+		};
+	}
+
+public
+   static method (remoteMain) {
+		Domain listen null;
+   }
+
+   [test]
+   static method (run) {
+       hdomain: auto = (Domain runMethod "RunMethodTest/remoteMain");
+	   comm: auto = (cast Communicator* (hdomain importObject "communicator"));
+	   assert ((comm getMagicValue1) == 667);
+	   assert ((comm getMagicValue2) == 1);
+   }
+}

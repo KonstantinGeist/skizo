@@ -1,0 +1,144 @@
+import console;
+import map;
+import marshal;
+
+class BfStack {
+	field m_arr: [int];
+	field m_index: int;
+
+	ctor (create) {
+		m_arr = (array 100); /* should suffice */
+	}
+
+	method (push v: int) {
+		m_arr set m_index v;
+		m_index = (m_index + 1);
+	}
+
+	method (pop): int {
+		m_index = (m_index - 1);
+		return (m_arr get m_index);
+	}
+}
+
+class BfMachine {
+	field m_instrPtr: int;
+	field m_dataPtr: int;
+	field m_memory: [int];
+	field m_nested: BfStack;
+	field m_outbuf: intptr;
+	field m_outbufptr: intptr;
+
+	unsafe ctor (create memSize: int) {
+		m_memory = (array memSize);
+		m_nested = (BfStack create);
+		m_outbuf = (Marshal allocNativeMemory 100);
+		m_outbufptr = m_outbuf;
+	}
+
+	unsafe dtor {
+		Marshal freeNativeMemory m_outbuf;
+	}
+
+	method (instrPtr): int {
+		return m_instrPtr;
+	}
+
+	method (currentByte): int {
+		return (m_memory get m_dataPtr);
+	}
+
+	method (setCurrentByte i: int) {
+		m_memory set m_dataPtr i;
+	}
+
+	method (incInstrPtr) {
+		m_instrPtr = (m_instrPtr + 1);
+	}
+
+	method (incValue) {
+		((this currentByte) == 255) then ^{
+			this setCurrentByte 0;
+		};
+		(((this currentByte) == 255) not) then ^{
+			this setCurrentByte ((this currentByte) + 1);
+		};
+		this incInstrPtr;
+	}
+
+	method (decValue) {
+		((this currentByte) == 0) then ^{
+			this setCurrentByte 255;
+		};
+		(((this currentByte) == 0) not) then ^{
+			this setCurrentByte ((this currentByte) - 1);
+		};
+		this incInstrPtr;
+	}
+
+	method (incAddr) {
+		m_dataPtr = (m_dataPtr + 1);
+		this incInstrPtr;
+	}
+
+	method (decAddr) {
+		m_dataPtr = (m_dataPtr - 1);
+		this incInstrPtr;
+	}
+
+	method (beginLoop) {
+		m_nested push m_instrPtr;
+		this incInstrPtr;
+	}
+
+	method (endLoop) {
+		((this currentByte) == 0) then ^{
+			this incInstrPtr;
+		};
+		(((this currentByte) == 0) not) then ^{
+			m_instrPtr = (m_nested pop);
+		};
+	}
+
+	unsafe method (outputCurByte) {
+		Marshal writeByte m_outbufptr (this currentByte);
+		m_outbufptr = (Marshal offset m_outbufptr 1);
+		this incInstrPtr;
+	}
+
+	unsafe method (getString): string {
+		Marshal writeByte m_outbufptr 0; /* null termination */
+		return (Marshal utf8ToString m_outbuf);
+	}
+}
+
+static class BfRunner {
+	static method (run code: string): string {
+		machine: auto = (BfMachine create 30000);
+		map: auto = (Map create);
+		map set '[' (cast Action ^{ machine beginLoop; });
+		map set ']' (cast Action ^{ machine endLoop; });
+		map set '+' (cast Action ^{ machine incValue; });
+		map set '-' (cast Action ^{ machine decValue; });
+		map set '<' (cast Action ^{ machine decAddr; });
+		map set '>' (cast Action ^{ machine incAddr; });
+		/*map set ',' (cast Action ^{ machine inputCurByte; });*/
+		map set '.' (cast Action ^{ machine outputCurByte; });
+
+		bool while ^(): bool { return ((machine instrPtr) < (code length)); } ^{
+			a: Action = (cast Action (map get (code get (machine instrPtr))));
+			a invoke;
+		};
+
+		return (machine getString);
+	}
+}
+
+static class BrainfuckTest {
+	[test]
+	static method (run) {
+		helloWorld: auto = (BfRunner run "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>.");
+
+		assert (helloWorld == "Hello World!\n");
+	}
+}

@@ -1,0 +1,56 @@
+import console;
+
+method class (CompareFunc a:any b:any): int;
+
+static class QSortTest {
+
+    static method (qsort elements:[any] compareFunc:CompareFunc) {
+        QSortTest qsortImpl elements 0 ((elements length) - 1) compareFunc;
+    }
+
+    static method (qsortImpl elements:[any] left:int right:int compareFunc:CompareFunc) {
+        i: auto = left;
+        j: auto = right;
+        pivot: auto = (elements get ((left + right) / 2));
+
+        bool while ^(): bool { return ((i < j) or (i == j)); } ^{
+
+            bool while ^(): bool { return ((compareFunc invoke (elements get i) pivot) < 0); } ^{
+                i = (i + 1);
+            };
+
+            bool while ^(): bool { return ((compareFunc invoke (elements get j) pivot) > 0); } ^{
+                j = (j - 1);
+            };
+
+            ((i < j) or (i == j)) then ^{
+                tmp: auto = (elements get i);
+                elements set i (elements get j);
+                elements set j tmp;
+
+                i = (i + 1);
+                j = (j - 1);
+            };
+
+        };
+
+        (left < j) then ^{
+            QSortTest qsortImpl elements left j compareFunc;
+        };
+        (i < right) then ^{
+            QSortTest qsortImpl elements i right compareFunc;
+        };
+    }
+
+    [test]
+	unsafe static method (main) {
+        arr: [any] = [(cast any 3) (cast any 1) (cast any 2)];
+        QSortTest qsort arr ^(a:any b:any): int {
+            return ((cast int a) - (cast int b));
+        };
+        
+        assert ((cast int (arr get 0)) == 1);
+        assert ((cast int (arr get 1)) == 2);
+        assert ((cast int (arr get 2)) == 3);
+	}
+}

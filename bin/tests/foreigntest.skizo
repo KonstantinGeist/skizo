@@ -1,0 +1,20 @@
+import console;
+import domain;
+import runtime;
+
+static class ForeignTest {
+	[test]
+	static method (run) {
+		handle: auto = (Domain runPath "foreigntestslave.skizo");
+		a: auto = (cast StringBuilder* (handle importObject "sharedObject"));
+		a append "hello";
+		a append "world";
+		a append a;
+		a append 10;
+		a append true;
+		a append 'c';
+		str: string = (a toString);
+		assert (str == "helloworldhelloworld10truec");
+        assert ((a length) == (str length));
+	}
+}

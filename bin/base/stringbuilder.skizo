@@ -1,0 +1,41 @@
+import text;
+
+[ptrWrapper]
+[doc="Represents a mutable string of characters. The builder automatically expands or shrinks
+when necessary. This class represents a string-like object whose value is a mutable sequence of characters. The value is said to be mutable because it can be modified after creation by appending, removing, replacing, or inserting characters. For comparison, see the string class."]
+class StringBuilder {
+private
+   static native method (createImpl cap:int): intptr;
+   static native method (appendImpl pSelf:intptr str:string);
+   static native method (toStringImpl pSelf:intptr): string;
+   static native method (lengthImpl pSelf:intptr): int;
+   static native method (clearImpl pSelf:intptr);
+
+public
+   [doc="Constructs a string builder with no characters in it and an initial capacity
+    specified by the cap argument.
+    <i>cap</i> The initial capacity."]
+   ctor (create cap: int) {
+       m_ptr = (StringBuilder createImpl cap);
+   }
+
+   [doc="Appends the string representation of the argument. The argument is converted to a string by calling StringRepresentable::toString, and the characters of that string are then appended to this sequence."]
+   method (append obj: StringRepresentable) {
+       StringBuilder appendImpl m_ptr (obj toString);
+   }
+
+   [doc="Returns a string representing the data in this sequence. A new string object is allocated and initialized to contain the character sequence currently represented by this object. This string is then returned. Subsequent changes to this sequence do not affect the contents of the returned string."]
+   method (toString): string {
+       return (StringBuilder toStringImpl m_ptr);
+   }
+
+   [doc="Returns the length of this character sequence. The length is the number of 16-bit chars in the sequence."]
+   method (length): int {
+       return (StringBuilder lengthImpl m_ptr);
+   }
+
+   [doc="Removes all characters from the current StringBuilder instance, the length is set to 0."]
+   method (clear) {
+       StringBuilder clearImpl m_ptr;
+   }
+}

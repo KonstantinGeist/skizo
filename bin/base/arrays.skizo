@@ -1,0 +1,4 @@
+static class Arrays {
+public
+	static native method (clone arr: any): any;
+}

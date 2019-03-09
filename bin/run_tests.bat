@@ -1,0 +1,1 @@
+skizo /source:test.skizo /paths:tests

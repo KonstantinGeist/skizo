@@ -1,0 +1,64 @@
+import marshal;
+
+class MemBlock {
+	field m_ptr: intptr;
+	field m_size: int;
+
+public
+	unsafe ctor (create size: int) {
+		m_ptr = (Marshal allocNativeMemory size);
+		m_size = size;
+	}
+
+	unsafe dtor {
+		Marshal freeNativeMemory m_ptr;
+	}
+
+	unsafe method (writeInt offset:int value:int) {
+		assert ((offset > 0) or (offset == 0));
+		assert (offset < m_size);
+
+		Marshal writeInt (Marshal offset m_ptr offset) value;
+	}
+
+	unsafe method (readInt offset:int): int {
+		assert ((offset > 0) or (offset == 0));
+		assert (offset < m_size);
+
+		return (Marshal readInt (Marshal offset m_ptr offset));
+	}
+}
+
+static class MarshalTest {
+	[test]
+	unsafe static method (run) {
+		p: intptr = (Marshal stringToUtf16 "Hello, World!");
+		s: string = (Marshal utf16ToString p);
+		Marshal freeUtf16String p;
+		assert (s == "Hello, World!");
+
+		p = (Marshal stringToUtf8 "Hello, World!");
+		s = (Marshal utf8ToString p);
+		Marshal freeUtf8String p;
+		assert (s == "Hello, World!");
+
+		p = (Marshal allocNativeMemory 5);
+		Marshal writeInt p 666;
+		i: int = (Marshal readInt p);
+		assert (i == 666);
+		Marshal freeNativeMemory p; /* the native memory allocator checks for memory corruption */
+
+		p = (Marshal stringToUtf8 "Hello, World!");
+		p = (Marshal offset p 1);
+		s = (Marshal utf8ToString p);
+		p = (Marshal offset p -1);
+		Marshal freeUtf8String p;
+		assert (s == "ello, World!");
+
+		mb: auto = (MemBlock create 16);
+		mb writeInt 4 666;
+		mb writeInt 8 13;
+		assert ((mb readInt 4) == 666);
+		assert ((mb readInt 8) == 13);
+	}
+}

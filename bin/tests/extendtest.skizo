@@ -1,0 +1,66 @@
+extend int {
+	method (negate): int {
+		return (this * (0 - 1));
+	}
+}
+
+/* ********************************************* */
+
+enum Season {
+	SPRING; SUMMER; AUTUMN; WINTER;
+}
+extend Season {
+	static method (currentSeason): Season {
+		return (Season WINTER);
+	}
+}
+
+/* ********************************************* */
+
+interface OddEntity {
+	method (isOdd): bool;
+}
+
+extend int {
+	method (isOdd): bool {
+		return ((this % 2) == 1);
+	}
+}
+
+/* ********************************************* */
+
+class Partial {
+protected
+	method (getHello): string {
+		return "Hello, ";
+	}
+}
+
+extend Partial {
+	method (getHelloWorld): string {
+		return ((this getHello) + "World!");
+	}
+
+	[test]
+	static method (run) {
+		p: Partial = (Partial createDefault);
+		assert ((p getHelloWorld) == "Hello, World!");
+
+		/* ********************************************* */
+
+		i: auto = (666 negate);
+		assert (i == (0 - 666));
+		
+		/* ********************************************* */
+
+		assert ((Season currentSeason) === (Season WINTER));
+		
+		/* ********************************************* */
+
+		oddEntity: auto = (cast OddEntity 665);
+		assert ((oddEntity isOdd) == true);
+
+		oddEntity = (cast OddEntity 666);
+		assert ((oddEntity isOdd) == false);
+	}
+}

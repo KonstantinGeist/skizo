@@ -1,0 +1,42 @@
+import console;
+
+struct for
+{
+    field m_cond: Predicate;
+
+    ctor (all cond: Predicate) {
+        m_cond = cond;
+    }
+
+	unsafe method (do action: Action) {
+		b: bool = true;
+
+		@
+		while(l_b) {
+		@
+			((m_cond invoke) not) then ^{
+				b = false;
+			};
+			b then ^{
+				action invoke;
+			};
+		@
+		};
+		@
+	}
+}
+
+static class FactorialTest {
+    [test]
+	static method (run) {
+        i: int = 1;
+        acc: int = 1;
+
+        (for all ^(): bool { return (i < 10); }) do ^{
+            acc = (acc * i);
+            i = (i + 1);
+        };
+
+        assert (acc == 362880);
+	}
+}

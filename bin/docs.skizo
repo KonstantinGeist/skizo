@@ -1,0 +1,125 @@
+/*
+	Generates SkizoDocs.html
+*/
+
+import application;
+import console;
+import domain;
+import filestream;
+import filesystem;
+import map;
+import marshal;
+import math;
+import path;
+import random;
+import reflection;
+import runtime;
+/*import socket;*/
+import stopwatch;
+import stream;
+import stringbuilder;
+import text;
+
+static class Program {
+	static field sb: StringBuilder;
+
+	static method (isStringNullOrEmpty s: string): bool {
+		return ((s === null) or (s == ""));
+	}
+
+	static method (isAppropriateMethod m: Method): bool {
+		return (((m accessModifier) === (AccessModifier PRIVATE)) not);
+	}
+
+	static method (emitMethodInfo m:Method) {
+		(Program isAppropriateMethod m) then ^{
+			sb append "<div> <b>method</b> (";
+			sb append (m name);
+			params: auto = (m parameters);
+			((params length) > 0) then ^{
+				sb append " ";
+			};
+			(0 to (params length)) loop ^(i: int) {
+				param: auto = (params get i);
+				name: string = (param name);
+				(Program isStringNullOrEmpty name) then ^{
+					name = ("arg" + (i toString));
+				};
+				sb append name;
+				sb append ": ";
+				sb append ((param type) name);
+				(i < ((params length) - 1)) then ^{
+					sb append " ";
+				};
+			};
+			sb append ")";
+			returnParam: auto = (m returnParameter);
+			((returnParam === null) not) then ^{
+				sb append ": ";
+				sb append ((returnParam type) name);
+			};
+			sb append ";</div>";
+
+			doc: auto = (m getAttribute "doc");
+			(doc success) then ^{
+				sb append "<div><br>";
+				sb append (doc unwrap);
+				sb append "</div><hr>";
+			};
+		};
+	}
+
+	static method (emitTypeInfo type:Type) {
+		sb append "<h2>";
+		sb append (type name);
+		sb append "</h2>";
+		staticMethods: auto = (type staticMethods);
+		instanceMethods: auto = (type instanceMethods);
+		((staticMethods length) > 0) then ^{
+			sb append "<h3>Static methods.</h3>";
+			(0 to (staticMethods length)) loop ^(j: int) {
+				Program emitMethodInfo (staticMethods get j);
+			};
+		};
+		((instanceMethods length) > 0) then ^{
+			sb append "<h3>Instance methods.</h3>";
+			(0 to (instanceMethods length)) loop ^(j: int) {
+				Program emitMethodInfo (instanceMethods get j);
+			};
+		};
+	}
+	
+	static method (emitProlog) {
+		sb append "<body>\n";
+		sb append "<head>\n";
+		sb append "<meta http-equiv='Content-Type' content='text/html; charset=UTF-8'/>\n";
+		sb append "</head>\n";
+	}
+
+	static method (emitEpilog) {
+		sb append "</body>\n";
+	}
+
+	unsafe static method (dumpToFile) {
+		finalString: auto = (sb toString);
+		file: auto = ((FileStream open "SkizoDocs.html" (FileAccess WRITE)) unwrap);
+		strptr: intptr = (Marshal stringToUtf8 finalString);
+		file write strptr (Marshal sizeOfUtf8String strptr);
+		Marshal freeUtf8String strptr;
+		file close;
+	}
+
+	static method (main) {
+		sb = (StringBuilder create 10000);
+		Program emitProlog;
+		types: auto = (Type allTypes);
+		(0 to (types length)) loop ^(i: int) {
+			type: auto = (types get i);
+			((type isCompilerGenerated) not) then ^{
+				Program emitTypeInfo type;
+			};
+		};
+		Program emitEpilog;
+		Program dumpToFile;
+	}
+}

@@ -1,0 +1,15 @@
+/* Runtime statistics, debugging, profiling, etc. */
+
+static class GC {
+    static native method (collect);
+    static native method (addRoot obj: any);
+    static native method (removeRoot obj: any);
+    static native method (addMemoryPressure i: int);
+    static native method (removeMemoryPressure i: int);
+
+	static native method (isValidObject obj: any): bool;
+}
+
+static class StackTrace {
+    static native method (print);
+}

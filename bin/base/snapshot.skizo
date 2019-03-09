@@ -1,0 +1,31 @@
+class Snapshot {
+private
+	field m_ptr: intptr;
+
+	static native method (createFromImpl obj: any): intptr;
+	static native method (destroyImpl ptr: intptr);
+	static native method (saveToFileImpl ptr:intptr path:string);
+	static native method (loadFromFileImpl path:string): intptr;
+	static native method (toObjectImpl ptr:intptr): any;
+
+	dtor {
+		Snapshot destroyImpl m_ptr;
+	}
+
+public
+	ctor (createFrom obj: any) {
+		m_ptr = (Snapshot createFromImpl obj);
+	}
+
+	ctor (loadFromFile path: string) {
+		m_ptr = (Snapshot loadFromFileImpl path);
+	}
+
+	method (saveToFile path: string) {
+		Snapshot saveToFileImpl m_ptr path;
+	}
+
+	method (toObject): any {
+		return (Snapshot toObjectImpl m_ptr);
+	}
+}

@@ -1,0 +1,92 @@
+import stream;
+
+class FileNotFoundError: Error {
+    field m_path: string;
+    method (path): string { return m_path; }
+
+    ctor (create _path: string) {
+        m_path = _path;
+        this setMessage (("File '" + _path) + "' not found.");
+    }
+}
+
+enum FileAccess {
+    READ;
+    WRITE;
+}
+
+class FileStream: Stream {
+private
+    field m_ptr: intptr;
+
+    static native method (openImpl path:string access:FileAccess): intptr;
+    static native method (destroyImpl ptr:intptr);
+    static native method (getBoolProp ptr:intptr index:int): bool;
+    static native method (getIntProp ptr:intptr index:int): int;
+    static native method (setIntProp ptr:intptr index:int value:int);
+    static native method (readImpl ptr:intptr buf:ByteBufferPtr count:int): int;
+    static native method (writeImpl ptr:intptr buf:ByteBufferPtr count:int): int;
+
+    ctor (wrap ptr: intptr) {
+        m_ptr = ptr;
+    }
+
+public
+    static method (open path:string access:FileAccess): FileStream? {
+        r: FileStream? = null;
+        ptr: intptr = (FileStream openImpl path access);
+        ((ptr == null) then ^{
+            r = (FileNotFoundError create path);
+        }) else ^{
+            r = (FileStream wrap ptr);
+        };
+        return r;
+    }
+
+    dtor {
+        FileStream destroyImpl m_ptr;
+    }
+
+    method (close) {
+        FileStream destroyImpl m_ptr;
+        m_ptr = null;
+    }
+
+    method (canRead): bool {
+        return (FileStream getBoolProp m_ptr 0);
+    }
+
+    method (canWrite): bool {
+        return (FileStream getBoolProp m_ptr 1);
+    }
+
+    method (canSeek): bool {
+        return (FileStream getBoolProp m_ptr 2);
+    }
+
+    method (setPosition p: int) {
+        FileStream setIntProp m_ptr 0 p;
+    }
+
+    method (position): int {
+        return (FileStream getIntProp m_ptr 0);
+    }
+
+    method (size): int {
+        return (FileStream getIntProp m_ptr 1);
+    }
+
+    method (read buf:ByteBufferPtr count:int): int {
+        return (FileStream readImpl m_ptr buf count);
+    }
+
+    method (write buf:ByteBufferPtr count:int): int {
+        return (FileStream writeImpl m_ptr buf count);
+    }
+}
+
+/*static class File {
+public
+    static native method (readAllText path: string): string?;
+    static native method (readAllLines path: string): [string]?;
+}*/

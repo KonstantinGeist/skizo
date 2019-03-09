@@ -1,0 +1,28 @@
+abstract class Permission {
+private
+	static native method (demandImpl obj: Permission);
+
+public
+	method (demand) {
+		Permission demandImpl this;
+	}
+}
+
+/* Basic permissions. */
+
+/* Reads/writes to disk require special permissions -- the most crucial requirement. */
+class FileIOPermission: Permission {
+}
+
+/* Being able to know the type of the OS, the runtime etc. gives hackers a way to know which kind of
+   of exploit is required. */
+class EnvironmentPermission: Permission {
+}
+
+/* Among other things, doesn't allow to dynamically invoke non-public methods. */
+class ReflectionPermission: Permission {
+}
+
+/* Don't allow a domain to create new domains. */
+class DomainCreationPermission: Permission {
+}

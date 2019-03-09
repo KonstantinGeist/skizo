@@ -1,0 +1,43 @@
+static class Marshal {
+    /* Common encodings. */
+    static native method (stringToUtf16 str:string): intptr;
+    static native method (freeUtf16String pstr:intptr);
+    static native method (stringToUtf8 str:string): intptr;
+	static native method (sizeOfUtf8String str:intptr): int;
+    static native method (freeUtf8String pstr:intptr);
+    static native method (utf8ToString str:intptr): string;
+    static native method (utf16ToString str:intptr): string;
+
+	/* Native memory management. */
+    static native method (allocNativeMemory size:int): intptr;
+    static native method (freeNativeMemory ptr: intptr);
+    static native method (nativeMemoryToArray pArray:intptr soArray:any);
+	static native method (copyMemory dst:intptr src:intptr size:int);
+
+	/*
+	   Data offset of heap classes: skips the vtable and allows native code to access fields directly.
+	   Skips also the internal count field for arrays.
+	*/
+	static native method (dataOffset obj: any): intptr;
+
+	/*
+	   Creates a stub that allows native code to call a closure as a simple C function.
+	   NOTE Returns null for null.
+	   WARNING The thunk is deallocated when the closure is garbage collected.
+	*/
+	static native method (codeOffset mc: any): intptr;
+
+	/* Offsets, reading/writing. */
+    static native method (offset ptr:intptr offset:int): intptr;
+    static native method (readByte ptr:intptr): int;
+    static native method (readInt ptr:intptr): int;
+	static native method (readFloat ptr:intptr): float;
+    static native method (readIntPtr ptr:intptr): intptr;
+    static native method (writeByte ptr:intptr value:int);
+    static native method (writeInt ptr:intptr value:int);
+	static native method (writeFloat ptr:intptr value:float);
+    static native method (writeIntPtr ptr:intptr value:intptr);
+
+	/* Various information. */
+    static native method (pointerSize): int;
+}

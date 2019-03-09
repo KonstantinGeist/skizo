@@ -1,0 +1,30 @@
+/* NOTE Some stuff here maps Danae's size_t to "int" which is not sufficient for some cases.
+   TODO nativeint? */
+
+alias ByteBufferPtr = intptr;
+
+abstract class Stream {
+private
+	static method (notSupported) {
+		abort "Functionality not supported (Stream).";
+	}
+
+public
+    method (canRead): bool { return false; }
+    method (canWrite): bool { return false; }
+    method (canSeek): bool { return false; }
+
+    method (readPartial buf:ByteBufferPtr count:int allowPartial:bool): int {
+        return (this read buf count);
+    }
+    method (writePartial buf:ByteBufferPtr count:int allowPartial:bool): int {
+        return (this write buf count);
+    }
+
+    abstract method (read buf:ByteBufferPtr count:int): int;
+    abstract method (write buf:ByteBufferPtr count:int): int;
+
+    method (setPosition p: int) { Stream notSupported; }
+    method (position): int { Stream notSupported; return 0; }
+    method (size): int { Stream notSupported; return 0; }
+}

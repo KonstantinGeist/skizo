@@ -1,0 +1,33 @@
+/*class ParseError: Error {
+	ctor (create origStr: string) {
+		this setMessage (("Couldn't parse '" + origStr) + "'.");
+	}
+}*/
+
+extend int {
+private
+	static native method (parseImpl str:string outp:intptr): bool;
+
+public
+	unsafe static method (parse str: string): int {
+		r: int = 0;
+		((int parseImpl str (ref r)) not) then ^{
+			abort (("Couldn't parse '" + str) + "'.");
+		};
+		return r;
+	}
+}
+
+extend float {
+private
+	static native method (parseImpl str:string outp:intptr): bool;
+
+public
+	unsafe static method (parse str: string): float {
+		r: float = 0.0;
+		((float parseImpl str (ref r)) not) then ^{
+			abort (("Couldn't parse '" + str) + "'.");
+		};
+		return r;
+	}
+}

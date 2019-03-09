@@ -1,0 +1,32 @@
+import console;
+
+interface IntUnwrapper {
+	method (unwrap): int;
+}
+
+static class InterfaceTest {
+	[test]
+	static method (run) {
+		a: int = 666;
+		x: any = a;
+		b: int = (cast int x);
+		assert (a == b);
+
+		sp: auto = (cast StringRepresentable x);
+		assert ((sp toString) == "666");
+		sp = (cast StringRepresentable b);
+		assert ((sp toString) == "666");
+		assert (x is StringRepresentable);
+		assert (x is int);
+
+		/*
+			Boxes a failable, casts it so that we could access its "unwrap"
+			method and extracts the underlying value dynamically.
+		*/
+		f: int? = 13666;
+		x = f;
+		iu: auto = (cast IntUnwrapper x);
+		i: int = (iu unwrap);
+		assert (i == 13666);
+	}
+}

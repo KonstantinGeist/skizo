@@ -1,0 +1,20 @@
+[ptrWrapper]
+class Random {
+private
+    static native method (createFromSeedImpl seed:int): intptr;
+    static native method (nextIntImpl pSelf:intptr min:int max:int): int;
+    static native method (nextFloatImpl pSelf:intptr): float;
+
+public
+    ctor (createFromSeed seed: int) {
+        m_ptr = (Random createFromSeedImpl seed);
+    }
+
+    method (nextInt min:int max:int): int {
+        return (Random nextIntImpl m_ptr min max);
+    }
+
+    method (nextFloat): float {
+        return (Random nextFloatImpl m_ptr);
+    }
+}

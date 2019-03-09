@@ -1,0 +1,28 @@
+static class ArrayTest {
+	static method (foo1): [int]? {
+		return (array 1);
+	}
+
+	static method (foo2 a: [int]?) {
+		assert (((a unwrap) length) == 10);
+	}
+
+	[test]
+	static method (run) {
+		/*
+			Tests if array creation inference conflicts with failables or not.
+		*/
+
+		p: [int]? = (array 100);
+		(p unwrap) set 0 666;
+		assert (((p unwrap) get 0) == 666);
+
+		/* *************************** */
+
+		p = (ArrayTest foo1);
+		assert (((p unwrap) get 0) == 0);
+
+		/* *************************** */
+		ArrayTest foo2 (array 10);
+	}
+}

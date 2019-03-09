@@ -1,0 +1,21 @@
+class Stopwatch {
+private
+    field m_ptr: intptr;
+
+    static native method (startImpl): intptr;
+    static native method (endImpl ptr: intptr): int;
+    static native method (destroyImpl ptr: intptr);
+
+public
+    ctor (start) {
+        m_ptr = (Stopwatch startImpl);
+    }
+
+    dtor {
+        Stopwatch destroyImpl m_ptr;
+    }
+
+    method (end): int {
+        return (Stopwatch endImpl m_ptr);
+    }
+}

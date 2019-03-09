@@ -1,0 +1,327 @@
+import console;
+import domain;
+import reflection;
+
+struct Point {
+	property x: int;
+	property y: int;
+
+	ctor (create x:int y:int) {
+		m_x = x;
+		m_y = y;
+	}
+
+	method (toString): string {
+		r: string = (m_x toString);
+		r = (r + (m_y toString));
+		return r;
+	}
+}
+
+class Foo {
+	property strValue: string;
+
+	ctor (create) {
+		m_strValue = "ABCD";
+	}
+
+	method (voidMethod) {
+		/* Do nothing. */
+	}
+
+	method (inc i:int): int {
+		return (i + 1);
+	}
+
+	method (cutInHalf str: string): string {
+		return (str substring 0 ((str length) / 2));
+	}
+
+	method (returnFloat): float {
+		return 13.0;
+	}
+
+	method (addPoints a:Point xFactor:int b:Point): Point {
+		return (Point create (((a x) + (b x)) * xFactor) ((a y) + (b y)));
+	}
+
+	static method (addPointsStatic a:Point xFactor:int b:Point): Point {
+		return (Point create (((a x) + (b x)) * xFactor) ((a y) + (b y)));
+	}
+}
+
+interface IFoo {
+	method (doStuff);
+}
+
+abstract class AFoo {
+	abstract method (doStuff);
+}
+
+class Parent {
+	method (doStuff): int {
+		return 0;
+	}
+}
+
+class Child: Parent {
+	method (doStuff): int {
+		return 1;
+	}
+}
+
+struct IntWrapper {
+	field m_wrapped: int;
+	
+	ctor (create i: int) {
+		m_wrapped = i;
+	}
+
+	static method (wrap i: int): IntWrapper {
+		return (IntWrapper create i);
+	}
+
+	method (wrapped): int {
+		return m_wrapped;
+	}
+}
+
+static class ReflectionTest {
+	static method (getMethod type:Type name:string): Method {
+		methods: auto = (type instanceMethods);
+		r: Method = null;
+		(0 to (methods length)) loop ^(i: int) {
+			m: auto = (methods get i);
+			((m name) == name) then ^{
+				r = m;
+			};
+		};
+		return r;
+	}
+
+	static method (getStaticMethod type:Type name:string): Method {
+		methods: auto = (type staticMethods);
+		r: Method = null;
+		(0 to (methods length)) loop ^(i: int) {
+			m: auto = (methods get i);
+			((m name) == name) then ^{
+				r = m;
+			};
+		};
+		return r;
+	}
+
+	static method (getProperty type:Type name:string): Property {
+		props: auto = (type instanceProperties);
+		r: Property = null;
+		(0 to (props length)) loop ^(i: int) {
+			p: auto = (props get i);
+			(((p getter) name) == name) then ^{
+				r = p;
+			};
+		};
+		return r;
+	}
+
+	static method (assertError a: Action) {
+		err: string = (Domain try ^{
+			a invoke;
+		});
+		assert ((err === null) not);
+	}
+
+	[test]
+	unsafe static method (main) {
+		obj: auto = (Foo create);
+		type: auto = (Type of obj);
+		m: auto = (ReflectionTest getMethod type "voidMethod");
+		p: Property = null;
+
+		ret: any = null;
+
+		/* ********************************************************** */
+		/* Checks an empty method with no arguments or return values. */
+		/* ********************************************************** */
+
+		ret = (m invoke obj null);
+		assert (ret === null); /* Must return null! */
+		ret = (m invoke obj []); /* Same as above. */
+		assert (ret === null); /* Must return null! */
+
+		ReflectionTest assertError ^{
+			ret = (m invoke obj [(cast any 1)]);
+		};
+
+		ReflectionTest assertError ^{
+			ret = (m invoke obj [(cast any null)]);
+		};
+
+		/* ***************************************************************** */
+		/* Checks taking a single integer argument and returning an integer. */
+		/* ***************************************************************** */
+
+		m = (ReflectionTest getMethod type "inc");
+		ret = (m invoke obj [(cast any 13)]);
+		assert ((cast int ret) == 14);
+
+		/* Trying to pass a null reference, must produce error. */
+		ReflectionTest assertError ^{
+			ret = (m invoke null [(cast any 13)]);
+		};
+
+		/* Trying to pass null where a valuetype is expected. */
+		ReflectionTest assertError ^{
+			ret = (m invoke obj [(cast any null)]);
+		};
+
+		/* Trying to call it on a wrong object TODO check subclasses */
+		ReflectionTest assertError ^{
+			ret = (m invoke m [(cast any 13)]);
+		};
+
+		/* ****************************************************** */
+		/* Checks if reflection is correct about reference types. */
+		/* ****************************************************** */
+
+		m = (ReflectionTest getMethod type "cutInHalf");
+		ret = (m invoke obj [(cast any "ABCD")]);
+		assert ((cast string ret) == "AB");
+
+		/* ******************************************** */
+		/* Checks getting/setting an instance property. */
+		/* ******************************************** */
+
+		p = (ReflectionTest getProperty type "strValue");
+		m = (p getter);
+		ret = (m invoke obj null);
+		assert ((cast string ret) == "ABCD");
+
+		/* Let's now set a new value. */
+		m = (p setter);
+		ret = (m invoke obj [(cast any "USSR")]);
+		assert (ret === null);
+
+		/* **************************************** */
+		/* Checks if floats are correctly returned. */
+		/* **************************************** */
+
+		m = (ReflectionTest getMethod type "returnFloat");
+		ret = (m invoke obj null);
+		assert ((cast float ret) == 13.0);
+
+		/* ***************************************************************** */
+		/* Checks if composite valuetypes are correctly passed and returned. */
+		/* ***************************************************************** */
+
+		m = (ReflectionTest getMethod type "addPoints");
+		ret = (m invoke obj [ (cast any (Point create 10 20)) (cast any 2) (cast any (Point create 30 40)) ]);
+		point: auto = (cast Point ret);
+		assert ((point x) == 80);
+		assert ((point y) == 60);
+
+		/* **********************************************  */
+		/* Checks if fails on interfaces/abstract methods. */
+		/* *********************************************** */
+
+		m = (ReflectionTest getMethod ((Type forName "IFoo") unwrap) "doStuff");
+		ReflectionTest assertError ^{
+			m invoke obj null;
+		};
+
+		m = (ReflectionTest getMethod ((Type forName "AFoo") unwrap) "doStuff");
+		ReflectionTest assertError ^{
+			m invoke obj null;
+		};
+
+		/* ****************************************************************** */
+		/* Checks if Type::createInstance works on reference types correctly. */
+		/* ****************************************************************** */
+
+		ret = (((Type forName "Foo") unwrap) createInstance "create" null);
+		assert (ret is Foo);
+
+		/* ************************************************************** */
+		/* Checks if Type::createInstance works on value types correctly. */
+		/* ************************************************************** */
+
+		ret = (((Type forName "Point") unwrap) createInstance "create" [(cast any 13) (cast any 666)]);
+		assert (ret is Point);
+		assert (((cast Point ret) x) == 13);
+		assert (((cast Point ret) y) == 666);
+
+		/* ********************************************** */
+		/* Checks if reflection works on primitive types. */
+		/* ********************************************** */
+
+		m = (ReflectionTest getMethod ((Type forName "int") unwrap) "toString");
+		ret = (m invoke 13 null);
+		assert ((cast string ret) == "13");
+
+		/* ****************************************************** */
+		/* Checks if passing an incorrect valuetype 'this' works. */
+		/* ****************************************************** */
+
+		ReflectionTest assertError ^{
+			ret = (m invoke 13.0 null);
+		};
+
+		/* ************************************** */
+		/* Checks if arrays work with reflection. */
+		/* ************************************** */
+
+		m = (ReflectionTest getMethod ((Type forName "[any]") unwrap) "get");
+		ret = (m invoke [(cast any "Hello") (cast any ", World!")] [(cast any 1)]);
+		assert ((cast string ret) == ", World!");
+
+		/* ***************************************** */
+		/* Checks if failables work with reflection. */
+		/* ***************************************** */
+
+		/*m = (ReflectionTest getMethod ((Type forName "Type?") unwrap) "unwrap");
+		ret = (m invoke [(cast any (Type forName "Type"))] null);*/
+
+		/* ***************************************************** */
+		/* Checks if calling a parent class on a subclass is OK. */
+		/* ***************************************************** */
+
+		m = (ReflectionTest getMethod ((Type forName "Parent") unwrap) "doStuff");
+		ret = (m invoke (Parent createDefault) null);
+		assert ((cast int ret) == 0);
+		ret = (m invoke (Child createDefault) null);
+		assert ((cast int ret) == 1); /* Calls the child method, behavior like in C# and Java. */
+		
+		type = (Type of obj);
+
+		/* **************************************** */
+		/* Checks if static methods work correctly. */
+		/* **************************************** */
+
+		m = (ReflectionTest getStaticMethod type "addPointsStatic");
+		ret = (m invoke null [ (cast any (Point create 10 20)) (cast any 2) (cast any (Point create 30 40)) ]);
+		point = (cast Point ret);
+		assert ((point x) == 80);
+		assert ((point y) == 60);
+
+		/* ********************************************************* */
+		/* Checks if static methods accept "this" (they should not). */
+		/* ********************************************************* */
+
+		ReflectionTest assertError ^{
+			ret = (m invoke obj [ (cast any (Point create 10 20)) (cast any 2) (cast any (Point create 30 40)) ]);
+		};
+
+		/* ******************************************* */
+		/* Checks if word-size structs work correctly. */
+		/* ******************************************* */
+
+		m = (ReflectionTest getStaticMethod ((Type forName "IntWrapper") unwrap) "wrap");
+		ret = (m invoke null [(cast any 15)]);
+		assert (((cast IntWrapper ret) wrapped) == 15);
+
+		/* ********************************************************************************* */
+		/* "Type of" of boxed objects should return the type for the actual valuetype class. */
+		/* ********************************************************************************* */
+
+		assert ((Type of 1) === ((Type forName "int") unwrap));
+	}
+}

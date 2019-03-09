@@ -1,0 +1,15 @@
+import path;
+
+static class PathTest {
+	[test]
+	static method (run) {
+		src: string = "F:/Windows/hacker.jpg";
+		assert ((Path changeExtension src "png") == "F:/Windows/hacker.png";
+		assert ((Path changeExtension src ".png") == "F:/Windows/hacker.png");
+		assert ((Path changeExtension "F:/Windows/hacker" ".png") == "F:/Windows/hacker.png");
+		assert ((Path changeExtension src null) == "F:/Windows/hacker");
+
+		assert ((Path getExtension src) == "jpg");
+		assert ((Path getExtension (Path changeExtension src null)) == null);
+	}
+}

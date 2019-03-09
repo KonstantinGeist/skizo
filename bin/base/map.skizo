@@ -1,0 +1,108 @@
+/* WARNING! Don't change this file! The runtime depends on the exact layout. */
+
+interface MapKey {
+	method (hashCode): int;
+	method (equals other: any): bool;
+}
+
+struct MapCase {
+	field m_key: MapKey;
+	field m_value: any;
+
+	method (key): MapKey { return m_key; }
+	method (value): any { return m_value; }
+
+	ctor (create _key:MapKey _value:any) {
+		m_key = _key;
+		m_value = _value;
+	}
+}
+
+method class (MapLooper key:MapKey value:any): bool;
+
+class MapError: Error {
+	field m_key: MapKey;
+	method (key): MapKey { return m_key; }
+
+	ctor (create key: MapKey) {
+		m_key = key;
+		((key is StringRepresentable) then ^{
+			str: string = ((cast StringRepresentable (cast any key)) toString);
+			this setMessage (("Key <" + str) + "> not found.");
+		}) else ^{
+			this setMessage "Key not found";
+		};
+	}
+}
+
+class Map {
+	field m_ptr: intptr;
+
+private
+	static native method (createImpl): intptr;
+	static native method (destroyImpl ptr: intptr);
+	static native method (getImpl self:intptr key:any): any;
+	static native method (containsImpl self:intptr key:any): bool;
+	static native method (setImpl self:intptr key:any value:any);
+	static native method (removeImpl self:intptr key:any);
+	static native method (clearImpl self: intptr);
+	static native method (sizeImpl self:intptr): int;
+	static native method (loopImpl self:intptr iter:MapLooper);
+
+public
+	ctor (create) {
+		m_ptr = (Map createImpl);
+	}
+
+	/* TODO */
+	ctor (create2 src: [MapCase]) {
+		m_ptr = (Map createImpl);
+
+		(0 to (src length)) loop ^(i: int) {
+			kase: auto = (src get i);
+			this set (kase key) (kase value);
+		};
+	}
+
+	dtor {
+		Map destroyImpl m_ptr;
+	}
+
+	method (contains key: MapKey): bool {
+		return (Map containsImpl m_ptr key);
+	}
+
+	method (get key: MapKey): any {
+		return (Map getImpl m_ptr key);
+	}
+
+	method (tryGet key: MapKey): any? {
+		r: any? = null;
+		(((Map containsImpl m_ptr key) not) then ^{
+			r = (MapError create key);
+		}) else ^{
+			r = (Map getImpl m_ptr key);
+		};
+		return r;
+	}
+
+	method (set key:MapKey value:any) {
+		Map setImpl m_ptr key value;
+	}
+
+	method (remove key: MapKey) {
+		Map removeImpl m_ptr key;
+	}
+
+	method (clear) {
+		Map clearImpl m_ptr;
+	}
+
+	method (size): int {
+		return (Map sizeImpl m_ptr);
+	}
+
+	method (loop iter: MapLooper) {
+		Map loopImpl m_ptr iter;
+	}
+}

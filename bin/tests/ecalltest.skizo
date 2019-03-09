@@ -1,0 +1,27 @@
+import console;
+import marshal;
+
+static class ECallTest {
+private
+
+	/*BOOL WINAPI GetComputerName(
+	  _Out_    LPTSTR lpBuffer,
+	  _Inout_  LPDWORD lpnSize
+	);*/
+
+	[module="Kernel32"] [callConv=stdcall]
+	static native method (GetComputerNameW lpBuffer: intptr
+										   lpnSize: intptr): bool;
+
+public
+	[test]
+	unsafe static method (run) {
+		/* See MSDN documentation for more information. */
+		bufferSize: int = 512;
+		buffer: intptr = (Marshal allocNativeMemory bufferSize);
+		result: bool = (ECallTest GetComputerNameW buffer (ref bufferSize));
+		str: string = (Marshal utf16ToString buffer);
+		Marshal freeNativeMemory buffer;
+		assert ((str length) == bufferSize);
+	}
+}
