@@ -11,8 +11,9 @@
 //
 // *****************************************************************************
 
-#include "WaitObject.h"
-#include "Thread.h"
+#include "../../WaitObject.h"
+#include "../../Thread.h"
+
 #include <assert.h>
 #include <errno.h>
 #include <sys/time.h>

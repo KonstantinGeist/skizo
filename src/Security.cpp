@@ -187,15 +187,11 @@ static void validatePathIsSecure(const CString* path)
     for(int i = 0; i < length; i++) {
         const so_char16 c = chars[i];
 
-    #ifdef SKIZO_WIN
         if(c == 0 || c == SKIZO_CHAR('/')) {
             CDomain::Abort(PATH_NOT_SECURE);
         } else if((c == SKIZO_CHAR('.')) && ((i + 1) < length) && (chars[i + 1] == SKIZO_CHAR('.'))) {
             CDomain::Abort(PATH_NOT_SECURE);
         }
-    #else
-        #error "Not implemented."
-    #endif
     }
 }
 

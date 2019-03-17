@@ -40,6 +40,7 @@
      */
     #define SKIZO_LOCK_AB(mu) (mu)->Lock(); try {
     #define SKIZO_END_LOCK_AB(mu) } catch(...) { (mu)->Unlock(); throw; } (mu)->Unlock()
+    #define SKIZO_END_LOCK_AB_NOEXCEPT(mu) } catch(...) {} (mu)->Unlock()
 
 #else // NO SKIZO_USE_SJLJ_ABORT_EXCEPTION
 

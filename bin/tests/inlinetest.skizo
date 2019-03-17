@@ -1,7 +1,7 @@
 import console;
 
 extend bool {
-	unsafe static method (while cond: Predicate
+	unsafe static method (while2 cond: Predicate
 			                    action: Action)
 	{
 		b: bool = true;
@@ -25,7 +25,7 @@ static class InlineTest {
 	[test]
 	static method (run) {
 		i: int = 0;
-		bool while ^(): bool { return (i < 5); } ^{
+		bool while2 ^(): bool { return (i < 5); } ^{
 			i = (i + 1);
 		};
 		assert (i == 5);

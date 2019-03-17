@@ -11,21 +11,28 @@
 //
 // *****************************************************************************
 
-#include "../../CoreUtils.h"
-#include "../../String.h"
+#include "../../Guid.h"
+#include "../../Random.h"
+#include "../../StringBuilder.h"
 
-namespace skizo { namespace core { namespace CoreUtils {
+namespace skizo { namespace core { namespace Guid {
 using namespace skizo::core;
 
-const CString* MemorySizeToString(so_long sz)
+// TODO stub
+const CString* NewGuid()
 {
-    return CString::Format("%l KB", sz / 1024);
-}
+    Auto<CRandom> random (new CRandom());
+    Auto<CStringBuilder> sb (new CStringBuilder());
 
-void ShowMessage(const CString* msg, bool isFatal)
-{
-    msg->DebugPrint();
-    printf("\n");
+    for(int i = 0; i < 16; i++) {
+        if(random->NextInt(0, 2) == 0) {
+            sb->Append(random->NextInt(0, 10));
+        } else {
+            sb->Append((so_char16)(SKIZO_CHAR('a') + 6));
+        }
+    }
+
+    return sb->ToString();
 }
 
 } } }

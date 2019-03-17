@@ -15,6 +15,7 @@
 #include "Application.h"
 #include "ArrayList.h"
 #include "Domain.h"
+#include "ExecutablePageAllocator.h"
 #include "FastByteBuffer.h"
 #include "RuntimeHelpers.h"
 #include <assert.h>
@@ -25,12 +26,6 @@ using namespace skizo::collections;
 
 struct ThunkManagerPrivate
 {
-#ifdef SKIZO_WIN
-    void* m_thunkHeap;
-#else
-    #error "Not implemented."
-#endif
-
     // Methods registered for JIT compilation by this ThunkJIT.
     bool m_isDirty;
     Auto<CArrayList<CMethod*> > m_closureCtors;
@@ -40,8 +35,11 @@ struct ThunkManagerPrivate
     // Generated names, to free them only after the domain is destroyed
     Auto<CArrayList<char*> > m_names;
 
+    Auto<CExecutablePageAllocator> m_execAllocator;
+
     ThunkManagerPrivate();
     ~ThunkManagerPrivate();
+
     void* allocExecutableMem(int sz);
     void freeExecutableMem(void* v);
 
@@ -54,19 +52,9 @@ ThunkManagerPrivate::ThunkManagerPrivate()
       m_closureCtors(new CArrayList<CMethod*>()),
       m_boxedMethods(new CArrayList<CMethod*>()),
       m_boxedCtors(new CArrayList<CMethod*>()),
-      m_names(new CArrayList<char*>())
+      m_names(new CArrayList<char*>()),
+      m_execAllocator(new CExecutablePageAllocator())
 {
-#ifdef SKIZO_WIN
-    // battling with headers, as usual (for some MinGW versions)
-    #ifndef HEAP_CREATE_ENABLE_EXECUTE
-        #define HEAP_CREATE_ENABLE_EXECUTE 0x00040000
-    #endif
-
-    m_thunkHeap = (void*)HeapCreate(HEAP_CREATE_ENABLE_EXECUTE, 0, 0);
-    SKIZO_REQ_PTR(m_thunkHeap);
-#else
-    #error "Not implemented."
-#endif
 }
 
 ThunkManagerPrivate::~ThunkManagerPrivate()
@@ -74,38 +62,16 @@ ThunkManagerPrivate::~ThunkManagerPrivate()
     for(int i = 0; i < m_names->Count(); i++) {
         CString::FreeUtf8(m_names->Array()[i]);
     }
-
-#ifdef SKIZO_WIN
-    // See MSDN:
-    //   Processes can call HeapDestroy without first calling the HeapFree function
-    //   to free memory allocated from the heap.
-    HeapDestroy((HANDLE)m_thunkHeap);
-#else
-    #error "Not implemented."
-#endif
 }
 
 void* ThunkManagerPrivate::allocExecutableMem(int sz)
 {
-#ifdef SKIZO_WIN
-    void* v = HeapAlloc(m_thunkHeap, HEAP_ZERO_MEMORY, sz);
-    if(!v) {
-        SKIZO_THROW(EC_OUT_OF_RESOURCES);
-    }
-    return v;
-#else
-    #error "Not implemented."
-#endif
+    return m_execAllocator->AllocatePage(sz);
 }
 
 void ThunkManagerPrivate::freeExecutableMem(void* v)
 {
-#ifdef SKIZO_WIN
-    SKIZO_REQ_PTR(v);
-    HeapFree(m_thunkHeap, 0, v);
-#else
-    #error "Not implemented."
-#endif
+    m_execAllocator->DeallocatePage(v);
 }
 
 SThunkManager::SThunkManager()
@@ -147,7 +113,8 @@ static __cdecl void closureChecker(void* origDomain)
             Application::Exit(1);
         }
     #else
-        #error "Not implemented."
+        // TODO ?
+        CDomain::Abort("A Skizo closure was found to be called on a foreign domain or thread (via native code).");
     #endif
     }
 }

@@ -223,7 +223,10 @@ void SKIZO_API _soX_checktype(void* pClass)
                         if(((char*)domain->MemoryManager().StackBase() - (char*)&_domain) > (900 * 1024)) \
                             _soX_abort0(SKIZO_ERRORCODE_STACK_OVERFLOW);
 #else
-    #error "Not implemented."
+    // The stack size of Linux is conservatively 1 MB as well.
+    #define SO_DETECT_STACK_OVERFLOW \
+                        if(((char*)domain->MemoryManager().StackBase() - (char*)&_domain) > (900 * 1024)) \
+                            _soX_abort0(SKIZO_ERRORCODE_STACK_OVERFLOW);
 #endif
 
 void SKIZO_API _soX_pushframe(void* _domain, void* pMethod)

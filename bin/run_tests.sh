@@ -1,0 +1,1 @@
+./skizo /source:tests_unix.skizo /paths:tests

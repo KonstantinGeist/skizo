@@ -28,7 +28,11 @@ extern "C" {
 //   of the engine.
 // ***********************************************************************
 
-#define SKIZO_API __cdecl
+#ifdef SKIZO_WIN
+    #define SKIZO_API __cdecl
+#else
+    #define SKIZO_API
+#endif
 
 typedef int so_bool;
 typedef void* so_string;

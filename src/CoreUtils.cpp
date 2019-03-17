@@ -18,6 +18,8 @@
 #include "Object.h"
 #include "String.h"
 
+#include "limits.h"
+
 // htonl & al.
 #ifdef SKIZO_WIN
     #include <winsock2.h>
@@ -123,7 +125,7 @@ const CString* LongToString(so_long l)
 #pragma GCC diagnostic pop
 #else
     SKIZO_REQ_EQUALS(sizeof(so_long), sizeof(long long));
-    sprintf(tmp, "%ld", l);
+    sprintf(tmp, "%lld", l);
 #endif
 
     return CString::FromUtf8(tmp);
@@ -287,25 +289,6 @@ void ValidatePath(const CString* path)
                 break;
         }
     }
-}
-
-so_byte* AllocAligned(size_t size, size_t alignment, bool clear)
-{
-    so_byte* const r = (so_byte*)_mm_malloc(size, alignment);
-    if(!r) {
-        SKIZO_THROW(EC_OUT_OF_RESOURCES);
-    }
-
-    if(clear) {
-        memset(r, 0, size);
-    }
-
-    return r;
-}
-
-void FreeAligned(so_byte* ptr)
-{
-    _mm_free(ptr);
 }
 
 so_uint32 ByteOrderHostToNetwork(so_uint32 c)

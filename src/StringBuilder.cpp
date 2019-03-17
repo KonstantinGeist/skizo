@@ -17,6 +17,7 @@
 #include "CoreUtils.h"
 #include "Marshal.h"
 #include "String.h"
+#include <stdarg.h>
 
 namespace skizo { namespace core {
 using namespace skizo::core::Marshal;

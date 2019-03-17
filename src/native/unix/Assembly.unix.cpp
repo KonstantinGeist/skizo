@@ -11,10 +11,10 @@
 //
 // *****************************************************************************
 
-#include "Assembly.h"
-#include "Contract.h"
-#include "HashMap.h"
-#include "Path.h"
+#include "../../Assembly.h"
+#include "../../Contract.h"
+#include "../../HashMap.h"
+#include "../../Path.h"
 
 #include <dlfcn.h>
 
@@ -29,7 +29,8 @@ struct AssemblyPrivate
     Auto<CHashMap<const char*, void*> > m_pFuncCache;
 
     AssemblyPrivate()
-        : m_hModule(nullptr), m_pFuncCache(new CHashMap<const char*, void*>())
+        : m_hModule(nullptr),
+          m_pFuncCache(new CHashMap<const char*, void*>())
     {
     }
 
@@ -99,8 +100,9 @@ const CString* CAssembly::GetAssemblyName(const CString* path)
     if(path->EndsWithASCII(".so")) {
         Auto<const CString> parent (Path::GetParent(path));
         Auto<const CString> fileName (Path::GetFileName(path));
-        if(fileName->StartsWithASCII("lib"))
-            fileName.SetPtr(fileName->Substring(3));
+        if(fileName->StartsWithASCII("lib")) {
+            fileName.SetPtr(fileName->Substring(strlen("lib")));
+        }
         fileName.SetPtr(Path::ChangeExtension(fileName, (const CString*)nullptr));
 
         return Path::Combine(parent, fileName);

@@ -13,6 +13,7 @@
 
 #include "Console.h"
 #include "String.h"
+#include <stdarg.h>
 
 namespace skizo { namespace core {
 

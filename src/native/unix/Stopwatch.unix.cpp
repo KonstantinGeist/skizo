@@ -11,9 +11,9 @@
 //
 // *****************************************************************************
 
-#include "Stopwatch.h"
-#include "Application.h"
-#include "Exception.h"
+#include "../../Stopwatch.h"
+#include "../../Application.h"
+#include "../../Exception.h"
 
 namespace skizo { namespace core {
 

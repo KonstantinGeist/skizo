@@ -20,7 +20,7 @@ file(GLOB SKIZO_ICALLS_SRC "icalls/*.cpp")
     ##################
 
 if (WIN32)
-	file(GLOB SKIZO_NATIVE_SRC "native/win32/*.cpp")
+    file(GLOB SKIZO_NATIVE_SRC "native/win32/*.cpp")
 endif()
 
 if(UNIX)
@@ -40,7 +40,7 @@ add_library(skizort STATIC ${SKIZO_SRC} ${SKIZO_NATIVE_SRC} ${SKIZO_ICALLS_SRC})
     ################################
 
 if(WIN32)
-	target_link_libraries(skizort kernel32 user32 winmm Shlwapi psapi ws2_32 ole32 tcc)
+    target_link_libraries(skizort kernel32 user32 winmm Shlwapi psapi ws2_32 ole32 tcc)
 endif()
 
     #############################
@@ -48,5 +48,5 @@ endif()
     #############################
 
 if(UNIX)
-    target_link_libraries(skizort pthread dl tcc)
+    target_link_libraries(skizort pthread tcc dl)
 endif()

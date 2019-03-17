@@ -18,7 +18,7 @@ endif()
 
 if(UNIX)
     add_definitions(-DSKIZO_X)
-	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 endif()
 
 ####################

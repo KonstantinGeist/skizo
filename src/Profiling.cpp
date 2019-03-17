@@ -153,7 +153,7 @@ void CProfilingInfo::_dumpImpl(bool dumpToDisk) const
         fwrite(cs, strlen(cs), 1, f);
         fclose(f);
     } else {
-        printf(cs);
+        printf("%s", cs);
     }
 }
 

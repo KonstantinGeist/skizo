@@ -15,85 +15,106 @@
 #include "Contract.h"
 #include <stdlib.h>
 
-#define SKIZO_BUMPPTRALLOCATOR_ENABLED // disable just to test performance
-#define SKIZO_EXPRMEMPAGE_SIZE (1024 * 1024)
+#define SKIZO_ALLOCATOR_PAGE (1024 * 1024)
 
 namespace skizo { namespace script {
+using namespace core;
 
-struct SBumpPtrAllocPage
+namespace
 {
-    SBumpPtrAllocPage *Next, *Prev;
+
+class CDefaultBumpPointerPageAllocator : public CBumpPointerPageAllocator
+{
+public:
+    void* AllocatePage(size_t sz) override
+    {
+        return malloc(sz);
+    }
+
+    void DeallocatePage(void* page) override
+    {
+        free(page);
+    }
+};
+
+}
+
+struct SBumpPointerAllocatorPage
+{
+    SBumpPointerAllocatorPage *Next, *Prev;
     int Size;
     char FirstByte;
 };
 
-SBumpPointerAllocator::SBumpPointerAllocator()
-    : m_firstPage(nullptr),
-      m_lastPage(nullptr),
-      m_profilingEnabled(false)
+void SBumpPointerAllocator::initBase(CBumpPointerPageAllocator* pageAllocator, int alignment)
 {
+    m_firstPage = nullptr;
+    m_lastPage = nullptr;
+    m_profilingEnabled = false;
+
+    m_pageAllocator.SetVal(pageAllocator);
+    m_alignment = alignment;
+
     for(int i = 0; i < E_SKIZOALLOCATIONTYPE_COUNT_DONT_USE; i++) {
         m_memoryByAllocationType[i] = 0;
     }
 
-#ifdef SKIZO_BUMPPTRALLOCATOR_ENABLED
     addPage(); // adds the first page
-#endif
+}
+
+SBumpPointerAllocator::SBumpPointerAllocator(CBumpPointerPageAllocator* pageAllocator, int alignment)
+{
+    initBase(pageAllocator, alignment);
+}
+
+SBumpPointerAllocator::SBumpPointerAllocator()
+{
+    Auto<CDefaultBumpPointerPageAllocator> allocator (new CDefaultBumpPointerPageAllocator());
+    initBase(allocator, (int)sizeof(void*));
 }
 
 SBumpPointerAllocator::~SBumpPointerAllocator()
 {
-    SBumpPtrAllocPage* page = m_firstPage;
-    if(page) {
-        SBumpPtrAllocPage* tmp = page;
+    SBumpPointerAllocatorPage* page = m_firstPage;
+    while(page) {
+        SBumpPointerAllocatorPage* tmp = page;
         page = page->Next;
-
-        free(tmp);
+        m_pageAllocator->DeallocatePage(tmp);
     }
 }
 
-#ifdef SKIZO_BUMPPTRALLOCATOR_ENABLED
-    void SBumpPointerAllocator::addPage()
-    {
-        SBumpPtrAllocPage* page = (SBumpPtrAllocPage*)malloc(SKIZO_EXPRMEMPAGE_SIZE);
-        memset(page, 0, sizeof(SBumpPtrAllocPage));
+void SBumpPointerAllocator::addPage()
+{
+    SBumpPointerAllocatorPage* page = (SBumpPointerAllocatorPage*)m_pageAllocator->AllocatePage(SKIZO_ALLOCATOR_PAGE);
+    memset(page, 0, sizeof(SBumpPointerAllocatorPage));
 
-        if(!m_firstPage) {
-            m_firstPage = m_lastPage = page;
-        } else {
-            m_lastPage->Next = page;
-            page->Prev = m_lastPage;
-            m_lastPage = page;
-        }
+    if(!m_firstPage) {
+        m_firstPage = m_lastPage = page;
+    } else {
+        m_lastPage->Next = page;
+        page->Prev = m_lastPage;
+        m_lastPage = page;
+    }
+}
+
+void* SBumpPointerAllocator::Allocate(int sizeRequest, ESkizoAllocationType allocType)
+{
+    const int sz = sizeRequest + (m_alignment - sizeRequest % m_alignment);
+    SKIZO_REQ_EQUALS(sz % m_alignment, 0);
+    SKIZO_REQ(sz >= sizeRequest, skizo::core::EC_ILLEGAL_ARGUMENT);
+
+    if(m_profilingEnabled) {
+        m_memoryByAllocationType[allocType] += sz;
     }
 
-    void* SBumpPointerAllocator::Allocate(int sizeRequest, ESkizoAllocationType allocType)
-    {
-        const int sz = sizeRequest + (sizeof(void*) - sizeRequest % sizeof(void*));
-        SKIZO_REQ_EQUALS(sz % sizeof(void*), 0);
-        SKIZO_REQ(sz >= sizeRequest, skizo::core::EC_ILLEGAL_ARGUMENT);
-
-        // ****************************************
-        // The runtime's memory profiling.
-        if(m_profilingEnabled) {
-            m_memoryByAllocationType[allocType] += sz;
-        }
-        // ****************************************
-
-        if((m_lastPage->Size + sz) >= (SKIZO_EXPRMEMPAGE_SIZE - (int)sizeof(SBumpPtrAllocPage))) {
-            addPage();
-        }
-
-        void* r = &m_lastPage->FirstByte + m_lastPage->Size;
-        m_lastPage->Size += sz;
-        return r;
+    if((m_lastPage->Size + sz) >= (SKIZO_ALLOCATOR_PAGE - (int)sizeof(SBumpPointerAllocatorPage))) {
+        addPage();
     }
-#else /* not SKIZO_BUMPPTRALLOCATOR_ENABLED */
-    void* SBumpPointerAllocator::Alloc(int sz, ESkizoAllocationType allocType)
-    {
-        return malloc(sz);
-    }
-#endif
+
+    void* r = &m_lastPage->FirstByte + m_lastPage->Size;
+    m_lastPage->Size += sz;
+    return r;
+}
 
 void SBumpPointerAllocator::EnableProfiling(bool value)
 {

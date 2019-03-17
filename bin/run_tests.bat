@@ -1,1 +1,1 @@
-skizo /source:test.skizo /paths:tests
+skizo /source:tests_win.skizo /paths:tests

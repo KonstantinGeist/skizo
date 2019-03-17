@@ -11,10 +11,11 @@
 //
 // *****************************************************************************
 
-#include "Application.h"
-#include "String.h"
-#include "StringBuilder.h"
-#include "Exception.h"
+#include "../../Application.h"
+#include "../../ArrayList.h"
+#include "../../Exception.h"
+#include "../../String.h"
+#include "../../StringBuilder.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -45,8 +46,9 @@ const CString* GetCommandLineArgs()
     sprintf(BUF, "/proc/%i/cmdline", proc_id);
 
     f = fopen(BUF, "rb");
-    if(!f)
+    if(!f) {
         return CString::CreateEmptyString();
+    }
 
     memset(BUF, 0, 1024);
     size_t sz = fread(BUF, 1, 1024, f);
@@ -59,8 +61,9 @@ const CString* GetCommandLineArgs()
         if(BUF[i] == 0) {
             BUF[i] = ' ';
             // The API contract ignores the executable name.
-            if(zeroCount == 0)
+            if(zeroCount == 0) {
                 final = BUF + i + 1;
+            }
             zeroCount++;
         }
     }
@@ -115,7 +118,8 @@ struct SLaunchArray
     char** xArgs;
 
     SLaunchArray(const CString* path, const CString* args)
-        : xArgSize(0), xArgs(nullptr)
+        : xArgSize(0),
+          xArgs(nullptr)
     {
         Auto<CArrayList<const CString*> > args2 (splitArgs(args));
         this->xArgSize = args2->Count() + 2; // 1 for the exe path + 1 for NULL
@@ -230,8 +234,9 @@ void Launch(const CString* path, const CString* args, const SLaunchOptions& opti
         int bytesRead = 0;
         int err;
         while((bytesRead = read(pipefds[0], &err, sizeof(errno))) == -1) {
-            if (errno != EAGAIN && errno != EINTR)
+            if (errno != EAGAIN && errno != EINTR) {
                 break;
+            }
         }
         close(pipefds[0]);
         if(bytesRead) {
@@ -315,12 +320,14 @@ static char* getexename(char* buf, int size)
     ret = readlink(linkname, buf, size);
 
     // In case of an error, leaves the handling up to the caller.
-    if (ret == -1)
+    if (ret == -1) {
         return nullptr;
+    }
 
     // Reports insufficient buffer size.
-    if (ret >= size)
+    if (ret >= size) {
         return nullptr;
+    }
 
     // Ensures proper NUL termination.
     buf[ret] = 0;
@@ -331,8 +338,9 @@ static char* getexename(char* buf, int size)
 const CString* GetExeFileName()
 {
     char buf[MAX_PATH] = { 0 };
-    if(!getexename(buf, MAX_PATH))
+    if(!getexename(buf, MAX_PATH)) {
         SKIZO_THROW(EC_PLATFORM_DEPENDENT);
+    }
 
     return CString::FromUtf8(buf);
 }
@@ -381,8 +389,9 @@ static int GetMemoryUsage_parseLine(char* line)
 so_long GetMemoryUsage()
 {
     FILE* file = fopen("/proc/self/status", "r");
-    if(!file)
+    if(!file) {
         return 0;
+    }
 
     int result = -1;
     char line[128];
@@ -403,8 +412,9 @@ int GetProcessorCount()
     // Technically non-standard, but will simply return 1 processor if no such
     // name is found. Or it just won't compile on such a system.
     long r = sysconf(_SC_NPROCESSORS_ONLN);
-    if(r < 1)
+    if(r < 1) {
         return 1; // Assume 1 processor.
+    }
     return r;
 }
 

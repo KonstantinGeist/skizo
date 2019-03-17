@@ -11,21 +11,21 @@
 //
 // *****************************************************************************
 
-#include "../../CoreUtils.h"
-#include "../../String.h"
+#include "BumpPointerAllocator.h"
 
-namespace skizo { namespace core { namespace CoreUtils {
-using namespace skizo::core;
+namespace skizo { namespace script {
 
-const CString* MemorySizeToString(so_long sz)
+class CExecutablePageAllocator : public CBumpPointerPageAllocator
 {
-    return CString::Format("%l KB", sz / 1024);
-}
+public:
+    CExecutablePageAllocator();
+    ~CExecutablePageAllocator();
 
-void ShowMessage(const CString* msg, bool isFatal)
-{
-    msg->DebugPrint();
-    printf("\n");
-}
+    void* AllocatePage(size_t sz) override;
+    void DeallocatePage(void* page) override;
 
-} } }
+private:
+    struct ExecutablePageAllocatorPrivate* p;
+};
+
+} }

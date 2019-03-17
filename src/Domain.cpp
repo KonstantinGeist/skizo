@@ -28,6 +28,7 @@
 #include "StringBuilder.h"
 #include "Transformer.h"
 #include <assert.h>
+#include <stdarg.h>
 
 namespace skizo { namespace script {
 using namespace skizo::core;
@@ -226,7 +227,7 @@ CDomain::~CDomain()
         void (SKIZO_API *epilog)();
         SKIZO_LOCK_AB(CDomain::g_globalMutex) {
             epilog = (void(SKIZO_API *)())tcc_get_symbol(m_tccState, "_soX_epilog");
-        } SKIZO_END_LOCK_AB(CDomain::g_globalMutex);
+        } SKIZO_END_LOCK_AB_NOEXCEPT(CDomain::g_globalMutex);
 
         try {
             if(epilog)
@@ -273,7 +274,7 @@ CDomain::~CDomain()
             m_securityMngr.DeinitSecureIO();
 
             tcc_delete(tccState);
-        } SKIZO_END_LOCK_AB(CDomain::g_globalMutex);
+        } SKIZO_END_LOCK_AB_NOEXCEPT(CDomain::g_globalMutex);
     }
 }
 
@@ -502,13 +503,13 @@ CDomain* CDomain::CreateDomain(const SDomainCreation& creation)
             }
 
             // **************************************************************
+        #ifdef SKIZO_WIN
             domain->chkstkHack();
+        #endif
 
-            domain->registerICall("_soX_mm", (void*)&domain->m_memMngr);
             domain->registerICall("_soX_gc_alloc", (void*)_soX_gc_alloc);
             domain->registerICall("_soX_gc_alloc_env", (void*)_soX_gc_alloc_env);
             domain->registerICall("_soX_gc_roots", (void*)_soX_gc_roots);
-
             domain->registerICall("_soX_regvtable", (void*)_soX_regvtable);
             domain->registerICall("_soX_patchstrings", (void*)_soX_patchstrings);
             domain->registerICall("_soX_downcast", (void*)_soX_downcast);
@@ -618,7 +619,9 @@ CDomain* CDomain::CreateDomain(const SDomainCreation& creation)
             AddVectoredExceptionHandler(0, unhandledExceptionFilter);
         }
     #else
-        #error "Not implemented."
+        if(!domain->m_explicitNullCheck) {
+            CDomain::Abort("Hardware checks for null aren't supported for this platform.");
+        }
     #endif
 
         // **********************

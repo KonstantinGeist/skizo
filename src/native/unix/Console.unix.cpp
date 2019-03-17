@@ -11,9 +11,9 @@
 //
 // *****************************************************************************
 
-#include "Console.h"
-#include "Exception.h"
-#include "String.h"
+#include "../../Console.h"
+#include "../../Exception.h"
+#include "../../String.h"
 
 #include <stdio.h>
 
@@ -35,15 +35,15 @@ const CString* ReadLine()
         len = strlen(buffer);
 
         // Removes the delimiter.
-        if(buffer[len - 1] == '\n')
+        if(buffer[len - 1] == '\n') {
             buffer[len - 1] = 0;
+        }
 
         r = CString::FromUtf8(buffer);
     }
     free(buffer);
 
     return r;
-#endif
 }
 
 void Write(const CString* str)

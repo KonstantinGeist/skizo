@@ -1,0 +1,35 @@
+import reflection;
+import console;
+import runtime;
+
+static class Program {
+    static method (main) {
+        ts: [Type] = (Type allTypes);
+
+		(0 to (ts length)) loop ^(i: int) {
+			t: Type = (ts get i);
+
+			((t isCompilerGenerated) not) then ^{
+				ms: [Method] = (t staticMethods);
+
+				(0 to (ms length)) loop ^(j: int) {
+					m: Method = (ms get j);
+
+					params: auto = (m parameters);
+					ret: auto = (m returnParameter);
+
+					(((params length) == 0) and (ret === null)) then ^{
+						((m getAttribute "test") success) then ^{
+							testName: string = (((t name) + "::") + (m name));
+							Console print "========================\n";
+							Console print (("Running '" + testName) + "'...\n");
+							Console print "========================\n";
+
+							m invoke null null;
+						};
+					};
+				};
+			};
+		};
+    }
+}

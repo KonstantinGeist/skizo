@@ -11,11 +11,11 @@
 //
 // *****************************************************************************
 
-#include "FileSystem.h"
-#include "Application.h"
-#include "Exception.h"
-#include "String.h"
-#include "Path.h"
+#include "../../FileSystem.h"
+#include "../../Application.h"
+#include "../../Exception.h"
+#include "../../Path.h"
+#include "../../String.h"
 
 #include <stdio.h>
 #include <sys/types.h>
@@ -48,8 +48,9 @@ bool FileExists(const CString* path)
     Utf8Auto cPath (path->ToUtf8());
 
     struct stat stbuf;
-    if(stat(cPath, &stbuf) == -1)
+    if(stat(cPath, &stbuf) == -1) {
         return false;
+    }
 
     return !S_ISDIR(stbuf.st_mode);
 }
@@ -61,8 +62,9 @@ bool DirectoryExists(const CString* path)
     Utf8Auto cPath (path->ToUtf8());
 
     struct stat stbuf;
-    if(stat(cPath, &stbuf) == -1)
+    if(stat(cPath, &stbuf) == -1) {
         return false;
+    }
 
     return S_ISDIR(stbuf.st_mode);
 }
@@ -97,10 +99,11 @@ const CString* GetCurrentDirectory()
 {
     char cwd[1024];
 
-    if (getcwd(cwd, sizeof(cwd)) != NULL)
+    if (getcwd(cwd, sizeof(cwd)) != NULL) {
         return CString::FromUtf8(cwd);
-    else
+    } else {
         return Application::GetSpecialFolder(E_SPECIALFOLDER_HOME);
+    }
 }
 
 static CArrayList<const CString*>* listCommon(const CString* rootPath,
@@ -117,7 +120,7 @@ static CArrayList<const CString*>* listCommon(const CString* rootPath,
         SKIZO_THROW(EC_PATH_NOT_FOUND);
     }
 
-    CArrayList<const CString*>* r = new CArrayList<const CString*>();
+    Auto<CArrayList<const CString*> > r (new CArrayList<const CString*>());
 
     while((entry = readdir(cDir)) != NULL) {
         if(strcmp(entry->d_name, ".") != 0
@@ -129,19 +132,23 @@ static CArrayList<const CString*>* listCommon(const CString* rootPath,
             // Trying to tell if it's a file or a directory...
             Utf8Auto cFullPath (fullPath->ToUtf8());
             struct stat stbuf;
-            if(stat(cFullPath, &stbuf) == -1) // Cannot access, or something like that.
+            if(stat(cFullPath, &stbuf) == -1) { // Cannot access, or something like that.
                 continue;
+            }
 
             if(S_ISDIR(stbuf.st_mode) == listDirs) {
-                if(returnFullPath)
+                if(returnFullPath) {
                     r->Add(fullPath);
-                else
+                } else {
                     r->Add(entryPath);
+                }
             }
         }
     }
 
     closedir(cDir);
+
+    r->Ref();
     return r;
 }
 
@@ -204,9 +211,9 @@ void DeleteFile(const CString* path)
     }
 }
 
-// Unix has no built-in function to copy files. Sad! Everyone has to roll his own
+// Unix has no built-in function to copy files. Sad! Everyone has to roll their own
 // sloppy version.
-// Taken from http://stackoverflow.com/questions/2180079/how-can-i-copy-a-file-on-unix-using-c
+// Based on http://stackoverflow.com/questions/2180079/how-can-i-copy-a-file-on-unix-using-c
 // License unknown but the code is pretty straightforward.
 static EExceptionCode copyFileImpl(const char* from, const char* to)
 {
@@ -215,12 +222,14 @@ static EExceptionCode copyFileImpl(const char* from, const char* to)
     ssize_t nread;
 
     fd_from = open(from, O_RDONLY);
-    if (fd_from < 0)
+    if (fd_from < 0) {
         return EC_PATH_NOT_FOUND; // failure
+    }
 
     fd_to = open(to, O_WRONLY | O_CREAT | O_EXCL, 0666);
-    if(fd_to < 0)
+    if(fd_to < 0) {
         goto out_error;
+    }
 
     while(nread = read(fd_from, buf, sizeof buf), nread > 0) {
         char *out_ptr = buf;
@@ -252,8 +261,9 @@ static EExceptionCode copyFileImpl(const char* from, const char* to)
   out_error:
     close(fd_from);
 
-    if(fd_to >= 0)
+    if(fd_to >= 0) {
         close(fd_to);
+    }
 
     return EC_PLATFORM_DEPENDENT;
 }
@@ -283,6 +293,15 @@ void RenameDirectory(const CString* oldPath, const CString* newPath)
     if(rename(cOldPath, cNewPath) != 0) {
         SKIZO_THROW(EC_PLATFORM_DEPENDENT);
     }
+}
+
+bool IsSameFile(const CString* path1, const CString* path2)
+{
+    CoreUtils::ValidatePath(path1);
+    CoreUtils::ValidatePath(path2);
+
+    // TODO stub
+    return path1->Equals(path2);
 }
 
 } } }

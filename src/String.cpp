@@ -19,6 +19,7 @@
 #include "Exception.h"
 #include "Marshal.h"
 #include "StringBuilder.h"
+#include <stdarg.h>
 
 namespace skizo { namespace core {
 using namespace skizo::core::Marshal;
@@ -166,7 +167,7 @@ const CString* CString::Substring(int start, int count) const
     }
 
     const CString* buffer = createBuffer(count);
-    Marshal::so_wmemcpy_16bit(&buffer->m_chars, &m_chars + start, count);
+    so_wmemcpy_16bit(&buffer->m_chars, &m_chars + start, count);
 
     return buffer;
 }
@@ -674,7 +675,13 @@ const CString* CString::FormatImpl(const CString* format, va_list vl)
         } else if(strcmp(e->Type, "p") == 0) {
 
             char buf[64]; // Must suffice.
+        #ifdef SKIZO_WIN
             sprintf(buf, "0x%p", (va_arg(vl, void*)));
+        #elif SKIZO_X
+            sprintf(buf, "%p", (va_arg(vl, void*)));
+        #else
+            SKIZO_REQ_NEVER
+        #endif
             sb->Append(buf);
 
         }

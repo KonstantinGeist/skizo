@@ -257,16 +257,6 @@ void ThrowWin32Error();
     // ***********
 
 /**
- * Allocates memory of the specified size and alignment.
- *
- * @param clear specified whether the returned block of memory should also be
- * cleared with 0's
- */
-so_byte* AllocAligned(size_t size, size_t alignment, bool clear = false);
-
-void FreeAligned(so_byte* ptr);
-
-/**
  * Takes a value (amount of memory in bytes) and makes a user-friendly string.
  * The value is treated as a binary size (2^N). Localized.
  */

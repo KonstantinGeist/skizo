@@ -11,16 +11,16 @@
 //
 // *****************************************************************************
 
-#include "Thread.h"
-#include "Contract.h"
-#include "Log.h"
-#include "Exception.h"
-#include "String.h"
-#include "CoreUtils.h"
-#include "Mutex.h"
-#include "WaitObject.h"
-#include "ArrayList.h"
-#include "HashMap.h"
+#include "../../Thread.h"
+#include "../../ArrayList.h"
+#include "../../Contract.h"
+#include "../../CoreUtils.h"
+#include "../../Exception.h"
+#include "../../HashMap.h"
+#include "../../Log.h"
+#include "../../Mutex.h"
+#include "../../String.h"
+#include "../../WaitObject.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -218,8 +218,9 @@ void* PosixToSkizo(void* arg)
 
     // We set it to running only here because we must ensure
     // that all thread-dependent data has been set up.
-    if(thread->p->m_state != E_THREADSTATE_ABORT_REQUESTED) // already aborted?
+    if(thread->p->m_state != E_THREADSTATE_ABORT_REQUESTED) { // already aborted?
         thread->p->m_state = E_THREADSTATE_RUNNING;
+    }
 
     // Sets an additional reference on itself. Why? To prevent deallocating
     // the thread while it's still running.
@@ -321,8 +322,9 @@ void CThread::Join(const CThread* thread, int timeout)
     }
 
     // The thread has already terminated...
-    if(thread->State() == E_THREADSTATE_STOPPED)
+    if(thread->State() == E_THREADSTATE_STOPPED) {
         return;
+    }
 
     if(thread->State() == E_THREADSTATE_UNSTARTED) {
         /*
@@ -360,8 +362,9 @@ void CThread::Join(const CThread* thread, int timeout)
 
 void CThread::Sleep(int ms)
 {
-    if(ms < 0)
+    if(ms < 0) {
         SKIZO_THROW(EC_ILLEGAL_ARGUMENT);
+    }
 
     struct timespec ts;
     ts.tv_sec = (long)ms / 1000;              // Seconds.
@@ -389,10 +392,12 @@ so_long CThread::GetProcessorTime() const
     struct timespec ts;
     clockid_t cid;
 
-    if(pthread_getcpuclockid(pthread_self(), &cid))
+    if(pthread_getcpuclockid(pthread_self(), &cid)) {
         return 0;
-    if(clock_gettime(cid, &ts) == -1)
+    }
+    if(clock_gettime(cid, &ts) == -1) {
         return 0;
+    }
 
     return (ts.tv_sec * 1000) + (ts.tv_nsec / 1000000);
 }
@@ -404,8 +409,9 @@ CArrayList<CThread*>* CThread::GetThreads()
     CArrayList<CThread*>* r =  new CArrayList<CThread*>();
 
     // Main thread is a special case, not listed inside g_knownThreadList.
-    if(g_MainThread)
+    if(g_MainThread) {
         r->Add(g_MainThread);
+    }
 
     pthread_mutex_lock(&g_cs);
         for(int i = 0; i < g_knownThreadList->Count(); i++) {

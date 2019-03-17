@@ -27,7 +27,7 @@ SECallCache::~SECallCache()
     #ifdef SKIZO_WIN
         FreeLibrary((HMODULE)handle);
     #else
-        #error "Not implemented."
+        CDomain::Abort("Not implemented.");
     #endif
     }
 }
@@ -43,7 +43,9 @@ void* SECallCache::SkizoGetLibrary(const SStringSlice& name_) const
     Auto<const CString> libName (name_.ToString());
     r = LoadLibrary((WCHAR*)(libName->Chars()));
 #else
-    #error "Not implemented."
+    Auto<const CString> libName (name_.ToString());
+    CDomain::Abort("Not implemented.");
+    r = nullptr;
 #endif
 
     if(!r) {
@@ -63,7 +65,9 @@ void* SECallCache::SkizoGetProcedure(void* nmodule, const SStringSlice& _procNam
     Utf8Auto procName (_procName.ToUtf8());
     void* r = (void*)GetProcAddress((HMODULE)nmodule, procName);
 #else
-    #error "Not implemented."
+    CDomain::Abort("Not implemented.");
+    Utf8Auto procName (_procName.ToUtf8());
+    void* r = nullptr;
 #endif
 
     if(!r) {

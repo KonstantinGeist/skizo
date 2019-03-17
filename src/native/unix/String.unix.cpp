@@ -11,8 +11,9 @@
 //
 // *****************************************************************************
 
-#include "String.h"
-#include "Exception.h"
+#include "../../String.h"
+#include "../../Exception.h"
+
 #include <string.h>
 #include <assert.h>
 #include <cwctype>

@@ -14,7 +14,7 @@
 #ifndef BUMPPOINTERALLOCATOR_H_INCLUDED
 #define BUMPPOINTERALLOCATOR_H_INCLUDED
 
-#include <cstddef>
+#include "Object.h"
 
 namespace skizo { namespace script {
 
@@ -36,15 +36,23 @@ enum ESkizoAllocationType
  */
 #define SO_FAST_ALLOC(sz, allocType) (CDomain::ForCurrentThread()->MemoryManager().BumpPointerAllocator().Allocate(sz, allocType))
 
+class CBumpPointerPageAllocator : public skizo::core::CObject
+{
+public:
+    virtual void* AllocatePage(size_t sz) = 0;
+    virtual void DeallocatePage(void* page) = 0;
+};
+
 /**
  * Fast allocator: allocates data by simply moving the current pointer. All data is freed at once when
  * the allocator is destroyed (on domain teardown).
- * Used by expressions/tokens etc. internally.
+ * Used by expressions/tokens/thunks etc. internally.
  */
 struct SBumpPointerAllocator
 {
 public:
     SBumpPointerAllocator();
+    SBumpPointerAllocator(CBumpPointerPageAllocator* pageAllocator, int alignment);
     ~SBumpPointerAllocator();
 
     /**
@@ -65,8 +73,13 @@ public:
     size_t GetMemoryByAllocationType(ESkizoAllocationType allocType) const;
 
 private:
-    struct SBumpPtrAllocPage* m_firstPage;
-    struct SBumpPtrAllocPage* m_lastPage;
+    void initBase(CBumpPointerPageAllocator* pageAllocator, int alignment);
+
+    struct SBumpPointerAllocatorPage* m_firstPage;
+    struct SBumpPointerAllocatorPage* m_lastPage;
+
+    skizo::core::Auto<CBumpPointerPageAllocator> m_pageAllocator;
+    int m_alignment;
 
     bool m_profilingEnabled;
     size_t m_memoryByAllocationType[E_SKIZOALLOCATIONTYPE_COUNT_DONT_USE];

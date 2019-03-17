@@ -16,7 +16,7 @@
 
 #include "basedefs.h"
 
-namespace skizo { namespace core { namespace Marshal {
+namespace skizo { namespace core {
 
 /*
 *    For Linux: versions of wcslen/wcscpy/wmemcpy that are guaranteed to work
@@ -55,6 +55,7 @@ namespace skizo { namespace core { namespace Marshal {
     #define so_wcscmp_16bit(s1, s2) wcscmp((wchar_t*)s1, (wchar_t*)s2)
 #endif
 
+namespace Marshal {
     /**
      * Encodes Base64.
      *

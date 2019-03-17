@@ -15,6 +15,7 @@
 #include "Application.h"
 #include "Contract.h"
 #include "String.h"
+#include <limits.h>
 
 namespace skizo { namespace core {
 

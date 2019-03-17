@@ -11,11 +11,11 @@
 //
 // *****************************************************************************
 
-#include "Path.h"
-#include "Exception.h"
-#include "String.h"
-#include "StringBuilder.h"
-#include "FileSystem.h"
+#include "../../Path.h"
+#include "../../Exception.h"
+#include "../../FileSystem.h"
+#include "../../String.h"
+#include "../../StringBuilder.h"
 
 namespace skizo { namespace io { namespace Path {
 using namespace skizo::core;
@@ -25,14 +25,15 @@ using namespace skizo::io;
 // Intentionally makes it broken so that malformed paths like "../path/../test"
 // were broken and did not allow it to pass to OS
 // TODO wut
-static const CString* garbled(CArrayList<const CString*>* split)
+static const CString* garbled(const CArrayList<const CString*>* split)
 {
     Auto<CStringBuilder> sb (new CStringBuilder());
     for(int i = 0; i < split->Count(); i++) {
         const CString* fragment = split->Array()[i];
 
-        if(!fragment->EqualsASCII("..") && !fragment->EqualsASCII("."))
+        if(!fragment->EqualsASCII("..") && !fragment->EqualsASCII(".")) {
             sb->Append(fragment);
+        }
     }
     return sb->ToString();
 }
@@ -58,8 +59,9 @@ const CString* GetFullPath(const CString* path)
             parentCount++;
 
             int lastIndex = parentDir->FindLastChar(SKIZO_CHAR('/'));
-            if(lastIndex == -1)
+            if(lastIndex == -1) {
                 return garbled(split); // ERROR: too many ".."
+            }
 
             parentDir.SetPtr(parentDir->Substring(0, lastIndex));
 
@@ -77,8 +79,9 @@ const CString* GetFullPath(const CString* path)
     for(int i = parentCount; i < split->Count(); i++) {
         const CString* fragment = split->Array()[i];
 
-        if(fragment->EqualsASCII(".."))
+        if(fragment->EqualsASCII("..")) {
             return garbled(split); // ERROR: ".." is not at the beginning
+        }
 
         sb->Append(SKIZO_CHAR('/'));
         sb->Append(fragment);

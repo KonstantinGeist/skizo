@@ -19,6 +19,10 @@ namespace skizo { namespace script {
 class CDomain;    
 class CMethod;
 
+#ifdef SKIZO_X
+    #define __cdecl
+#endif
+
 /**
  * A reflection thunk builds a correct native frame out of a pre-constructed argument buffer
  * and calls the target method.

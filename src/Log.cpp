@@ -22,6 +22,7 @@
 #include "String.h"
 #include "TextWriter.h"
 #include "Thread.h"
+#include <stdarg.h>
 
 namespace skizo { namespace core {
 using namespace skizo::collections;

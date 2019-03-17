@@ -11,9 +11,9 @@
 //
 // *****************************************************************************
 
-#include "Marshal.h"
+#include "../../Marshal.h"
 
-namespace skizo { namespace core { namespace Marshal {
+namespace skizo { namespace core {
 
 int so_wcslen_16bit(const so_char16* str)
 {
@@ -33,11 +33,13 @@ so_char16* so_wmemcpy_16bit(so_char16* __restrict__ s1, const so_char16* __restr
 {
     so_char16* orig_s1 = s1;
 
-    if (s1 == NULL || s2 == NULL || n == 0)
+    if (s1 == NULL || s2 == NULL || n == 0) {
         return orig_s1;
+    }
 
-    for (; n > 0; --n )
+    for (; n > 0; --n ) {
         *s1++ = *s2++;
+    }
 
     return orig_s1;
 }
@@ -45,8 +47,9 @@ so_char16* so_wmemcpy_16bit(so_char16* __restrict__ s1, const so_char16* __restr
 int so_wcscmp_16bit(const so_char16* cs, const so_char16* ct)
 {
     while(*cs == *ct) {
-        if(*cs == 0)
+        if(*cs == 0) {
             return 0;
+        }
         cs++;
         ct++;
     }
@@ -54,4 +57,4 @@ int so_wcscmp_16bit(const so_char16* cs, const so_char16* ct)
     return *cs - *ct;
 }
 
-} } }
+} }

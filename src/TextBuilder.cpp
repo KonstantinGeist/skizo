@@ -15,6 +15,7 @@
 #include "Class.h"
 #include "Contract.h"
 #include "StringSlice.h"
+#include <stdarg.h>
 
 #define SKIZO_CONVBUFFER_SIZE 1024
 
@@ -125,7 +126,13 @@ void STextBuilder::emitImpl(const char* format, va_list vl)
                 case 'p':
                 {
                     const void* ptr = va_arg(vl, void*);
+                #ifdef SKIZO_WIN
                     sprintf(buf, "0x%p", ptr);
+                #elif SKIZO_X
+                    sprintf(buf, "%p", ptr); // already embeds 0x TODO LINUX
+                #else
+                    SKIZO_REQ_NEVER
+                #endif
                     append(buf, strlen(buf));
                 }
                 break;

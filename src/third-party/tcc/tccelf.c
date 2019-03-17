@@ -1363,9 +1363,9 @@ ST_FUNC void tcc_add_runtime(TCCState *s1)
         tcc_add_library(s1, "c");
 #ifdef CONFIG_USE_LIBGCC
         tcc_add_file(s1, TCC_LIBGCC);
-#elif !defined WITHOUT_LIBTCC
+#elif defined CONFIG_USE_LIBTCC
         // **********************************************
-        //       Skizo: WITHOUT_LIBTCC must be false
+        //    Skizo: CONFIG_USE_LIBTCC must be false
         // **********************************************
         tcc_add_support(s1, "libtcc1.a");
 #endif

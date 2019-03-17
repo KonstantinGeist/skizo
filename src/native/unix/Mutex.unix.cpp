@@ -11,8 +11,8 @@
 //
 // *****************************************************************************
 
-#include "Mutex.h"
-#include "Exception.h"
+#include "../../Mutex.h"
+#include "../../Exception.h"
 
 #include <errno.h>
 #include <assert.h>

@@ -1630,8 +1630,9 @@ void SEmitter::emitFunctionBody(STextBuilder& cb, const CMethod* method)
         if(method->ClosureEnvClass()) {
             // Why managed constructors if we can have this directly in C?
 
-            varSegCB.Emit("struct _so_%s* _soX_newEnv = _soX_gc_alloc_env(_soX_mm, (void*)%p);\n",
+            varSegCB.Emit("struct _so_%s* _soX_newEnv = _soX_gc_alloc_env((void*)%p, (void*)%p);\n",
                           &method->ClosureEnvClass()->FlatName(),
+                          &domain->MemoryManager(),
                           method->ClosureEnvClass());
 
             if(method->DeclaringClass()->SpecialClass() == E_SPECIALCLASS_METHODCLASS) {
@@ -1851,10 +1852,12 @@ void SEmitter::emitInstanceCtor(const CClass* klass, const CMethod* method)
         // NOTE No need for memset because _so_gc_alloc does that for us.
         // NOTE Closures share the same structure, so they're a special case to minimize the amount of generated C code.
         if(klass->SpecialClass() == E_SPECIALCLASS_METHODCLASS) {
-            mainCB.Emit("self = _soX_gc_alloc(_soX_mm, (int)sizeof(struct _soX_0Closure), _soX_vtbl_%s);\n",
+            mainCB.Emit("self = _soX_gc_alloc((void*)%p, (int)sizeof(struct _soX_0Closure), _soX_vtbl_%s);\n",
+                                    &domain->MemoryManager(),
                                     &klass->FlatName());
         } else {
-            mainCB.Emit("self = _soX_gc_alloc(_soX_mm, (int)sizeof(struct _so_%s), _soX_vtbl_%s);\n",
+            mainCB.Emit("self = _soX_gc_alloc((void*)%p, (int)sizeof(struct _so_%s), _soX_vtbl_%s);\n",
+                                    &domain->MemoryManager(),
                                     &klass->FlatName(),
                                     &klass->FlatName());
         }
@@ -1982,7 +1985,8 @@ void SEmitter::emitStaticCtorDtor(const CClass* klass)
                         }
                     }
                     mainCB.Emit("\n};\n"
-                                "_soX_gc_roots(_soX_mm, rootRefs, %d);\n",
+                                "_soX_gc_roots((void*)%p, rootRefs, %d);\n",
+                                &domain->MemoryManager(),
                                 staticHeapFields->Count());
                 }
             mainCB.Emit( "} else {\n");
@@ -2056,8 +2060,7 @@ void SEmitter::emit()
                 "#define _so_bool_not(x) (!(x))\n");
 
     // Runtime helpers.
-    mainCB.Emit("extern void* _soX_mm;\n"
-                "extern void* _soX_gc_alloc(void* mm, int sz, void** vtable);\n"
+    mainCB.Emit("extern void* _soX_gc_alloc(void* mm, int sz, void** vtable);\n"
                 "extern void* _soX_gc_alloc_env(void* mm, void* objClass);\n"
                 "extern void _soX_gc_roots(void* mm, void** rootRefs, int count);\n"
                 "extern void _soX_regvtable(void* klass, void** vtable);\n"
