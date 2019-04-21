@@ -69,13 +69,6 @@ typedef enum {
     SKIZO_PROFDATA_DUMP_TO_DISK
 } SKIZO_PROFDATA_DUMP;
 
-/**
- * This callback, when installed via SDomainCreation::CompilationCallback, allows to
- * to keep track of the compilation progress of a domain: 0.0 means compilation has
- * just started; 1.0 means the domain is ready.
- */
-typedef void (SKIZO_API * SKIZO_DOMAINCOMPILATIONCALLBACK)(float completeness);
-
 // ********************
 //   Domain creation.
 // ********************

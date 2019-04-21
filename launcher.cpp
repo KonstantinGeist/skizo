@@ -76,7 +76,7 @@ static int mainImpl(int argc, char **argv)
     addOptionDescr(descrs, "safecallbacks", "closures passed as C callbacks to native code are checked for being called in correct domains", "false");
     addOptionDescr(descrs, "permissions", "makes the base domain untrusted and specifies a list of permissions", 0);
     addOptionDescr(descrs, "inline", "inlines branching", "true");
-    addOptionDescr(descrs, "mingcthreshold", "sets minimal GC threshold.", 0);
+    addOptionDescr(descrs, "mingcthreshold", "sets minimal GC threshold", 0);
     addOptionDescr(descrs, "gcstats", "gc stats on every garbage collection", "false");
 
     Auto<const CString> source;

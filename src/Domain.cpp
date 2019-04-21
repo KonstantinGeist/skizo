@@ -339,13 +339,6 @@ const CString* CDomain::readSource(const CString* _source, bool* out_isBaseModul
     return FileUtils::ReadAllText(source);
 }
 
-static void reportProgress(const SDomainCreation& creation, float completeness)
-{
-    if(creation.CompilationCallback) {
-        creation.CompilationCallback(completeness);
-    }
-}
-
 CDomain* CDomain::CreateDomain(const SDomainCreation& creation)
 {
     if(!creation.StackBase) {
@@ -362,7 +355,6 @@ CDomain* CDomain::CreateDomain(const SDomainCreation& creation)
     }
 
     Auto<CDomain> domain (new CDomain());
-    reportProgress(creation, 0.0f); // reports: compilation has just started
 
     // *******************************************************************************
     // Security stuff.
@@ -459,7 +451,6 @@ CDomain* CDomain::CreateDomain(const SDomainCreation& creation)
         printf("Parsing phase: %d ms.\n", tmpDt - dt);
         dt = tmpDt;
     }
-    reportProgress(creation, 0.2f); // reports: parsing ready
 
     SkizoTransform(domain);
     domain->verifyIntrinsicClasses();
@@ -469,7 +460,6 @@ CDomain* CDomain::CreateDomain(const SDomainCreation& creation)
         printf("Transform phase: %d ms.\n", tmpDt - dt);
         dt = tmpDt;
     }
-    reportProgress(creation, 0.4f); // reports: transformation ready
 
     STextBuilder cb;
     SkizoEmit(domain, cb);
@@ -479,7 +469,6 @@ CDomain* CDomain::CreateDomain(const SDomainCreation& creation)
         printf("Emit phase: %d ms.\n", tmpDt - dt);
         dt = tmpDt;
     }
-    reportProgress(creation, 0.6f); // reports: emission ready
 
     {
         char* cCode = cb.Chars();
@@ -595,7 +584,6 @@ CDomain* CDomain::CreateDomain(const SDomainCreation& creation)
                 //SKIZO_THROW(EC_EXECUTION_ERROR); // TODO ?
                 CDomain::Abort("Relocation error (invalid inline C code or a bug in the backend).");
             }
-            reportProgress(creation, 0.8f); // reports: relocation ready
 
         } SKIZO_END_LOCK_AB(CDomain::g_globalMutex);
 
@@ -642,8 +630,6 @@ CDomain* CDomain::CreateDomain(const SDomainCreation& creation)
 
         domain->m_readyForEpilog = true;
     }
-
-    reportProgress(creation, 1.0f); // reports: prolog and secure IO complete; the domain is ready.
 
     domain->Ref();
     return domain;

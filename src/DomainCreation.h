@@ -61,7 +61,7 @@ public:
     /**
      * If the domain is marked as untrusted, Permission::demand(..) takes permissions added with ::AddPermission(..)
      * into consideration.
-     * Otherwise, treats as the domain as trusted, completely ignoring permission demands.
+     * Otherwise, treats the domain as trusted, completely ignoring permission demands.
      * False by default for code hosted from C/C++.
      */
     bool IsUntrusted;
@@ -146,11 +146,6 @@ public:
     SKIZO_BREAKPOINTCALLBACK BreakpointCallback;
 
     /**
-     * See the comments for SKIZO_DOMAINCOMPILATIONCALLBACK in skizoscript.h
-     */
-    SKIZO_DOMAINCOMPILATIONCALLBACK CompilationCallback;
-
-    /**
      * Used to diagnose GC problems.
      */
     bool GCStatsEnabled;
@@ -172,7 +167,6 @@ public:
           SafeCallbacks(false),
           InlineBranching(true),
           BreakpointCallback(nullptr),
-          CompilationCallback(nullptr),
           GCStatsEnabled(false),
           iCalls(new skizo::collections::CHashMap<const char*, void*>()),
           searchPaths(new skizo::collections::CArrayList<const char*>()),
