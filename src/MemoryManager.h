@@ -50,7 +50,8 @@ struct SMemoryManager
 public:
     SMemoryManager();
 
-    /** Forces a garbage collection.
+    /**
+     * Forces a garbage collection.
      * Ignored if called inside a destructor.
      *
      * If judgementDay is set to true, the garbage collector sweeps out all objects, even if those that are reachable.

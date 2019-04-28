@@ -224,14 +224,15 @@ CDomain::~CDomain()
     //   Calls the epilog (static destructors).
     /* TODO I am not sure if it's safe to do it here, in a destructor. */
     if(m_tccState && m_readyForEpilog) {
-        void (SKIZO_API *epilog)();
+        void (SKIZO_API *epilog)() = nullptr;
         SKIZO_LOCK_AB(CDomain::g_globalMutex) {
             epilog = (void(SKIZO_API *)())tcc_get_symbol(m_tccState, "_soX_epilog");
         } SKIZO_END_LOCK_AB_NOEXCEPT(CDomain::g_globalMutex);
 
         try {
-            if(epilog)
+            if(epilog) {
                 epilog();
+            }
         } catch(const SoDomainAbortException& e) {
             // All errors are swallowed as we're terminating anyway.
         }
