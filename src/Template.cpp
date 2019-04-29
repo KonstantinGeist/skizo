@@ -14,6 +14,7 @@
 #include "Template.h"
 #include "ArrayList.h"
 #include "Domain.h"
+#include "HashMap.h"
 #include "Method.h"
 #include "RuntimeHelpers.h"
 #include "StringBuilder.h"
@@ -263,7 +264,7 @@ private:
 
     // NOTE `obj` is always boxed if it's a valuetype so the logic is simpler than
     // that of the debugger.
-    static const CString* convertObjectToString(void* obj)
+    const CString* convertObjectToString(void* obj) const
     {
         if(!obj) {
             return nullptr;
@@ -281,15 +282,24 @@ private:
             return retValue;
         }
 
-        CMethod* toStringMethod = toStringMethodInClass(objClass);
-        void* pToString = domain->GetFunctionPointer(toStringMethod);
+        if(!m_classToFuncPtrCache) {
+            m_classToFuncPtrCache.SetPtr(new CHashMap<void*, void*>());
+        }
 
-        if(!pToString
-        || toStringMethod->ECallDesc().CallConv != E_CALLCONV_CDECL
-        || toStringMethod->Signature().Params->Count() != 0
-        || toStringMethod->Signature().ReturnType.ResolvedClass != domain->StringClass())
-        {
-            domain->Abort("Object has no method `toString` with an appropriate signature.");
+        void* pToString;
+        if(!m_classToFuncPtrCache->TryGet(objClass, &pToString)) {
+            CMethod* toStringMethod = toStringMethodInClass(objClass);
+            pToString = domain->GetFunctionPointer(toStringMethod);
+
+            if(!pToString
+            || toStringMethod->ECallDesc().CallConv != E_CALLCONV_CDECL
+            || toStringMethod->Signature().Params->Count() != 0
+            || toStringMethod->Signature().ReturnType.ResolvedClass != domain->StringClass())
+            {
+                domain->Abort("Object has no method `toString` with an appropriate signature.");
+            }
+
+            m_classToFuncPtrCache->Set(objClass, pToString);
         }
 
         typedef SStringHeader* (SKIZO_API *FToStringMethod)(const void* self);
@@ -306,6 +316,10 @@ private:
 
     CDomain* m_domain;
     Auto<const CArrayList<CMethodWithArgument*>> m_methods;
+
+    // Function pointer retrieval may be quite slow (for TCC, it's also under a lock),
+    // so we cache retrieved pointers here instead.
+    mutable Auto<CHashMap<void*, void*>> m_classToFuncPtrCache;
 };
 
 }
