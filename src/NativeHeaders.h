@@ -203,6 +203,16 @@ struct SClosureHeader
     void* codeOffset;
 };
 
+/**
+ * The header for Skizo objects of type "Type" which wrap CClass instances.
+ * @warning Make sure the layout is in sync with the Skizo side.
+ */
+struct STypeHeader
+{
+    void** vtable;
+    CClass* typeHandle SKIZO_FIELD;
+};
+
 } }
 
 #endif // NATIVEHEADERS_H_INCLUDED

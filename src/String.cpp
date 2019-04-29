@@ -731,8 +731,8 @@ bool CString::Equals(const CObject* obj) const
 
 bool CString::TryParseString(const CString** result) const
 {
-    int nl = m_length,
-             startIndex = 0;
+    int nl = m_length;
+    int startIndex = 0;
     int endIndex = nl;
 
     const so_char16* const chars = &m_chars;

@@ -22,7 +22,6 @@ namespace skizo { namespace script {
 using namespace skizo::core;
 using namespace skizo::collections;
 
-// TODO check array type as well, just to be sure.
 void* CMethod::InvokeDynamic(void* thisObj, void* args) const
 {
     // **********************************
@@ -136,18 +135,22 @@ void* CMethod::InvokeDynamic(void* thisObj, void* args) const
             CClass* argClass = so_class_of(arg);
             void* pData = &arg;
 
-            // NOTE: same as in the "thisObj" section below.
-            if(argClass->SpecialClass() == E_SPECIALCLASS_BOXED) {
-                // For boxed classes (valuetypes), we need the wrapped class.
+            if(argClass->SpecialClass() == E_SPECIALCLASS_BINARYBLOB) {
+                CDomain::Abort("Binary blobs not supported yet.");
+            }
+
+            CClass* paramType = param->Type.ResolvedClass;
+
+            // For boxed valuetypes, we need the wrapped class of the argument, but only if the parameter type
+            // itself is a valuetype; otherwise, the method is designed to accept boxed values and not direct values.
+            if(argClass->SpecialClass() == E_SPECIALCLASS_BOXED && paramType->IsValueType()) {
                 argClass = argClass->ResolvedWrappedClass();
                 SKIZO_REQ_PTR(argClass);
 
                 pData = SKIZO_GET_BOXED_DATA(arg);
-            } else if(argClass->SpecialClass() == E_SPECIALCLASS_BINARYBLOB) {
-                CDomain::Abort("Binary blobs not supported yet.");
             }
 
-            if(param->Type.ResolvedClass != argClass) {
+            if(!argClass->Is(paramType)) {
                 CDomain::Abort("Argument type mismatch.");
             }
 

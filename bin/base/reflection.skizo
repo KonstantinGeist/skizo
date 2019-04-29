@@ -119,6 +119,7 @@ public
 	method (setter): Method { return m_setter; }
 }
 
+/* WARNING Internal code relies on this layout. */
 class Type {
     field m_typeHandle: intptr;
     static field g_allTypes: [Type];

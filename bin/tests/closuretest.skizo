@@ -33,7 +33,7 @@ class PersonInfo {
 	property age: int;
 }
 
-class Person {
+class Person2 {
 	field m_name: string;
 	field m_age: int;
 private
@@ -106,7 +106,7 @@ class ClosureTest {
 		incr = (ClosureTest getIncrementor2 1);
 		assert ((incr invoke 5) == 7);
 
-		p: auto = (Person create "Peter" 45);
+		p: auto = (Person2 create "Peter" 45);
 		pip: auto = (p getInfoProvider);
 		pi: auto = (pip invoke);
 		assert ((pi name) == "Peter");

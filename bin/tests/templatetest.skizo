@@ -1,0 +1,231 @@
+import console;
+import template;
+import reflection;
+import stringbuilder;
+import domain;
+import map;
+
+class CustomObject
+{
+    method (toString): string {
+        return "CustomObject";
+    }
+}
+
+class BrokenCustomObject
+{
+    method (toString): int {
+        return 1;
+    }
+}
+
+class BrokenCustomObject2 {}
+
+class Person {
+    property name: string;
+    property age: int;
+
+    method (methodWithNoReturn) {}
+    method (methodWithArgs a:int): int {
+        return 1;
+    }
+    
+    method (custom): CustomObject {
+        return (CustomObject createDefault);
+    }
+
+    method (brokenCustom): BrokenCustomObject {
+        return (BrokenCustomObject createDefault);
+    }
+
+    method (brokenCustom2): BrokenCustomObject2 {
+        return (BrokenCustomObject2 createDefault);
+    }
+
+    method (intArray): [int] {
+        return [1 2 3];
+    }
+
+    method (aborts): int {
+        abort "failure";
+        return 0;
+    }
+
+    ctor (create name:string age:int) {
+        m_name = name;
+        m_age = age;
+    }
+}
+
+class ObjectWithCustomIntGet {
+    method (get i: int): int {
+        return (i * 2);
+    }
+}
+
+class ObjectWithBadCustomGet {
+    method (get i: StringRepresentable): any {
+        return ((i toString) + "2");
+    }
+}
+
+class ObjectWithCustomAnyGet {
+    method (get i: any): any {
+        return (((cast StringRepresentable i) toString) + "2");
+    }
+}
+
+class ObjectWithCustomStringGet {
+    method (get i: string): string {
+        return (i + i);
+    }
+}
+
+static class TemplateTest {
+    static method (test input:string output:string) {
+        p: auto = (Person create "Peterson" 92);
+        t: auto = (Template create input (Type of p));
+        r: auto = (t render p);
+        assert(r == output);
+    }
+    
+    static method (assertCrashed action: Action) {
+        crashed: bool = true;
+        Domain try ^{
+            action invoke;
+            crashed = false;
+        };
+        assert crashed;
+    }
+
+    static method (testEx input:string) {
+        TemplateTest assertCrashed ^{
+            p: auto = (Person create "Peterson" 92);
+            t: auto = (Template create input (Type of p));
+            r: auto = (t render p);
+        };
+    }
+
+    static method (testArr input:string output:string) {
+        p: auto = [(cast any 1) (cast any true) (cast any "Hello, World!")];
+        t: auto = (Template create input (Type of p));
+        r: auto = (t render p);
+        assert(r == output);
+    }
+
+    static method (testArrEx input: string) {
+        TemplateTest assertCrashed ^{
+            p: auto = [(cast any 1) (cast any true) (cast any "Hello, World!")];
+            t: auto = (Template create input (Type of p));
+            r: auto = (t render p);
+        };
+    }
+
+    static method (testMap input:string output:string) {
+        map: auto = (Map create);
+        map set 666 "six-six-six";
+        map set "six-six-six" 666;
+
+        t: auto = (Template create input (Type of map));
+        r: auto = (t render map);
+        assert(r == output);
+    }
+    
+    static method (testCustomGet) {
+        customGet: auto = (ObjectWithCustomIntGet createDefault);
+        t: auto = (Template create "I'll take {4}." (Type of customGet));
+        assert ((t render customGet) == "I'll take 8.");
+    }
+
+    static method (testCustomGet2) {
+        TemplateTest assertCrashed ^{
+            customGet: auto = (ObjectWithBadCustomGet createDefault);
+            t: auto = (Template create "I'll take {4}." (Type of customGet));
+        };
+    }
+
+    static method (testCustomGet3) {
+        customGet: auto = (ObjectWithCustomAnyGet createDefault);
+        t: auto = (Template create "{4} will be taken." (Type of customGet));
+        assert ((t render customGet) == "42 will be taken.");
+    }
+
+    static method (testCustomGet4) {
+        customGet: auto = (ObjectWithCustomStringGet createDefault);
+        t: auto = (Template create "I'll take {'hello'}." (Type of customGet));
+        assert ((t render customGet) == "I'll take hellohello.");
+    }
+
+    static method (testCustomGet5) {
+        customGet: auto = (ObjectWithCustomStringGet createDefault);
+        t: auto = (Template create "I'll take {'hello' length}" (Type of customGet));
+        assert ((t render customGet) == "I'll take 10");
+    }
+
+    static method (testCustomGet6) {
+        customGet: auto = (ObjectWithCustomStringGet createDefault);
+        t: auto = (Template create "I'll take {'hello' length}." "ObjectWithCustomStringGet");
+        assert ((t render customGet) == "I'll take 10.");
+    }
+
+    static method (testMultipleCalls) {
+        s: string = "Hello, World!";
+        t: auto = (Template create "Letter: {4}." (Type of s));
+        (0 to 10) loop ^(i: int) {
+            r: auto = (t render s);
+            assert (r == "Letter: o.");
+        };
+    }
+
+    [test]
+    static method (main) {
+        TemplateTest test "Hello, {name}!" "Hello, Peterson!";
+        TemplateTest test "Hello, {name length}!" "Hello, 8!";
+        TemplateTest test "Hello, Name!" "Hello, Name!";
+        TemplateTest test "" "";
+        TemplateTest test "{name}" "Peterson";
+        TemplateTest test "{name}! You are cool!" "Peterson! You are cool!";
+        TemplateTest test "{name}! You are cool! You are {age}" "Peterson! You are cool! You are 92";
+        TemplateTest test "{name}! You are cool! You are {age} years old" "Peterson! You are cool! You are 92 years old";
+        TemplateTest test "I like you, {name}" "I like you, Peterson";
+        TemplateTest test "I like you, {name}" "I like you, Peterson";
+        TemplateTest test "I like you, {name}{age}" "I like you, Peterson92";
+        TemplateTest test "{custom}" "CustomObject";
+        TemplateTest test "{intArray 2}" "3";
+        TemplateTest test "{intArray 2 hashCode toString}" "3";
+
+        TemplateTest testEx "{hello";
+        TemplateTest testEx "{";
+        TemplateTest testEx "}";
+        TemplateTest testEx "{}";
+        TemplateTest testEx "hello{name{age}}";
+        TemplateTest testEx "hello{name age}}";
+        TemplateTest testEx "{methodWithNoReturn}";
+        TemplateTest testEx "{methodWithArgs}";
+        TemplateTest testEx "{brokenCustom}";
+        TemplateTest testEx "{brokenCustom2}";
+        TemplateTest testEx "{unknownMethod}";
+        TemplateTest testEx "{aborts}";
+
+        TemplateTest testArr "A{0}B{1}C{2}D" "A1BtrueCHello, World!D";
+
+        TemplateTest testArrEx "A{100}";
+        TemplateTest testArrEx "A{-1}";
+
+        TemplateTest testMap "{'six-six-six'} {666}" "666 six-six-six";
+
+        TemplateTest assertCrashed ^{
+            p: auto = (Person create "Peterson" 92);
+            t: auto = (Template create "{name}" (Type of p));
+            r: auto = (t render 1);
+        };
+
+        TemplateTest testCustomGet;
+        TemplateTest testCustomGet2;
+        TemplateTest testCustomGet3;
+        TemplateTest testCustomGet4;
+        TemplateTest testCustomGet5;
+        TemplateTest testCustomGet6;
+        TemplateTest testMultipleCalls;
+    }
+}

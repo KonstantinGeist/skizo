@@ -29,4 +29,5 @@ import stringbuildertest;
 import staticctoraborttest;
 import reflectiontest;
 import factorialtest;
+import templatetest;
 import testrunner;

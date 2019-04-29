@@ -271,6 +271,12 @@ void CDomain::registerStandardICalls()
         registerICall("_so_Map_sizeImpl", (void*)_so_Map_sizeImpl);
         registerICall("_so_Map_loopImpl", (void*)_so_Map_loopImpl);
     }
+
+    if(isClassLoaded("Template")) {
+        registerICall("_so_Template_createImpl", (void*)_so_Template_createImpl);
+        registerICall("_so_Template_destroyImpl", (void*)_so_Template_destroyImpl);
+        registerICall("_so_Template_renderImpl", (void*)_so_Template_renderImpl);
+    }
 }
 
 } }

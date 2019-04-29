@@ -1,0 +1,15 @@
+[ptrWrapper]
+class Template {
+private
+    static native method (createImpl source:string type:any): intptr;
+    static native method (renderImpl pSelf:intptr obj: any): string;
+
+public
+    ctor (create source:string type:any) {
+        m_ptr = (Template createImpl source type);
+    }
+
+    method (render obj: any): string {
+        return (Template renderImpl m_ptr obj);
+    }
+}
