@@ -74,12 +74,7 @@ enum ETypeRefKind
     /**
      * A foreign object exists in a separate domain.
      */
-    E_TYPEREFKIND_FOREIGN,
-
-    /**
-     * An explicit boxed typeref. Useful in the "force boxed T" idiom.
-     */
-    E_TYPEREFKIND_BOXED
+    E_TYPEREFKIND_FOREIGN
 };
 
 /**
@@ -193,6 +188,8 @@ struct STypeRef
     bool IsFailableStruct() const;
     bool IsStructClass() const;
 
+    bool IsBoxable() const;
+
     /**
      * @note Returns true for both "Action" and "Action?" if allowFailable=true
      */
@@ -216,7 +213,7 @@ struct STypeRef
     SCastInfo GetCastInfo(const STypeRef& other) const;
 
     /**
-     * Composite typerefs are: T?, T*, [T], boxed T.
+     * Composite typerefs are: T?, T*, [T].
      */
     bool IsComposite() const;
 };

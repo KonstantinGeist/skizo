@@ -588,7 +588,7 @@ CClass* CDomain::BoxedClass(const STypeRef& typeRef, bool mustBeAlreadyCreated)
         return r;
     }
 
-    SKIZO_REQ(!mustBeAlreadyCreated, EC_ILLEGAL_ARGUMENT);
+    SKIZO_REQ(!mustBeAlreadyCreated, EC_INVALID_STATE);
 
     Auto<CClass> klass (new CClass(this));
     EClassFlags& classFlags = klass->Flags();

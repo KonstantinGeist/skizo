@@ -158,6 +158,24 @@ bool STypeRef::IsArrayClass(bool allowFailable) const
     }
 }
 
+bool STypeRef::IsBoxable() const
+{
+    switch(this->PrimType) {
+        case E_PRIMTYPE_INT:
+        case E_PRIMTYPE_FLOAT:
+        case E_PRIMTYPE_BOOL:
+        case E_PRIMTYPE_CHAR:
+        case E_PRIMTYPE_INTPTR:
+            return true;
+        case E_PRIMTYPE_OBJECT:
+            SKIZO_REQ_PTR(this->ResolvedClass);
+            return this->ResolvedClass->IsValueType()
+                && this->ResolvedClass->SpecialClass() == E_SPECIALCLASS_NONE;
+        default:
+            return false;
+    }
+}
+
 SCastInfo STypeRef::GetCastInfo(const STypeRef& other) const
 {
     SCastInfo castInfo;

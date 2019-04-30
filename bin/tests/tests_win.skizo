@@ -28,6 +28,6 @@ import runmethodtest;
 import stringbuildertest;
 import staticctoraborttest;
 import reflectiontest;
-import factorialtest;
 import templatetest;
+import factorialtest;
 import testrunner;

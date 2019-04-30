@@ -1,3 +1,5 @@
+force int; /* required internally */
+
 [ptrWrapper]
 class Template {
 private

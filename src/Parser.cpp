@@ -117,7 +117,7 @@ struct SParser
     void parseImport(const CToken* errorToken);
     void parseAttribute(const CToken* errorToken);
     void parseForce(const CToken* token);
-    STypeRef parseTypeRef(bool isBaseClass = false);
+    STypeRef parseTypeRef(bool isBaseClass = false, bool forcedTypeRef = false);
 };
 
 SParser::SParser(const CArrayList<CToken*>* tokens, CModuleDesc* module, CDomain* domain)
@@ -134,7 +134,7 @@ SParser::SParser(const CArrayList<CToken*>* tokens, CModuleDesc* module, CDomain
 }
 
 // NOTE Doesn't allow typerefs such as [int?] or [int*]
-STypeRef SParser::parseTypeRef(bool isBaseClass)
+STypeRef SParser::parseTypeRef(bool isBaseClass, bool forcedTypeRef)
 {
     const CToken* token = nullptr;
     STypeRef typeRef;
@@ -199,7 +199,7 @@ again:
     // called and at that point, StringBuilder* doesn't contain inherited methods of StringBuilder."
     // The solution is, during parsing, any mention of a composite typeref will generate a ForcedTypeRef, forcing
 	// types to be enqueued for transforming (in Transformer.cpp) before they are accessed by random method bodies.
-    if(typeRef.IsComposite()) {
+    if(forcedTypeRef || typeRef.IsComposite()) {
         Auto<CForcedTypeRef> forcedTypeRef (new CForcedTypeRef(typeRef, token->FilePath, token->LineNumber));
         domain->AddForcedTypeRef(forcedTypeRef);
         // TODO use a hashmap to deduplicate
@@ -2138,7 +2138,7 @@ void SParser::parseForce(const CToken* token)
 {
     // parseTypeRef(..) takes care of adding ForcedTypeRef's.
     // Don't do here anything else.
-    STypeRef typeRef (parseTypeRef(false));
+    STypeRef typeRef (parseTypeRef(false, true)); // isBaseClass=false, forcedTypeRef=true
 
     // ';'
     reader.Expect(E_TOKENKIND_SEMICOLON);

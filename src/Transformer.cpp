@@ -216,12 +216,23 @@ void STransformer::inferForcedTypeRefs()
 {
     // Resolves forced typerefs.
     CArrayList<CForcedTypeRef*>* forcedTypeRefs = domain->ForcedTypeRefs();
+    
     for(int i = 0; i < forcedTypeRefs->Count(); i++) {
         CForcedTypeRef* forcedTypeRef = forcedTypeRefs->Array()[i];
+        STypeRef& typeRef = forcedTypeRef->TypeRef;
 
-        if(!ResolveTypeRef(forcedTypeRef->TypeRef)) {
+        if(!ResolveTypeRef(typeRef)) {
             ScriptUtils::Fail_(domain->FormatMessage("Couldn't resolve a forced '%T'.", &forcedTypeRef->TypeRef),
                                forcedTypeRef->FilePath, forcedTypeRef->LineNumber);
+        }
+
+        // For valuetypes, the simple `force` syntax also generates the boxed version.
+        // The previous idea of using syntax `force boxed int` was discarded as it introduces a new concept to the syntax.
+        if(typeRef.IsBoxable()) {
+            CClass* boxedClass = domain->BoxedClass(typeRef);
+            if(!boxedClass->IsInferred()) {
+                classesToProcess->Enqueue(boxedClass);
+            }
         }
     }
     forcedTypeRefs->Clear();

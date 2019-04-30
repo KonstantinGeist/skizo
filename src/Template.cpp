@@ -28,51 +28,9 @@ using namespace skizo::collections;
 namespace
 {
 
-// CMethod::InvokeDynamic only reads data without retaining it. The trick to avoid stressing GC when boxing
-// int values is to allocate the boxed int on the runtime heap.
-// CMethod::InvokeDynamic won't see the difference between an object on the GC heap and the runtime heap.
-struct SPseudoBoxedInt
-{
-    SPseudoBoxedInt()
-        : m_boxedObject(nullptr)
-    {
-    }
-
-    void TryInitialize(int value, CDomain* domain)
-    {
-        if(!m_boxedObject) {
-            STypeRef intTypeRef;
-            intTypeRef.SetPrimType(E_PRIMTYPE_INT);
-            domain->ResolveTypeRef(intTypeRef);
-            CClass* boxedIntClass = domain->BoxedClass(intTypeRef, true); // mustBeAlreadyCreated=true
-
-            m_boxedObject = malloc(boxedIntClass->GCInfo().ContentSize);
-            if(!m_boxedObject) {
-                _soX_abort0(SKIZO_ERRORCODE_OUT_OF_MEMORY);
-            }
-
-            ((SObjectHeader*)m_boxedObject)->vtable = boxedIntClass->VirtualTable();
-        }
-
-        void* boxedData = SKIZO_GET_BOXED_DATA(m_boxedObject);
-        *((int*)boxedData) = value;
-    }
-
-    ~SPseudoBoxedInt()
-    {
-        free(m_boxedObject);
-    }
-
-    void* BoxedObject() const
-    {
-        return m_boxedObject;
-    }
-
-private:
-    void* m_boxedObject;
-};
-
-// See SPseudoBoxedInt.
+// The trick to avoid stressing GC with creating a temporary array is to allocate it outside of the GC heap.
+// User code won't ever see it; CMethod::InvokeDynamic won't see the difference between an object on the GC
+// heap and the runtime heap.
 struct SPseudoArrayOfSingleAny
 {
     SPseudoArrayOfSingleAny()
@@ -129,7 +87,15 @@ private:
 class CMethodWithArgument: public CObject
 {
 public:
+    enum EDirectMethodCall {
+        E_DIRECTMETHODCALL_NONE,
+        E_DIRECTMETHODCALL_INT_TO_PTR, // void* method(void* self, int arg)
+        E_DIRECTMETHODCALL_PTR_TO_PTR  // void* method(void* self, void* arg)
+    };
+
     CMethodWithArgument(CMethod* method)
+        : m_directFuncPtr(nullptr),
+          m_directMethodCall(E_DIRECTMETHODCALL_NONE)
     {
         m_method.SetVal(method);
         m_domain = method->DeclaringClass()->DeclaringDomain();
@@ -139,12 +105,32 @@ public:
         : CMethodWithArgument(method)
     {
         m_argument.SetInt(arg);
+
+        const CSignature& sig = method->Signature();
+
+        if(sig.ReturnType.IsHeapClass()
+        && sig.Params->Count() == 1
+        && sig.Params->Array()[0]->Type.PrimType == E_PRIMTYPE_INT)
+        {
+            m_directFuncPtr = m_domain->GetFunctionPointer(method);
+            m_directMethodCall = E_DIRECTMETHODCALL_INT_TO_PTR;
+        }
     }
 
     CMethodWithArgument(CMethod* method, const CString* arg)
         : CMethodWithArgument(method)
     {
         m_argument.SetObject(arg);
+
+        const CSignature& sig = method->Signature();
+
+        if(sig.ReturnType.IsHeapClass()
+        && sig.Params->Count() == 1
+        && sig.Params->Array()[0]->Type.IsHeapClass())
+        {
+            m_directFuncPtr = m_domain->GetFunctionPointer(method);
+            m_directMethodCall = E_DIRECTMETHODCALL_PTR_TO_PTR;
+        }
     }
 
     CMethod* Method() const
@@ -152,50 +138,104 @@ public:
         return m_method;
     }
 
+    // An optimized dynamic call.
     void* InvokeDynamic(void* obj)
     {
         const EVariantType argType = m_argument.Type();
 
-        if(argType == E_VARIANTTYPE_NOTHING) {
-            return m_method->InvokeDynamic(obj, nullptr);
-        } else {
-            m_anyArray.TryInitialize(m_domain);
+        if(m_directMethodCall == E_DIRECTMETHODCALL_NONE) {
+            // The slower, more generic codepath for signatures with arbitrary return types
+            // (the reflection call will box it appropriately).
 
-            if(argType == E_VARIANTTYPE_OBJECT) {
-
-                // String objects can be retained by the underlying method, so we have to create a real
-                // GC-managed object.
-                const CString* strArg = dynamic_cast<const CString*>(m_argument.ObjectValue());
-                SKIZO_REQ_PTR(strArg);
-                void* strObj = m_domain->CreateString(strArg, true);
-
-                m_anyArray.SetElement(strObj);
-                return m_method->InvokeDynamic(obj, m_anyArray.Array());
-                
-            } else if(argType == E_VARIANTTYPE_INT) {
-
-                // Boxed integers are supposed to be temporary, they cannot be retained by the underlying method
-                // (as it only sees by-value integers), hence we can use a pseudo-object outside of the GC heap.
-                m_pseudoBoxedInt.TryInitialize(m_argument.IntValue(), m_domain);
-                m_anyArray.SetElement(m_pseudoBoxedInt.BoxedObject());
-                return m_method->InvokeDynamic(obj, m_anyArray.Array());
-
+            if(argType == E_VARIANTTYPE_NOTHING) {
+                return m_method->InvokeDynamic(obj, nullptr);
             } else {
-                SKIZO_REQ_NEVER;
-                return nullptr; // to shut up the compiler
+                m_anyArray.TryInitialize(m_domain);
+
+                if(argType == E_VARIANTTYPE_OBJECT) {
+
+                    void* strObj = allocInternedString();
+                    m_anyArray.SetElement(strObj);
+                    return m_method->InvokeDynamic(obj, m_anyArray.Array());
+                    
+                } else if(argType == E_VARIANTTYPE_INT) {
+                    
+                    // The first optimized solution which was tried was allocating boxed integers outside of the heap.
+                    // However, 2 problems were found a) the fake boxed int can be retained in the target method in certain
+                    // scenarios, which will lead to crashes b) VTables of boxed classes are generated on demand in ThunkManager.
+
+                    if(!m_directFuncPtr) {
+                        STypeRef typeRef;
+                        typeRef.SetPrimType(E_PRIMTYPE_INT);
+                        m_domain->ResolveTypeRef(typeRef);
+
+                        CClass* boxedClass = m_domain->BoxedClass(typeRef, true); // mustBeAlreadyCreated=true, relies on template.skizo forcing boxed int
+                        CMethod* ctor = boxedClass->MyMethod(m_domain->NewSlice("create"), true, E_METHODKIND_CTOR);
+
+                        m_directFuncPtr = m_domain->GetFunctionPointer(ctor);
+                    }
+
+                    typedef void* (SKIZO_API *FBoxedIntCtor)(int param);
+                    void* boxedIntObj = ((FBoxedIntCtor)m_directFuncPtr)(m_argument.IntValue());
+
+                    m_anyArray.SetElement(boxedIntObj);
+                    return m_method->InvokeDynamic(obj, m_anyArray.Array());
+
+                } else {
+                    SKIZO_REQ_NEVER;
+                    return nullptr; // to shut up the compiler
+                }
+            }
+
+        } else {
+            // The faster code path for most common signatures.
+
+            typedef void* (SKIZO_API *FIntToPtrMethod)(const void* self, int param);
+            typedef void* (SKIZO_API *FPtrToPtrMethod)(const void* self, void* param);
+
+            assert(m_directFuncPtr);
+
+            switch(m_directMethodCall) {
+                case E_DIRECTMETHODCALL_INT_TO_PTR: // array access optimization
+                {
+                    return ((FIntToPtrMethod)m_directFuncPtr)(obj, m_argument.IntValue());
+                }
+                case E_DIRECTMETHODCALL_PTR_TO_PTR: // map access optimization
+                {
+                    void* strObj = allocInternedString();
+                    return ((FPtrToPtrMethod)m_directFuncPtr)(obj, strObj);
+                }
+                default:
+                {
+                    SKIZO_REQ_NEVER;
+                    return nullptr; // to shut up the compiler
+                }
             }
         }
     }
-    
+
 private:
+    // String objects can be retained by the underlying method, so we have to create a real
+    // GC-managed object.
+    void* allocInternedString() const
+    {
+        const CString* strArg = dynamic_cast<const CString*>(m_argument.ObjectValue());
+        SKIZO_REQ_PTR(strArg);
+        return m_domain->CreateString(strArg, true);
+    }
+
     Auto<CMethod> m_method;
     SVariant m_argument;
 
     CDomain* m_domain;
 
-    // Cached 
+    // Cached.
     SPseudoArrayOfSingleAny m_anyArray;
-    SPseudoBoxedInt m_pseudoBoxedInt;
+
+    // For some common scenarios, we can optimize even further and avoid
+    // expensive reflection calls by calling the function pointer directly.
+    void* m_directFuncPtr;
+    EDirectMethodCall m_directMethodCall;
 };
 
 class CTemplatePart: public CObject
@@ -269,7 +309,7 @@ private:
         if(!obj) {
             return nullptr;
         }
-        
+
         const CString* retValue = nullptr;
         
         CClass* objClass = so_class_of(obj);
@@ -474,8 +514,32 @@ CTemplate::~CTemplate()
     delete p;
 }
 
+// NOTE Can use boxed classes, but the user can't refer to the boxed class directly, hence it's ommited here.
+// TODO should we support E_SPECIALCLASS_FOREIGN, E_SPECIALCLASS_ALIAS?
+static bool isRenderableClass(const CClass* klass)
+{
+    if(klass->IsAbstract() || klass->IsStatic()) {
+        return false;
+    }
+
+    const ESpecialClass special = klass->SpecialClass();
+    switch(special) {
+        case E_SPECIALCLASS_NONE:
+        case E_SPECIALCLASS_ARRAY:
+        case E_SPECIALCLASS_FAILABLE:
+        case E_SPECIALCLASS_METHODCLASS:
+            return true;
+        default:
+            return false;
+    }
+}
+
 CTemplate* CTemplate::CreateForClass(const CString* source, const CClass* klass)
 {
+    if(!isRenderableClass(klass)) {
+        CDomain::Abort("The class is not renderable.");
+    }
+
     Auto<CArrayList<CTemplatePart*>> parts (new CArrayList<CTemplatePart*>());
 
     int lastIndex = 0;
@@ -528,10 +592,14 @@ CTemplate* CTemplate::CreateForClass(const CString* source, const CClass* klass)
 
 const CString* CTemplate::Render(void* obj) const
 {
-    if(so_class_of(obj) != p->m_klass.Ptr()) {
+    CClass* objClass = so_class_of(obj);
+    if(objClass->SpecialClass() == E_SPECIALCLASS_BOXED) {
+        objClass = objClass->ResolvedWrappedClass();
+    }
+    if(objClass != p->m_klass) {
         CDomain::Abort("The rendered object is of a wrong type.");
     }
-    
+
     CStringBuilder* sb = p->m_sb;
     const CArrayList<CTemplatePart*>* parts = p->m_parts;
 

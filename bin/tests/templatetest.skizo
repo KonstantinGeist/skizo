@@ -5,15 +5,13 @@ import stringbuilder;
 import domain;
 import map;
 
-class CustomObject
-{
+class CustomObject {
     method (toString): string {
         return "CustomObject";
     }
 }
 
-class BrokenCustomObject
-{
+class BrokenCustomObject {
     method (toString): int {
         return 1;
     }
@@ -81,6 +79,76 @@ class ObjectWithCustomStringGet {
     }
 }
 
+class ParentWithCustomGet {
+    method (get index: int): string {
+        return (index toString);
+    }
+}
+
+class ChildWithCustomGet: ParentWithCustomGet {}
+
+class ParentWithCustomToString {
+    method (toString): string {
+        return "parentWithCustomToString";
+    }
+}
+
+class ChildWithCustomToString: ParentWithCustomToString {}
+
+class EmbedsChildWithCustomToString {
+    method (child): ChildWithCustomToString {
+        return (ChildWithCustomToString createDefault);
+    }
+}
+
+class CustomToStringReturnsNull {
+    method (toString): string {
+        return null;
+    }
+}
+
+struct EmbedCustomStringReturnsNull {
+    field m_dummyField: int;
+
+    method ( null_ ): CustomToStringReturnsNull {
+        return (CustomToStringReturnsNull createDefault);
+    }
+}
+
+struct CustomGetReturnsNull {
+    field m_dummyField: int;
+
+    method (get i: int): string {
+        return null;
+    }
+}
+
+class CustomGetWithTooManyParams {
+    method (get a:int b:float): string {
+        return null;
+    }
+}
+
+class CustomGetReturnsNothing {
+    method (get a: int) {}
+}
+
+method class (StringReturner): string;
+
+abstract class AbstractClass {}
+interface Interface {}
+alias AliasTest = int;
+event class (TestEventClass);
+
+[nativeSize=32]
+struct BinaryBlob {}
+
+class ObjectWithCustomGetAutoboxedToAny {
+    method (get obj: any): string {
+        return ((cast StringRepresentable obj) toString);
+    }
+}
+
 static class TemplateTest {
     static method (test input:string output:string) {
         p: auto = (Person create "Peterson" 92);
@@ -88,7 +156,28 @@ static class TemplateTest {
         r: auto = (t render p);
         assert(r == output);
     }
-    
+
+    static method (testCustomGetReturnsNull) {
+        p: auto = (CustomGetReturnsNull createDefault);
+        t: auto = (Template create "{666}" (Type of p));
+        r: auto = (t render p);
+        assert(r == "");
+    }
+
+    static method (testToStringReturnsNull) {
+        p: auto = (EmbedCustomStringReturnsNull createDefault);
+        t: auto = (Template create "{null_}" (Type of p));
+        r: auto = (t render p);
+        assert(r == "");
+    }
+
+    static method (testFailable) {
+        p: int? = 5;
+        t: auto = (Template create "hello, {unwrap}" "int?");
+        r: auto = (t render p);
+        assert(r == "hello, 5");
+    }
+
     static method (assertCrashed action: Action) {
         crashed: bool = true;
         Domain try ^{
@@ -96,6 +185,20 @@ static class TemplateTest {
             crashed = false;
         };
         assert crashed;
+    }
+    
+    static method (testInheritance) {
+        p: auto = (ChildWithCustomGet createDefault);
+        t: auto = (Template create "{666}" (Type of p));
+        r: auto = (t render p);
+        assert(r == "666");
+    }
+
+    static method (testInheritance2) {
+        p: auto = (EmbedsChildWithCustomToString createDefault);
+        t: auto = (Template create "{child}" (Type of p));
+        r: auto = (t render p);
+        assert(r == "parentWithCustomToString");
     }
 
     static method (testEx input:string) {
@@ -177,6 +280,73 @@ static class TemplateTest {
         };
     }
 
+    static method (testNonExistingClass) {
+        TemplateTest assertCrashed ^{
+            t: auto = (Template create "something" "nonexistingclass");
+        };
+    }
+    
+    static method (testValueType) {
+        t: auto = (Template create "Number: {toString length}" "int");
+        r: auto = (t render 666);
+        assert(r == "Number: 3");
+    }
+    
+    static method (testNull) {
+        TemplateTest assertCrashed ^{
+            Template create "hello" null;
+        };
+        
+        TemplateTest assertCrashed ^{
+            t: auto = (Template create "hello" (Type of 1));
+            t render null;
+        };
+    }
+
+    static method (testClosure) {
+        p: StringReturner = ^(): string {
+            return "world!";
+        };
+        t: auto = (Template create "hello, {invoke}" (Type of p));
+        r: auto = (t render p);
+        assert(r == "hello, world!");
+    }
+
+    static method (testNonRenderable name: string) {
+        TemplateTest assertCrashed ^{
+            t: auto = (Template create "test" name);
+        };
+    }
+
+    static method (testTooManyParams) {
+        TemplateTest assertCrashed ^{
+            c: auto = (CustomGetWithTooManyParams createDefault);
+            t: auto = (Template create "{0}" (Type of c));
+        };
+    }
+
+    static method (testReturnsNothing) {
+        TemplateTest assertCrashed ^{
+            c: auto = (CustomGetWithTooManyParams createDefault);
+            t: auto = (Template create "{0}" (Type of c));
+        };
+    }
+
+    static method (testAutoBoxingIntArg) {
+        c: auto = (ObjectWithCustomGetAutoboxedToAny createDefault);
+        t: auto = (Template create "{2}" (Type of c));
+        r: auto = (t render c);
+        assert(r == "2");
+    }
+    
+    static method (testAutoBoxingIntArg2) {
+        m: auto = (Map create);
+        m set 666 "13";
+        t: auto = (Template create "{666}" "Map");
+        r: auto = (t render m);
+        assert(r == "13");
+    }
+
     [test]
     static method (main) {
         TemplateTest test "Hello, {name}!" "Hello, Peterson!";
@@ -227,5 +397,27 @@ static class TemplateTest {
         TemplateTest testCustomGet5;
         TemplateTest testCustomGet6;
         TemplateTest testMultipleCalls;
+        TemplateTest testNonExistingClass;
+        TemplateTest testInheritance;
+        TemplateTest testInheritance2;
+        TemplateTest testValueType;
+        TemplateTest testNull;
+        TemplateTest testToStringReturnsNull;
+        TemplateTest testCustomGetReturnsNull;
+        TemplateTest testFailable;
+        TemplateTest testClosure;
+
+        TemplateTest testNonRenderable "BinaryBlob";
+        TemplateTest testNonRenderable "StringBuilder*";
+        TemplateTest testNonRenderable "TemplateTest";
+        TemplateTest testNonRenderable "AbstractClass";
+        TemplateTest testNonRenderable "Interface";
+        TemplateTest testNonRenderable "AliasTest";
+        TemplateTest testNonRenderable "TestEventClass";
+
+        TemplateTest testTooManyParams;
+        TemplateTest testReturnsNothing;
+        TemplateTest testAutoBoxingIntArg;
+        TemplateTest testAutoBoxingIntArg2;
     }
 }
