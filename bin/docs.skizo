@@ -14,11 +14,18 @@ import path;
 import random;
 import reflection;
 import runtime;
-/*import socket;*/
 import stopwatch;
 import stream;
 import stringbuilder;
 import text;
+import template;
+
+extend string {
+    method (format obj: any): string {
+        t: auto = (Template create this (Type of obj));
+        return (t render obj);
+    }
+}
 
 static class Program {
 	static field sb: StringBuilder;
@@ -62,17 +69,14 @@ static class Program {
 
 			doc: auto = (m getAttribute "doc");
 			(doc success) then ^{
-				sb append "<div><br>";
-				sb append (doc unwrap);
-				sb append "</div><hr>";
+                sb append ("<div><br>{unwrap}</div><hr>" format doc);
 			};
 		};
 	}
 
-	static method (emitTypeInfo type:Type) {
-		sb append "<h2>";
-		sb append (type name);
-		sb append "</h2>";
+	static method (emitTypeInfo type:Type) {        
+        sb append ("<h2>{name}</h2>" format type);
+        
 		staticMethods: auto = (type staticMethods);
 		instanceMethods: auto = (type instanceMethods);
 		((staticMethods length) > 0) then ^{
