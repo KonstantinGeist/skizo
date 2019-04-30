@@ -88,10 +88,10 @@ struct IntWrapper {
 
 static class ReflectionTest {
 	static method (getMethod type:Type name:string): Method {
-		methods: auto = (type instanceMethods);
+		methods := (type instanceMethods);
 		r: Method = null;
 		(0 to (methods length)) loop ^(i: int) {
-			m: auto = (methods get i);
+			m := (methods get i);
 			((m name) == name) then ^{
 				r = m;
 			};
@@ -100,10 +100,10 @@ static class ReflectionTest {
 	}
 
 	static method (getStaticMethod type:Type name:string): Method {
-		methods: auto = (type staticMethods);
+		methods := (type staticMethods);
 		r: Method = null;
 		(0 to (methods length)) loop ^(i: int) {
-			m: auto = (methods get i);
+			m := (methods get i);
 			((m name) == name) then ^{
 				r = m;
 			};
@@ -112,10 +112,10 @@ static class ReflectionTest {
 	}
 
 	static method (getProperty type:Type name:string): Property {
-		props: auto = (type instanceProperties);
+		props := (type instanceProperties);
 		r: Property = null;
 		(0 to (props length)) loop ^(i: int) {
-			p: auto = (props get i);
+			p := (props get i);
 			(((p getter) name) == name) then ^{
 				r = p;
 			};
@@ -132,9 +132,9 @@ static class ReflectionTest {
 
 	[test]
 	unsafe static method (main) {
-		obj: auto = (Foo create);
-		type: auto = (Type of obj);
-		m: auto = (ReflectionTest getMethod type "voidMethod");
+		obj := (Foo create);
+		type := (Type of obj);
+		m := (ReflectionTest getMethod type "voidMethod");
 		p: Property = null;
 
 		ret: any = null;
@@ -215,7 +215,7 @@ static class ReflectionTest {
 
 		m = (ReflectionTest getMethod type "addPoints");
 		ret = (m invoke obj [ (cast any (Point create 10 20)) (cast any 2) (cast any (Point create 30 40)) ]);
-		point: auto = (cast Point ret);
+		point := (cast Point ret);
 		assert ((point x) == 80);
 		assert ((point y) == 60);
 

@@ -5,8 +5,8 @@ import runtime;
 static class ForeignTest {
 	[test]
 	static method (run) {
-		handle: auto = (Domain runPath "foreigntestslave.skizo");
-		a: auto = (cast StringBuilder* (handle importObject "sharedObject"));
+		handle := (Domain runPath "foreigntestslave.skizo");
+		a := (cast StringBuilder* (handle importObject "sharedObject"));
 		a append "hello";
 		a append "world";
 		a append a;

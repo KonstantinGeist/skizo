@@ -13,7 +13,7 @@ class Aborter {
 static class StaticCtorAbortTest {
 	[test]
 	static method (run) {
-		r: auto = (Domain try ^{
+		r := (Domain try ^{
 			Console print (Aborter value);
 		});
 		assert ((r === null) not);

@@ -48,7 +48,7 @@ extend Partial {
 
 		/* ********************************************* */
 
-		i: auto = (666 negate);
+		i := (666 negate);
 		assert (i == (0 - 666));
 		
 		/* ********************************************* */
@@ -57,7 +57,7 @@ extend Partial {
 		
 		/* ********************************************* */
 
-		oddEntity: auto = (cast OddEntity 665);
+		oddEntity := (cast OddEntity 665);
 		assert ((oddEntity isOdd) == true);
 
 		oddEntity = (cast OddEntity 666);

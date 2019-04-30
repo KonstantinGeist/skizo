@@ -25,8 +25,8 @@ public
 
    [test]
    static method (run) {
-       hdomain: auto = (Domain runMethod "RunMethodTest/remoteMain");
-	   comm: auto = (cast Communicator* (hdomain importObject "communicator"));
+       hdomain := (Domain runMethod "RunMethodTest/remoteMain");
+	   comm := (cast Communicator* (hdomain importObject "communicator"));
 	   assert ((comm getMagicValue1) == 667);
 	   assert ((comm getMagicValue2) == 1);
    }

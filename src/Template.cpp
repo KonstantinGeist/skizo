@@ -494,7 +494,7 @@ struct TemplatePrivate
     Auto<const CClass> m_klass;
     Auto<const CArrayList<CTemplatePart*>> m_parts;
     Auto<CStringBuilder> m_sb;
-    
+
     TemplatePrivate(const CClass* klass, const CArrayList<CTemplatePart*>* parts)
         : m_sb(new CStringBuilder())
     {

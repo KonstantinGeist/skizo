@@ -55,7 +55,7 @@ static class MarshalTest {
 		Marshal freeUtf8String p;
 		assert (s == "ello, World!");
 
-		mb: auto = (MemBlock create 16);
+		mb := (MemBlock create 16);
 		mb writeInt 4 666;
 		mb writeInt 8 13;
 		assert ((mb readInt 4) == 666);

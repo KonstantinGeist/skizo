@@ -114,8 +114,8 @@ class BfMachine {
 
 static class BfRunner {
 	static method (run code: string): string {
-		machine: auto = (BfMachine create 30000);
-		map: auto = (Map create);
+		machine := (BfMachine create 30000);
+		map := (Map create);
 		map set '[' (cast Action ^{ machine beginLoop; });
 		map set ']' (cast Action ^{ machine endLoop; });
 		map set '+' (cast Action ^{ machine incValue; });
@@ -137,7 +137,7 @@ static class BfRunner {
 static class BrainfuckTest {
 	[test]
 	static method (run) {
-		helloWorld: auto = (BfRunner run "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>.");
+		helloWorld := (BfRunner run "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>.");
 
 		assert (helloWorld == "Hello World!\n");
 	}

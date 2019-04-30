@@ -9,9 +9,9 @@ static class QSortTest {
     }
 
     static method (qsortImpl elements:[any] left:int right:int compareFunc:CompareFunc) {
-        i: auto = left;
-        j: auto = right;
-        pivot: auto = (elements get ((left + right) / 2));
+        i := left;
+        j := right;
+        pivot := (elements get ((left + right) / 2));
 
         bool while ^(): bool { return ((i < j) or (i == j)); } ^{
 
@@ -24,7 +24,7 @@ static class QSortTest {
             };
 
             ((i < j) or (i == j)) then ^{
-                tmp: auto = (elements get i);
+                tmp := (elements get i);
                 elements set i (elements get j);
                 elements set j tmp;
 

@@ -33,11 +33,11 @@ struct ValuetypePoint {
 class CapturedSelfTest {
 	[test]
 	static method (run) {
-		p1: auto = (ReferencePoint create 666.0);
-		a: auto = (p1 getGetter);
+		p1 := (ReferencePoint create 666.0);
+		a := (p1 getGetter);
 		assert ((a invoke) == 666.0);
 
-		p2: auto = (ValuetypePoint create 666.0);
+		p2 := (ValuetypePoint create 666.0);
 		a = (p2 getGetter);
 		assert ((a invoke) == 666.0);
 	}

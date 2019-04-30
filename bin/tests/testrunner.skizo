@@ -15,8 +15,8 @@ static class Program {
 				(0 to (ms length)) loop ^(j: int) {
 					m: Method = (ms get j);
 
-					params: auto = (m parameters);
-					ret: auto = (m returnParameter);
+					params := (m parameters);
+					ret := (m returnParameter);
 
 					(((params length) == 0) and (ret === null)) then ^{
 						((m getAttribute "test") success) then ^{

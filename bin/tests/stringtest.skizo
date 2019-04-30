@@ -2,7 +2,7 @@ import stringbuilder;
 
 extend string {
 	method (reverse): string {
-		sb: auto = (StringBuilder create (this length));
+		sb := (StringBuilder create (this length));
 		(0 to (this length)) loop ^(i: int) {
 			sb append (this get (((this length) - i) - 1));
 		};
@@ -37,7 +37,7 @@ static class StringTest {
 		assert ("Moscow" equals ("Mos" + "cow"));
 		assert (("Moscow" equals 1) not);
 
-		split: auto = ("1|2|3|4" split "|");
+		split := ("1|2|3|4" split "|");
 		assert ((split length) == 4);
 		assert ((split get 0) == "1");
 		assert ((split get 1) == "2");
@@ -70,7 +70,7 @@ static class StringTest {
 		assert (("   Bob  " trim) == "Bob");
 
 		/* A small stress test. */
-		s: auto = "";
+		s := "";
 		(0 to 1000) loop ^(i: int) {
 			s = (s + "A");
 		};

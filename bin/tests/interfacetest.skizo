@@ -12,7 +12,7 @@ static class InterfaceTest {
 		b: int = (cast int x);
 		assert (a == b);
 
-		sp: auto = (cast StringRepresentable x);
+		sp := (cast StringRepresentable x);
 		assert ((sp toString) == "666");
 		sp = (cast StringRepresentable b);
 		assert ((sp toString) == "666");
@@ -25,7 +25,7 @@ static class InterfaceTest {
 		*/
 		f: int? = 13666;
 		x = f;
-		iu: auto = (cast IntUnwrapper x);
+		iu := (cast IntUnwrapper x);
 		i: int = (iu unwrap);
 		assert (i == 13666);
 	}

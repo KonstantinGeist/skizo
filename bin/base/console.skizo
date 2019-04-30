@@ -2,7 +2,7 @@ import text;
 
 static class Console {
    static method (print obj: StringRepresentable) {
-		tmp: auto = (obj toString);
+		tmp := (obj toString);
 		tmp print;
    }
 

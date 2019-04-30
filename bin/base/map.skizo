@@ -59,7 +59,7 @@ public
 		m_ptr = (Map createImpl);
 
 		(0 to (src length)) loop ^(i: int) {
-			kase: auto = (src get i);
+			kase := (src get i);
 			this set (kase key) (kase value);
 		};
 	}

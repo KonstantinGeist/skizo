@@ -51,7 +51,7 @@ event class (EventWith4Args a:int b:int c:int d:int);
 static class EventTest {
 	[test]
 	static method (run) {
-		f: auto = (Form create);
+		f := (Form create);
 		f simulateStuff;
 		assert ((f targetValue) == 13666);
 

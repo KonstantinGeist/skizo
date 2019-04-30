@@ -151,30 +151,30 @@ class ObjectWithCustomGetAutoboxedToAny {
 
 static class TemplateTest {
     static method (test input:string output:string) {
-        p: auto = (Person create "Peterson" 92);
-        t: auto = (Template create input (Type of p));
-        r: auto = (t render p);
+        p := (Person create "Peterson" 92);
+        t := (Template create input (Type of p));
+        r := (t render p);
         assert(r == output);
     }
 
     static method (testCustomGetReturnsNull) {
-        p: auto = (CustomGetReturnsNull createDefault);
-        t: auto = (Template create "{666}" (Type of p));
-        r: auto = (t render p);
+        p := (CustomGetReturnsNull createDefault);
+        t := (Template create "{666}" (Type of p));
+        r := (t render p);
         assert(r == "");
     }
 
     static method (testToStringReturnsNull) {
-        p: auto = (EmbedCustomStringReturnsNull createDefault);
-        t: auto = (Template create "{null_}" (Type of p));
-        r: auto = (t render p);
+        p := (EmbedCustomStringReturnsNull createDefault);
+        t := (Template create "{null_}" (Type of p));
+        r := (t render p);
         assert(r == "");
     }
 
     static method (testFailable) {
         p: int? = 5;
-        t: auto = (Template create "hello, {unwrap}" "int?");
-        r: auto = (t render p);
+        t := (Template create "hello, {unwrap}" "int?");
+        r := (t render p);
         assert(r == "hello, 5");
     }
 
@@ -188,107 +188,107 @@ static class TemplateTest {
     }
     
     static method (testInheritance) {
-        p: auto = (ChildWithCustomGet createDefault);
-        t: auto = (Template create "{666}" (Type of p));
-        r: auto = (t render p);
+        p := (ChildWithCustomGet createDefault);
+        t := (Template create "{666}" (Type of p));
+        r := (t render p);
         assert(r == "666");
     }
 
     static method (testInheritance2) {
-        p: auto = (EmbedsChildWithCustomToString createDefault);
-        t: auto = (Template create "{child}" (Type of p));
-        r: auto = (t render p);
+        p := (EmbedsChildWithCustomToString createDefault);
+        t := (Template create "{child}" (Type of p));
+        r := (t render p);
         assert(r == "parentWithCustomToString");
     }
 
     static method (testEx input:string) {
         TemplateTest assertCrashed ^{
-            p: auto = (Person create "Peterson" 92);
-            t: auto = (Template create input (Type of p));
-            r: auto = (t render p);
+            p := (Person create "Peterson" 92);
+            t := (Template create input (Type of p));
+            r := (t render p);
         };
     }
 
     static method (testArr input:string output:string) {
-        p: auto = [(cast any 1) (cast any true) (cast any "Hello, World!")];
-        t: auto = (Template create input (Type of p));
-        r: auto = (t render p);
+        p := [(cast any 1) (cast any true) (cast any "Hello, World!")];
+        t := (Template create input (Type of p));
+        r := (t render p);
         assert(r == output);
     }
 
     static method (testArrEx input: string) {
         TemplateTest assertCrashed ^{
-            p: auto = [(cast any 1) (cast any true) (cast any "Hello, World!")];
-            t: auto = (Template create input (Type of p));
-            r: auto = (t render p);
+            p := [(cast any 1) (cast any true) (cast any "Hello, World!")];
+            t := (Template create input (Type of p));
+            r := (t render p);
         };
     }
 
     static method (testMap input:string output:string) {
-        map: auto = (Map create);
+        map := (Map create);
         map set 666 "six-six-six";
         map set "six-six-six" 666;
 
-        t: auto = (Template create input (Type of map));
-        r: auto = (t render map);
+        t := (Template create input (Type of map));
+        r := (t render map);
         assert(r == output);
     }
     
     static method (testCustomGet) {
-        customGet: auto = (ObjectWithCustomIntGet createDefault);
-        t: auto = (Template create "I'll take {4}." (Type of customGet));
+        customGet := (ObjectWithCustomIntGet createDefault);
+        t := (Template create "I'll take {4}." (Type of customGet));
         assert ((t render customGet) == "I'll take 8.");
     }
 
     static method (testCustomGet2) {
         TemplateTest assertCrashed ^{
-            customGet: auto = (ObjectWithBadCustomGet createDefault);
-            t: auto = (Template create "I'll take {4}." (Type of customGet));
+            customGet := (ObjectWithBadCustomGet createDefault);
+            t := (Template create "I'll take {4}." (Type of customGet));
         };
     }
 
     static method (testCustomGet3) {
-        customGet: auto = (ObjectWithCustomAnyGet createDefault);
-        t: auto = (Template create "{4} will be taken." (Type of customGet));
+        customGet := (ObjectWithCustomAnyGet createDefault);
+        t := (Template create "{4} will be taken." (Type of customGet));
         assert ((t render customGet) == "42 will be taken.");
     }
 
     static method (testCustomGet4) {
-        customGet: auto = (ObjectWithCustomStringGet createDefault);
-        t: auto = (Template create "I'll take {'hello'}." (Type of customGet));
+        customGet := (ObjectWithCustomStringGet createDefault);
+        t := (Template create "I'll take {'hello'}." (Type of customGet));
         assert ((t render customGet) == "I'll take hellohello.");
     }
 
     static method (testCustomGet5) {
-        customGet: auto = (ObjectWithCustomStringGet createDefault);
-        t: auto = (Template create "I'll take {'hello' length}" (Type of customGet));
+        customGet := (ObjectWithCustomStringGet createDefault);
+        t := (Template create "I'll take {'hello' length}" (Type of customGet));
         assert ((t render customGet) == "I'll take 10");
     }
 
     static method (testCustomGet6) {
-        customGet: auto = (ObjectWithCustomStringGet createDefault);
-        t: auto = (Template create "I'll take {'hello' length}." "ObjectWithCustomStringGet");
+        customGet := (ObjectWithCustomStringGet createDefault);
+        t := (Template create "I'll take {'hello' length}." "ObjectWithCustomStringGet");
         assert ((t render customGet) == "I'll take 10.");
     }
 
     static method (testMultipleCalls) {
         s: string = "Hello, World!";
-        t: auto = (Template create "Letter: {4}." (Type of s));
+        t := (Template create "Letter: {4}." (Type of s));
         (0 to 10) loop ^(i: int) {
-            r: auto = (t render s);
+            r := (t render s);
             assert (r == "Letter: o.");
         };
     }
 
     static method (testNonExistingClass) {
         TemplateTest assertCrashed ^{
-            t: auto = (Template create "something" "nonexistingclass");
+            t := (Template create "something" "nonexistingclass");
         };
     }
     
     static method (testValueType) {
-        t: auto = (Template create "Number: {toString length}" "int");
-        r: auto = (t render 666);
+        t := (Template create "Number: {toString length}" "int");
+        r := (t render 666);
         assert(r == "Number: 3");
     }
     
@@ -298,7 +298,7 @@ static class TemplateTest {
         };
         
         TemplateTest assertCrashed ^{
-            t: auto = (Template create "hello" (Type of 1));
+            t := (Template create "hello" (Type of 1));
             t render null;
         };
     }
@@ -307,43 +307,43 @@ static class TemplateTest {
         p: StringReturner = ^(): string {
             return "world!";
         };
-        t: auto = (Template create "hello, {invoke}" (Type of p));
-        r: auto = (t render p);
+        t := (Template create "hello, {invoke}" (Type of p));
+        r := (t render p);
         assert(r == "hello, world!");
     }
 
     static method (testNonRenderable name: string) {
         TemplateTest assertCrashed ^{
-            t: auto = (Template create "test" name);
+            t := (Template create "test" name);
         };
     }
 
     static method (testTooManyParams) {
         TemplateTest assertCrashed ^{
-            c: auto = (CustomGetWithTooManyParams createDefault);
-            t: auto = (Template create "{0}" (Type of c));
+            c := (CustomGetWithTooManyParams createDefault);
+            t := (Template create "{0}" (Type of c));
         };
     }
 
     static method (testReturnsNothing) {
         TemplateTest assertCrashed ^{
-            c: auto = (CustomGetWithTooManyParams createDefault);
-            t: auto = (Template create "{0}" (Type of c));
+            c := (CustomGetWithTooManyParams createDefault);
+            t := (Template create "{0}" (Type of c));
         };
     }
 
     static method (testAutoBoxingIntArg) {
-        c: auto = (ObjectWithCustomGetAutoboxedToAny createDefault);
-        t: auto = (Template create "{2}" (Type of c));
-        r: auto = (t render c);
+        c := (ObjectWithCustomGetAutoboxedToAny createDefault);
+        t := (Template create "{2}" (Type of c));
+        r := (t render c);
         assert(r == "2");
     }
     
     static method (testAutoBoxingIntArg2) {
-        m: auto = (Map create);
+        m := (Map create);
         m set 666 "13";
-        t: auto = (Template create "{666}" "Map");
-        r: auto = (t render m);
+        t := (Template create "{666}" "Map");
+        r := (t render m);
         assert(r == "13");
     }
 
@@ -385,9 +385,9 @@ static class TemplateTest {
         TemplateTest testMap "{'six-six-six'} {666}" "666 six-six-six";
 
         TemplateTest assertCrashed ^{
-            p: auto = (Person create "Peterson" 92);
-            t: auto = (Template create "{name}" (Type of p));
-            r: auto = (t render 1);
+            p := (Person create "Peterson" 92);
+            t := (Template create "{name}" (Type of p));
+            r := (t render 1);
         };
 
         TemplateTest testCustomGet;

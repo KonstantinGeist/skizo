@@ -708,9 +708,11 @@ void SParser::parseMethodBody(CMethod* method)
 
                     // Checks if it's "auto".
                     token = reader.PeekToken();
-                    if(token && token->Kind == E_TOKENKIND_AUTO) {
-                        // The code expects the engine to infer the type.
-                        reader.NextToken(); // Skips "auto".
+                    if(token && (token->Kind == E_TOKENKIND_AUTO || token->Kind == E_TOKENKIND_ASSIGNMENT)) {
+                        // The code expects the transformer to infer the type.
+                        if(token->Kind == E_TOKENKIND_AUTO) {
+                            reader.NextToken(); // Skips "auto".
+                        }
                         curExpr.SetPtr((CExpression*)new CIdentExpression(stringSlice, true /* NOTE: isAuto = true. */));
                     } else {
                         const STypeRef identTypeRef (parseTypeRef());

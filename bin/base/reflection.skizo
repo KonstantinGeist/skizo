@@ -221,8 +221,8 @@ public
 			m_instanceProps = (array (pGetters length));
 
 			(0 to (pGetters length)) loop ^(i: int) {
-				getter: auto = (Method wrap (pGetters get i));
-				setter: auto = (Method wrap (pSetters get i));
+				getter := (Method wrap (pGetters get i));
+				setter := (Method wrap (pSetters get i));
 
 				m_instanceProps set i (Property create getter setter);
 			};

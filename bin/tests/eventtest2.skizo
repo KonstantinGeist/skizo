@@ -24,7 +24,7 @@ class GenButton {
 static class GenerativeEventTest {
 	[test]
 	static method (run) {
-		b: auto = (GenButton createDefault);
+		b := (GenButton createDefault);
 		(b mouseEvent) addHandler ^(coord: GenCoord) {
 			assert ((coord x) == 10);
 			assert ((coord y) == 20);
@@ -36,9 +36,9 @@ static class GenerativeEventTest {
 		*/
 
 		t: Type = ((Type forName "GenButton") unwrap);
-		meths: auto = (t instanceMethods);
+		meths := (t instanceMethods);
 		(0 to (meths length)) loop ^(i: int) {
-			meth: auto = (meths get i);
+			meth := (meths get i);
 			attr: string? = null;
 			((meth name) == "mouseEvent") then ^{
 				attr = (meth getAttribute "doc");

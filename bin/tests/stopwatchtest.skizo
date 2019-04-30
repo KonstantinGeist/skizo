@@ -5,7 +5,7 @@ import math;
 static class StopwatchTest {
 	[test]
 	static method (run) {
-		sp: auto = (Stopwatch start);
+		sp := (Stopwatch start);
 		Domain sleep 1000;
 		time: int = (sp end);
 		assert ((Math abs (time - 1000)) < 100);
