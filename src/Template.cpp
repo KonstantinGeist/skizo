@@ -446,10 +446,53 @@ static CMethodWithArgument* tryGetGetMethodWithArgument(const CClass* klass, con
     return nullptr;
 }
 
+static CArrayList<const CString*>* split(const CString* source)
+{
+    Auto<CArrayList<const CString*>> result (new CArrayList<const CString*>());
+
+    int lastIndex = 0;
+    bool quote = false;
+
+    const so_char16* chars = source->Chars();
+    const int length = source->Length();
+    for(int i = 0; i < length; i++) {
+        const so_char16 c = chars[i];
+
+        if(!quote && c == SKIZO_CHAR(' ')) {
+            if(i != lastIndex) {
+                Auto<const CString> stringPart (source->Substring(lastIndex, i - lastIndex));
+                result->Add(stringPart);
+            }
+
+            lastIndex = i + 1;
+        } else if(c == SKIZO_CHAR('\'')) {
+            if(!quote && i > 0 && chars[i - 1] != SKIZO_CHAR(' ')) {
+                CDomain::Abort("A space required before a quote.");
+            } else if(quote && i < length - 1 && chars[i + 1] != SKIZO_CHAR(' ')) {
+                CDomain::Abort("A space is required after a quote.");
+            }
+
+            quote = !quote;
+        }
+    }
+
+    if(quote) {
+        CDomain::Abort("Unclosed quotation.");
+    }
+
+    if(length != lastIndex) {
+        Auto<const CString> stringPart (source->Substring(lastIndex, length - lastIndex));
+        result->Add(stringPart);
+    }
+
+    result->Ref();
+    return result;
+}
+
 static void addObjectPart(CArrayList<CTemplatePart*>* parts, const CString* literal, const CClass* klass)
 {
-    Auto<CArrayList<const CString*>> split (literal->Split(SKIZO_CHAR(' ')));
-    if(split->Count() == 0) {
+    Auto<CArrayList<const CString*>> stringParts (split(literal));
+    if(stringParts->Count() == 0) {
         CDomain::Abort("Empty placeholder not allowed.");
     }
 
@@ -457,8 +500,8 @@ static void addObjectPart(CArrayList<CTemplatePart*>* parts, const CString* lite
     const CClass* tmpClass = klass;
     CDomain* domain = klass->DeclaringDomain();
     
-    for(int j = 0; j < split->Count(); j++) {
-        const CString* elem = split->Array()[j];
+    for(int j = 0; j < stringParts->Count(); j++) {
+        const CString* elem = stringParts->Array()[j];
         
         CMethod* method;
 
@@ -545,30 +588,30 @@ CTemplate* CTemplate::CreateForClass(const CString* source, const CClass* klass)
     int lastIndex = 0;
     bool isStatic = true;
     for(int i = 0; i < source->Length(); i++) {
-        so_char16 c = source->Chars()[i];
-        
+        const so_char16 c = source->Chars()[i];
+
         if(c == SKIZO_CHAR('{')) {
             if(!isStatic) {
                 CDomain::Abort("nested '{' not allowed");
             }
-            
+
             if(i != lastIndex) {
                 Auto<const CString> literal (source->Substring(lastIndex, i - lastIndex));
                 Auto<CTemplatePart> part (new CStaticTemplatePart(literal));
                 parts->Add(part);
             }
-            
+
             isStatic = false;
             lastIndex = i + 1;
         } else if(c == SKIZO_CHAR('}')) {
             if(isStatic) {
                 CDomain::Abort("Nested '}' not allowed.");
             }
-            
+
             if(i == lastIndex) {
                 CDomain::Abort("Empty placeholder not allowed.");
             }
-            
+
             Auto<const CString> literal (source->Substring(lastIndex, i - lastIndex));
             isStatic = true;
             lastIndex = i + 1;
@@ -576,11 +619,11 @@ CTemplate* CTemplate::CreateForClass(const CString* source, const CClass* klass)
             addObjectPart(parts, literal, klass);
         }
     }
-    
+
     if(!isStatic) {
         CDomain::Abort("Unclosed placeholder.");
     }
-    
+
     if(lastIndex < source->Length()) {
         Auto<const CString> remaining (source->Substring(lastIndex, source->Length() - lastIndex));
         Auto<CTemplatePart> part (new CStaticTemplatePart(remaining));

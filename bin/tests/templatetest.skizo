@@ -149,6 +149,22 @@ class ObjectWithCustomGetAutoboxedToAny {
     }
 }
 
+class RecursiveReference {
+    field m_wrapped: string;
+
+    method (get key: string): RecursiveReference {
+        return (RecursiveReference create (m_wrapped + key));
+    }
+
+    method (toString): string {
+        return m_wrapped;
+    }
+
+    ctor (create wrapped: string) {
+        m_wrapped = wrapped;
+    }
+}
+
 static class TemplateTest {
     static method (test input:string output:string) {
         p := (Person create "Peterson" 92);
@@ -347,6 +363,49 @@ static class TemplateTest {
         assert(r == "13");
     }
 
+    static method (testSpaceInsideQuote) {
+        m := (Map create);
+        m set "a key" "a value";
+        t := (Template create "I have {'a key'}." "Map");
+        r := (t render m);
+        assert (r == "I have a value.");
+    }
+
+    static method (testSpaceInsideQuote2) {
+        m := (RecursiveReference create "1");
+        t := (Template create "I have {'2' '3'}" "RecursiveReference");
+        r := (t render m);
+        assert (r == "I have 123");
+    }
+    
+    static method (testSpaceInsideQuote3) {
+        TemplateTest assertCrashed ^{
+            m := (RecursiveReference create "1");
+            t := (Template create "I have {'2''3'}" "RecursiveReference");
+        };
+    }
+
+    static method (testSpaceInsideQuote4) {
+        TemplateTest assertCrashed ^{
+            m := (RecursiveReference create "1");
+            t := (Template create "I have {'3}" "RecursiveReference");
+        };
+    }
+
+    static method (testSpaceInsideQuote5) {
+        m := (RecursiveReference create "1");
+        t := (Template create "I have {'2'   }" "RecursiveReference");
+        r := (t render m);
+        assert (r == "I have 12");
+    }
+
+    static method (testSpaceInsideQuote6) {
+        TemplateTest assertCrashed ^{
+            m := (RecursiveReference create "1");
+            t := (Template create "I have {'3'length}" "RecursiveReference");
+        };
+    }
+
     [test]
     static method (main) {
         TemplateTest test "Hello, {name}!" "Hello, Peterson!";
@@ -419,5 +478,11 @@ static class TemplateTest {
         TemplateTest testReturnsNothing;
         TemplateTest testAutoBoxingIntArg;
         TemplateTest testAutoBoxingIntArg2;
+        TemplateTest testSpaceInsideQuote;
+        TemplateTest testSpaceInsideQuote2;
+        TemplateTest testSpaceInsideQuote3;
+        TemplateTest testSpaceInsideQuote4;
+        TemplateTest testSpaceInsideQuote5;
+        TemplateTest testSpaceInsideQuote6;
     }
 }
