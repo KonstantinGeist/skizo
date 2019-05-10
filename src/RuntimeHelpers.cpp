@@ -165,6 +165,8 @@ void SKIZO_API _soX_abort0(int errCode)
 
 void SKIZO_API _soX_abort(void* msg)
 {
+    SKIZO_NULL_CHECK(msg);
+
     char* _msg = so_string_of(msg)->ToUtf8();
     CDomain::Abort(_msg, true);
 }

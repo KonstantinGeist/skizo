@@ -74,9 +74,9 @@ void* SMemoryManager::Allocate(int sz, void** vtable)
 
         if(m_gcStatsEnabled) {
             printf("[GC reason] alloc'd memory: %ld; memory pressure: %ld; threshold: %ld\n",
-				    (long int)m_allocdMemory,
-					(long int)m_customMemoryPressure,
-					(long int)m_minGCThreshold);
+                    (long int)m_allocdMemory,
+                    (long int)m_customMemoryPressure,
+                    (long int)m_minGCThreshold);
         }
 
         CollectGarbage(false); // IMPORTANT 'judgement day' flag set to false

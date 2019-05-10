@@ -350,7 +350,7 @@ static __cdecl void boxedMethodJit(void* trampoline, void* pMethod)
     assert(wrappedSelfSize % 4 == 0);
 
     so_byte pushSelf[8] = {
-        0x8B, 0x45, 0x08,  // mov eax, [ebp+8] // gets boxed "this"
+        0x8B, 0x45, 0x08,                      // mov eax, [ebp+8] // gets boxed "this"
         0x5, 0x4, 0x0, 0x0, 0x0                // add eax, 4       // skips the vtable
     };
     if(hiddenBufferSize) {
@@ -363,7 +363,7 @@ static __cdecl void boxedMethodJit(void* trampoline, void* pMethod)
     int wrappedSelfGranuleCount = wrappedSelfSize / 4;
     for(int i = wrappedSelfGranuleCount - 1; i >= 0; i--) {
         so_byte pushField[6] = {
-            0xFF, 0xB0, 0x0, 0x0, 0x0, 0x0
+            0xFF, 0xB0, 0x0, 0x0, 0x0, 0x0     // push [eax+0] ; will be patched below
         };
         const int offset = i * 4;
         memcpy(&pushField[2], &offset, sizeof(int));
@@ -617,6 +617,7 @@ void* SThunkManager::GetReflectionThunk(const CMethod* method) const
         // *************************************
         // Considers the size of "this" as well.
         // *************************************
+
     if(!method->Signature().IsStatic && (method->MethodKind() != E_METHODKIND_CTOR)) {
         size_t sizeForUse = method->DeclaringClass()->GCInfo().SizeForUse;
         if(sizeForUse < sizeof(void*)) {

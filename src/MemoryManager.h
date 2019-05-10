@@ -11,8 +11,8 @@
 //
 // *****************************************************************************
 
-#ifndef GC_H_INCLUDED
-#define GC_H_INCLUDED
+#ifndef MEMORYMANAGER_H_INCLUDED
+#define MEMORYMANAGER_H_INCLUDED
 
 #include "Mutex.h"
 #include "ArrayList.h"
@@ -177,4 +177,4 @@ private:
 
 } }
 
-#endif // GC_H_INCLUDED
+#endif // MEMORYMANAGER_H_INCLUDED
