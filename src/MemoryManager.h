@@ -14,12 +14,12 @@
 #ifndef MEMORYMANAGER_H_INCLUDED
 #define MEMORYMANAGER_H_INCLUDED
 
-#include "Mutex.h"
 #include "ArrayList.h"
-#include "LinkedList.h"
-#include "HashMap.h"
 #include "BumpPointerAllocator.h"
-#include "PointerSet.h"
+#include "HashMap.h"
+#include "LinkedList.h"
+#include "Mutex.h"
+#include "PoolAllocator.h"
 
 namespace skizo { namespace script {
 
@@ -136,9 +136,8 @@ private:
     void scanStack();
     void gcMark(void* obj_ptr);
 
-    struct SMemoryCellHeader* m_firstCell;
-    struct SMemoryCellHeader* m_lastCell;
-    int m_cellCount;
+    static void sweep(void* obj, void* ctx);
+
     skizo::core::Auto<skizo::collections::CLinkedList<void*> > m_roots;
 
     // Used by AddGCRoot(..)/RemoveGCRoot(..) for custom, dynamically added/removed roots.
@@ -149,9 +148,6 @@ private:
     // information to quickly dismiss pointers outside of the GC heap.
     void* m_heapStart;
     void* m_heapEnd;
-
-    // The heap map assist in quickly finding if an object is a GC allocated object.
-    SPointerSet m_heapMap;
 
     void* m_stackBase;
     so_long m_allocdMemory;
@@ -172,7 +168,10 @@ private:
     long int m_lastGCTime; // for profiling
     bool m_gcStatsEnabled; // for profiling
 
+    SPoolAllocator m_poolAllocator;
     SBumpPointerAllocator m_bumpPointerAllocator;
+
+    bool m_dtorsEnabled;
 };
 
 } }

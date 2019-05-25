@@ -14,20 +14,28 @@
 #ifndef POINTERSET_H_INCLUDED
 #define POINTERSET_H_INCLUDED
 
+// A faster reimplementation of CHashMap specialized for storing pointers.
+
 namespace skizo { namespace script {
+
+struct SPointerSetEnumerator;
 
 struct SPointerSetEntry
 {
     SPointerSetEntry* Next;
     void* Value;
 
-    SPointerSetEntry(): Next(nullptr), Value(nullptr) { }
+    SPointerSetEntry()
+        : Next(nullptr),
+          Value(nullptr)
+    {
+    }
 };
 
-// A faster reimplementation of CHashMap specialized for storing pointers.
-// TODO
 class SPointerSet
 {
+    friend struct SPointerSetEnumerator;
+
 private:
     SPointerSetEntry** m_buckets;
     int m_bucketCount, m_size, m_threshold;
@@ -98,7 +106,6 @@ public:
     {
         int capacity = 547;
 
-        /* The whole block is set with nulls by the GC. */
         m_buckets = (SPointerSetEntry**)calloc(capacity, sizeof(void*));
         m_bucketCount = capacity;
 
@@ -121,10 +128,8 @@ public:
             }
         }
 
-        /* At this point, we know we need to add a new entry. */
         if (++m_size > m_threshold) {
           rehash();
-          /* Need a new idx to suit the bigger table. */
           idx = getIdx(value);
         }
 
@@ -187,6 +192,47 @@ public:
         }
 
         m_size = 0;
+    }
+};
+
+class SPointerSetEnumerator
+{
+private:
+    const SPointerSet& m_set;
+    int m_bucketIndex;
+    SPointerSetEntry* m_entry;
+
+public:
+    explicit SPointerSetEnumerator(const SPointerSet& set)
+        : m_set(set),
+          m_bucketIndex(0),
+          m_entry(nullptr)
+    {
+    }
+
+    bool MoveNext(void** value_out)
+    {
+    try_again:
+        if(m_bucketIndex < m_set.m_bucketCount) {
+            if(!m_entry) {
+                m_entry = m_set.m_buckets[m_bucketIndex];
+                if(!m_entry) {
+                    m_bucketIndex++;
+                    goto try_again;
+                }
+            } else {
+                m_entry = m_entry->Next;
+                if(!m_entry) {
+                    m_bucketIndex++;
+                    goto try_again;
+                }
+            }
+
+            *value_out = m_entry->Value;
+            return true;
+        } else {
+            return false;
+        }
     }
 };
 

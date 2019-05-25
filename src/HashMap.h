@@ -61,7 +61,7 @@ public:
     void Reset()
     {
         m_bucketIndex = 0;
-        m_mapEntry = 0;
+        m_mapEntry = nullptr;
 
     #ifdef SKIZO_COLLECTIONS_MODCOUNT
         this->m_modCount = m_map->m_modCount;

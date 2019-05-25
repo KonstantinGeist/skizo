@@ -25,20 +25,9 @@ using namespace skizo::collections;
 #define IS_LASTBIT_SET(value) ((uintptr_t)(value) & 0x1)
 #define SET_LASTBIT(value, bit) value = (void**)(((uintptr_t)(value) & 0xFFFFFFFE) | bit)
 
-#define CELL_TO_POBJECT(cell) ((char*)(cell) + sizeof(SMemoryCellHeader))
-#define OBJECT_TO_PCELL(obj) ((char*)(obj) - sizeof(SMemoryCellHeader))
-#define CELL_TO_OBJECT(cell) ((SObjectHeader*)((char*)(cell) + sizeof(SMemoryCellHeader)))
-#define OBJECT_TO_CELL(obj) ((SMemoryCellHeader*)((char*)(obj) - sizeof(SMemoryCellHeader)))
-
-struct SMemoryCellHeader
-{
-    SMemoryCellHeader *Next, *Prev;
-};
-
 SMemoryManager::SMemoryManager():
     ExportedObjs(new CHashMap<const skizo::core::CString*, void*>()),
     ExportedObjsMutex(new CMutex()),
-    m_firstCell(nullptr), m_lastCell(nullptr), m_cellCount(0),
     m_roots(new CLinkedList<void*>()),
     m_gcRootHolders(new CArrayList<CGCRootHolder*>()),
     m_heapStart(nullptr), m_heapEnd(nullptr), m_stackBase(nullptr),
@@ -48,7 +37,8 @@ SMemoryManager::SMemoryManager():
     m_disableGC(false),
     m_mapClass(nullptr),
     m_lastGCTime(0),
-    m_gcStatsEnabled(false)
+    m_gcStatsEnabled(false),
+    m_dtorsEnabled(true)
 {
 }
 
@@ -111,25 +101,11 @@ void* SMemoryManager::Allocate(int sz, void** vtable)
     }
 
     // Allocates "sz" with a header.
-    SMemoryCellHeader* cell = (SMemoryCellHeader*)malloc(sz + sizeof(SMemoryCellHeader));
-    if(!cell) {
+    void* obj = m_poolAllocator.Allocate(sz);
+    if(!obj) {
         _soX_abort0(SKIZO_ERRORCODE_OUT_OF_MEMORY);
     }
-    memset(cell, 0, sz + sizeof(SMemoryCellHeader));
-
-    // *************************************
-    // NOTE it's the base pointer which is added to the linked list, not the pointer to the actual data!
-    if(!m_firstCell) {
-        m_firstCell = m_lastCell = cell;
-    } else {
-        m_lastCell->Next = cell;
-        cell->Prev = m_lastCell;
-        m_lastCell = cell;
-    }
-    // *************************************
-    m_cellCount++;
-
-    char* obj = CELL_TO_POBJECT(cell);
+    memset(obj, 0, sz);
 
     if(pClass->SpecialClass() == E_SPECIALCLASS_ARRAY) {
         m_allocdMemory += sz;
@@ -141,12 +117,9 @@ void* SMemoryManager::Allocate(int sz, void** vtable)
     if(m_heapStart > obj) {
         m_heapStart = obj;
     }
-    if(m_heapEnd < (obj + sz)) {
-        m_heapEnd = obj + sz;
+    if(m_heapEnd < ((char*)obj + sz)) {
+        m_heapEnd = (char*)obj + sz;
     }
-
-	// Adds the pointer to the pointer set.
-    m_heapMap.Set(obj);
 
     ((SObjectHeader*)(obj))->vtable = vtable;
     return obj;
@@ -284,13 +257,12 @@ bool SMemoryManager::IsValidObject(void* ptr) const
     // Zeros and non-aligned pointers are discarded immediately.
     if(ptr && ((uintptr_t)(ptr) % sizeof(void*) == 0)) {
 
-		// Another shortcut. The heap bounds are updated in _soX_gc_alloc(..)
+        // Another shortcut. The heap bounds are updated in _soX_gc_alloc(..)
         if(ptr < m_heapStart && ptr >= m_heapEnd) {
             return false;
         }
 
-		// The slower way.
-        return m_heapMap.Contains(ptr);
+        return m_poolAllocator.IsValidPointer(ptr);
 
     } else {
         return false;
@@ -315,6 +287,38 @@ void SMemoryManager::scanStack()
     }
 }
 
+void SMemoryManager::sweep(void* rawObj, void* ctx)
+{
+    SMemoryManager* mngr = (SMemoryManager*)ctx;
+    SObjectHeader* obj = (SObjectHeader*)rawObj;
+
+    if(IS_LASTBIT_SET(obj->vtable)) {
+        // IMPORTANT Resets the mark for marked (reachable) objects. Not doing so would corrupt the vtables for general use.
+        SET_LASTBIT(obj->vtable, 0);
+    } else {
+        // Frees objects that were left unmarked.
+
+        // GC must know how much memory is allocated/deallocated.
+        const CClass* pClass = static_cast<CClass*>(obj->vtable[0]);
+
+        if(pClass->SpecialClass() == E_SPECIALCLASS_ARRAY) {
+            const size_t itemSize = pClass->ResolvedWrappedClass()->GCInfo().SizeForUse;
+            mngr->m_allocdMemory -= (offsetof(SArrayHeader, firstItem) + ((SArrayHeader*)obj)->length * itemSize);
+        } else {
+            mngr->m_allocdMemory -= pClass->GCInfo().ContentSize;
+        }
+
+        // NOTE Closures have built-in dtors that get rid of C=>Skizo thunks.
+        // NOTE the object isn't added to the destructor list if dtorsEnabled=false (the GC is rerun)
+        // TODO won't this leak C=>Skizo thunks?
+        if((mngr->m_dtorsEnabled && pClass->InstanceDtor()) || pClass->SpecialClass() == E_SPECIALCLASS_METHODCLASS) {
+            mngr->m_destructables->Add(obj);
+        } else {
+            mngr->m_poolAllocator.Free(obj);
+        }
+    }
+}
+
 // WARNING don't introduce RAII
 void SMemoryManager::CollectGarbage(bool judgementDay)
 {
@@ -324,7 +328,7 @@ void SMemoryManager::CollectGarbage(bool judgementDay)
     }
 
     if(m_gcStatsEnabled) {
-        printf("\nMemory before GC: %d | Object count before GC: %d\n", (int)m_allocdMemory, m_cellCount);
+        printf("\nMemory before GC: %d | Object count before GC: %d\n", (int)m_allocdMemory, m_poolAllocator.GetObjectCount());
     }
     SStopwatch stopwatch;
     stopwatch.Start();
@@ -354,63 +358,10 @@ void SMemoryManager::CollectGarbage(bool judgementDay)
     // garbage once again. However, this algorithm can potentially break if a destructor creates objects with
     // destructors every time the GC is run. To solve the issue, dtorsEnabled is set to false before garbage
     // collection is reattempted.
-    bool dtorsEnabled = true;
+    m_dtorsEnabled = true;
 
 doGC:
-    SMemoryCellHeader* cell = m_firstCell;
-
-    while(cell) {
-        // Don't forget to fix up the pointer: the list works with cells (base pointers), not data pointers.
-        SObjectHeader* obj = CELL_TO_OBJECT(cell);
-
-        if(IS_LASTBIT_SET(obj->vtable)) {
-            // IMPORTANT Resets the mark for marked (reachable) objects. Not doing so would corrupt the vtables for general use.
-            SET_LASTBIT(obj->vtable, 0);
-            cell = cell->Next;
-        } else {
-            // Frees objects that were left unmarked.
-            SMemoryCellHeader* cellToDestroy = cell;
-            cell = cell->Next; // Advance in advance (yeah) because the node is to be destroyed.
-
-            // GC must know how much memory is allocated/deallocated.
-            const CClass* pClass = static_cast<CClass*>(obj->vtable[0]);
-
-            if(pClass->SpecialClass() == E_SPECIALCLASS_ARRAY) {
-                const size_t itemSize = pClass->ResolvedWrappedClass()->GCInfo().SizeForUse;
-                m_allocdMemory -= (offsetof(SArrayHeader, firstItem) + ((SArrayHeader*)obj)->length * itemSize);
-            } else {
-                m_allocdMemory -= pClass->GCInfo().ContentSize;
-            }
-
-            m_heapMap.Remove(obj);
-
-            // TODO update also heap bounds in case of shrinking heaps
-
-            // *************************************************
-			//   Removes the cell from the linked list.
-            if(cellToDestroy->Prev) {
-                cellToDestroy->Prev->Next = cellToDestroy->Next;
-            } else {
-                m_firstCell = cellToDestroy->Next;
-            }
-            if(cellToDestroy->Next) {
-                cellToDestroy->Next->Prev = cellToDestroy->Prev;
-            } else {
-                m_lastCell = cellToDestroy->Prev;
-            }
-            m_cellCount--;
-            // *************************************************
-
-            // NOTE Closures have built-in dtors that get rid of C=>Skizo thunks.
-            // NOTE the object isn't added to the destructor list if dtorsEnabled=false (the GC is rerun)
-            if((dtorsEnabled && pClass->InstanceDtor()) || pClass->SpecialClass() == E_SPECIALCLASS_METHODCLASS) {
-                m_destructables->Add(cellToDestroy);
-            } else {
-                free(cellToDestroy);
-            }
-            // ******************************************************
-        }
-    }
+    m_poolAllocator.EnumerateObjects(sweep, this);
 
     // Resets the mark bits of string literals back to the "accessible" state, otherwise their vtables would be corrupted.
     // NOTE String literals are destroyed only on domain teardown.
@@ -426,8 +377,7 @@ doGC:
     typedef void (SKIZO_API * FDtor)(SObjectHeader* self);
     m_disableGC = true; // Do not run GC inside destructors if they happen to allocate (and therefore trigger GC).
     for(int i = 0; i < m_destructables->Count(); i++) {
-        SMemoryCellHeader* cell = (SMemoryCellHeader*)m_destructables->Array()[i];
-        SObjectHeader* obj = CELL_TO_OBJECT(cell);
+        SObjectHeader* obj = (SObjectHeader*)m_destructables->Array()[i];
         const CClass* pClass = static_cast<CClass*>(obj->vtable[0]);
 
         FDtor dtor = (FDtor)pClass->DtorImpl();
@@ -438,7 +388,7 @@ doGC:
             // Aborts/possible leaking Skizo exceptions are ignored.
         }
 
-        free(cell);
+        m_poolAllocator.Free(obj);
     }
     m_destructables->Clear();
     m_disableGC = false;
@@ -462,8 +412,8 @@ doGC:
     // are disabled so that such garbage was never allocated again.
     // ********************************************************************
 
-    if(judgementDay && m_cellCount && dtorsEnabled) {
-        dtorsEnabled = false;
+    if(judgementDay && m_poolAllocator.GetObjectCount() && m_dtorsEnabled) {
+        m_dtorsEnabled = false;
         goto doGC;
     }
 
@@ -472,9 +422,9 @@ doGC:
     m_lastGCTime = (long int)stopwatch.End();
     if(m_gcStatsEnabled) {
         printf("Memory after GC: %d, time: %ld | Object count after GC: %d\n",
-			   (int)m_allocdMemory,
-			   m_lastGCTime,
-			   m_cellCount);
+            (int)m_allocdMemory,
+                 m_lastGCTime,
+                 m_poolAllocator.GetObjectCount());
     }
 }
 
