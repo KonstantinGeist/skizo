@@ -25,6 +25,50 @@ using namespace skizo::collections;
 #define MIN_OBJECT_COUNT_PER_ARENA 64
 #define GRANULARITY 16 // 16 bytes for SSE minimum TODO x86-specific
 
+// An arena is a contiguous memory block where fixed-size allocations are made.
+// All allocations are prepended a SElementHeader.
+struct SArenaHeader
+{
+    // All elements in an arena are fixed-size.
+    size_t ElementSize;
+
+    // Element count.
+    size_t ElementCount;
+
+    // Points to the first element right after this header.
+    char* Start;
+    char* End;
+};
+
+// An "element" is the allocated object + metadata (its header).
+// So every allocated object has the overhead of sizeof(SElementHeader) + alignment.
+struct SElementHeader
+{
+    // Points to the next element in the free list (if it's inside one).
+    SElementHeader* Next;
+
+    // The original pool the object was allocated from. It serves two purposes:
+    // To quickly find the original free list to put the element back to (when it's freed).
+    // Helps finding allocated objects during heap traversal. If this value isn't null, the object
+    // is allocated.
+    class CPool* Pool;
+};
+
+// A pool is a resizable set of fixed-size arenas and a free list to quickly find free elements.
+class CPool: public skizo::core::CObject
+{
+public:
+    CPool(size_t elementSize, SPoolAllocator* allocator);
+
+    SElementHeader* Allocate();
+    void AddToFreeList(SElementHeader* element);
+
+private:
+    size_t m_elementSize;        // object size + header + alignment
+    SPoolAllocator* m_allocator; // required for allocating new arenas
+    SElementHeader* m_freeList;
+};
+
     // ****************************
     //          Static
     // ****************************
@@ -34,45 +78,45 @@ constexpr bool isLargeObject(size_t sz)
     return (sz > TARGET_ARENA_SIZE) || (TARGET_ARENA_SIZE / sz < MIN_OBJECT_COUNT_PER_ARENA);
 }
 
-size_t SPoolAllocator::AlignUp(size_t sz)
+constexpr size_t AlignUp(size_t sz)
 {
-    size_t leftOver = sz % GRANULARITY;
+    /*size_t leftOver = sz % GRANULARITY;
     if(leftOver > 0) {
         sz += GRANULARITY - leftOver;
     }
-    return sz;
+    return sz;*/
+    return sz % GRANULARITY
+            ? sz + (GRANULARITY - sz % GRANULARITY)
+            : sz;
 }
 
-size_t SPoolAllocator::GetElementSize(size_t objectSize)
+constexpr size_t GetElementSize(size_t objectSize)
 {
-    const size_t alignedHeaderSize = AlignUp(sizeof(SElementHeader));
-    return AlignUp(alignedHeaderSize + objectSize);
+    return AlignUp(AlignUp(sizeof(SElementHeader)) + objectSize);
 }
 
-char* SPoolAllocator::GetObjectStart(SElementHeader* header)
+constexpr char* GetObjectStart(SElementHeader* header)
 {
-    const size_t alignedHeaderSize = AlignUp(sizeof(SElementHeader));
-    return reinterpret_cast<char*>(header) + alignedHeaderSize;
+    return reinterpret_cast<char*>(header) + AlignUp(sizeof(SElementHeader));
 }
 
-SPoolAllocator::SElementHeader* SPoolAllocator::GetElementHeader(void* objectStart)
+constexpr SElementHeader* GetElementHeader(void* objectStart)
 {
-    const size_t alignedHeaderSize = AlignUp(sizeof(SElementHeader));
-    return reinterpret_cast<SElementHeader*>(reinterpret_cast<char*>(objectStart) - alignedHeaderSize);
+    return reinterpret_cast<SElementHeader*>(reinterpret_cast<char*>(objectStart) - AlignUp(sizeof(SElementHeader)));
 }
 
     // ****************************
     //           Pool
     // ****************************
 
-SPoolAllocator::CPool::CPool(size_t elementSize, SPoolAllocator* allocator)
+CPool::CPool(size_t elementSize, SPoolAllocator* allocator)
     : m_elementSize(elementSize),
       m_allocator(allocator),
       m_freeList(nullptr)
 {
 }
 
-SPoolAllocator::SElementHeader* SPoolAllocator::CPool::Allocate()
+SElementHeader* CPool::Allocate()
 {
     // No objects in the free list. Create a new arena and allocate new free list elements inside it.
     if(!m_freeList) {
@@ -96,7 +140,7 @@ SPoolAllocator::SElementHeader* SPoolAllocator::CPool::Allocate()
     return element;
 }
 
-void SPoolAllocator::CPool::AddToFreeList(SElementHeader* element)
+void CPool::AddToFreeList(SElementHeader* element)
 {
     element->Next = m_freeList;
     m_freeList = element;
@@ -129,7 +173,7 @@ SPoolAllocator::~SPoolAllocator()
     }
 }
 
-SPoolAllocator::SArenaHeader* SPoolAllocator::allocateArena(size_t elementSize)
+SArenaHeader* SPoolAllocator::allocateArena(size_t elementSize)
 {
     const size_t elementCount = TARGET_ARENA_SIZE / elementSize;
     const size_t alignedHeaderSize = AlignUp(sizeof(SArenaHeader));
