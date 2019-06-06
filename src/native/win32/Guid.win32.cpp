@@ -16,14 +16,36 @@
 
 namespace skizo { namespace core { namespace Guid {
 
+#define MS_GUID_SIZE 40
+
+static void toLower(so_char16* guidStr)
+{
+    while(*guidStr++) {
+        const so_char16 c = *guidStr;
+        if(c >= SKIZO_CHAR('A') && c <= SKIZO_CHAR('F')) {
+            *guidStr = SKIZO_CHAR('a') + (c - SKIZO_CHAR('A'));
+        }
+    }
+}
+
 const CString* NewGuid()
 {
-    GUID guid = { 0 };
-    wchar_t szGuidW[80] = { 0 };
-    CoCreateGuid(&guid);
-    StringFromGUID2(guid, szGuidW, 40);
+    GUID guid;
+    const HRESULT hRes = CoCreateGuid(&guid);
+    if(hRes != S_OK) {
+        memset(&guid, 0, sizeof(guid));
+    }
 
-    return CString::FromUtf16(reinterpret_cast<so_char16*>(&szGuidW[0]));
+    so_char16 guidStr[MS_GUID_SIZE];
+    StringFromGUID2(guid, reinterpret_cast<wchar_t*>(&guidStr[0]), MS_GUID_SIZE);
+
+    // Skips { and } added by the Microsoft implementation.
+    so_char16* guidStrStart = &guidStr[1];
+    guidStrStart[MS_GUID_SIZE - 4] = 0;
+    // The Microsoft implementation outputs in upper case.
+    toLower(guidStr);
+
+    return CString::FromUtf16(guidStrStart);
 }
 
 } } }

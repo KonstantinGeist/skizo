@@ -277,6 +277,10 @@ void CDomain::registerStandardICalls()
         registerICall("_so_Template_destroyImpl", (void*)_so_Template_destroyImpl);
         registerICall("_so_Template_renderImpl", (void*)_so_Template_renderImpl);
     }
+
+    if(isClassLoaded("Guid")) {
+        registerICall("_so_Guid_generate", (void*)_so_Guid_generate);
+    }
 }
 
 } }

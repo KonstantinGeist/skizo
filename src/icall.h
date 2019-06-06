@@ -408,13 +408,19 @@ void SKIZO_API _so_Map_clearImpl(void* mapObj);
 int SKIZO_API _so_Map_sizeImpl(void* mapObj);
 void SKIZO_API _so_Map_loopImpl(void* mapObj, void* mapLooper);
 
-// ************
+// *************
 //   Template
-// ************
+// *************
 
 void* SKIZO_API _so_Template_createImpl(void* sourceObj, void* typeObj);
 void SKIZO_API _so_Template_destroyImpl(void* pSelf);
 void* SKIZO_API _so_Template_renderImpl(void* pSelf, void* str);
+
+// ************
+//    Guid
+// ************
+
+void* SKIZO_API _so_Guid_generate();
 
 }
 

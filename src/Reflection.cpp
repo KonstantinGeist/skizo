@@ -316,6 +316,7 @@ CArrayList<CProperty*>* CClass::GetProperties(bool isStatic) const
     return r;
 }
 
+// TODO for base classes, should verify that they stem from the base directory
 bool CDomain::isClassLoaded(const char* _className) const
 {
     Auto<const CString> className (CString::FromUtf8(_className));

@@ -4,7 +4,7 @@ force int; /* required internally */
 class Template {
 private
     static native method (createImpl source:string type:any): intptr;
-    static native method (renderImpl pSelf:intptr obj: any): string;
+    static native method (renderImpl pSelf:intptr obj:any): string;
 
 public
     ctor (create source:string type:any) {
