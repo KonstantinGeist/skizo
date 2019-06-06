@@ -171,6 +171,7 @@ void SKIZO_API _so_Application_exit(int code);
 void* SKIZO_API _so_Application_exeFileName();
 int SKIZO_API _so_Application_processorCount();
 int SKIZO_API _so_Application_tickCount();
+void* SKIZO_API _so_Application_osVersion();
 
 // ************
 //   DateTime

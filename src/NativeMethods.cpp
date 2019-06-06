@@ -142,6 +142,7 @@ void CDomain::registerStandardICalls()
         registerICall("_so_Application_exeFileName", (void*)_so_Application_exeFileName);
         registerICall("_so_Application_processorCount", (void*)_so_Application_processorCount);
         registerICall("_so_Application_tickCount", (void*)_so_Application_tickCount);
+        registerICall("_so_Application_osVersion", (void*)_so_Application_osVersion);
     }
 
     if(isClassLoaded("DateTime")) {

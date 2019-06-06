@@ -23,8 +23,8 @@ extern "C" {
 void* SKIZO_API _so_Application_NEWLINE()
 {
     CDomain* curDomain = CDomain::ForCurrentThread();
-    const CString* r = Application::PlatformString(E_PLATFORMSTRING_NEWLINE);
 
+    const CString* r = Application::PlatformString(E_PLATFORMSTRING_NEWLINE);
     return curDomain->CreateString(r, true);
 }
 
@@ -59,6 +59,15 @@ int SKIZO_API _so_Application_tickCount()
     //CDomain::DemandPermission("EnvironmentPermission");
 
     return Application::TickCount();
+}
+
+void* SKIZO_API _so_Application_osVersion()
+{
+    CDomain* curDomain = CDomain::ForCurrentThread();
+    curDomain->SecurityManager().DemandPermission("EnvironmentPermission");
+
+    Auto<const CString> osVersion (Application::GetOSVersion());
+    return curDomain->CreateString(osVersion);
 }
 
 }

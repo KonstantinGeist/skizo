@@ -2,11 +2,12 @@ static class Application {
 public
     static native method (NEWLINE): string;
 
-	/* NOTE Only the base trusted domain is allowed to call Application::exit(..) */
-	static native method (exit code: int);
+    /* NOTE Only the base trusted domain is allowed to call Application::exit(..) */
+    static native method (exit code: int);
 
-	static native method (exeFileName): string;
-	static native method (processorCount): int;
+    static native method (exeFileName): string;
+    static native method (processorCount): int;
+    static native method (osVersion): string;
 
-	static native method (tickCount): int;
+    static native method (tickCount): int;
 }
