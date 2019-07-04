@@ -276,7 +276,9 @@ void STransformer::mergeExtensions()
                 m->SetDeclaringExtClass(m->DeclaringClass());
                 m->SetDeclaringClass(classToPatch);
 
-                classToPatch->RegisterStaticMethod(m);
+                if(!classToPatch->TryRegisterStaticMethod(m)) {
+                    ScriptUtils::FailM(domain->FormatMessage("Can't extend class '%C' with a static method '%s': name already in use.", classToPatch, &m->Name()), m);
+                }
             }
         }
 
@@ -294,7 +296,9 @@ void STransformer::mergeExtensions()
                 m->SetDeclaringExtClass(m->DeclaringClass());
                 m->SetDeclaringClass(classToPatch);
 
-                classToPatch->RegisterInstanceMethod(m);
+                if(!classToPatch->TryRegisterInstanceMethod(m)) {
+                    ScriptUtils::FailM(domain->FormatMessage("Can't extend class '%C' with an instance method '%s': name already in use.", classToPatch, &m->Name()), m);
+                }
             }
         }
 

@@ -367,10 +367,12 @@ public:
     // ************************
 
     void RegisterInstanceMethod(CMethod* method);
+    bool TryRegisterInstanceMethod(CMethod* method);
     void RegisterInstanceField(CField* field);
     void RegisterStaticField(CField* field);
     void RegisterInstanceCtor(CMethod* method);
     void RegisterStaticMethod(CMethod* method);
+    bool TryRegisterStaticMethod(CMethod* method);
     void RegisterConst(CConst* konst);
     
     // Just adds to the list of methods; doesn't register in the name set unlike RegisterXXX functions. TODO ?

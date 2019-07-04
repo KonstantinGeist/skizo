@@ -489,6 +489,16 @@ void CClass::RegisterInstanceMethod(CMethod* method)
     m_instanceMethodMap->Set(method->Name(), method);
 }
 
+bool CClass::TryRegisterInstanceMethod(CMethod* method)
+{
+    if(m_nameSet->Contains(method->Name())) {
+        return false;
+    }
+
+    this->RegisterInstanceMethod(method);
+    return true;
+}
+
 void CClass::RegisterStaticMethod(CMethod* method)
 {
     SKIZO_REQ_EQUALS(method->MethodKind(), E_METHODKIND_NORMAL);
@@ -497,6 +507,16 @@ void CClass::RegisterStaticMethod(CMethod* method)
 
     m_staticMethods->Add(method);
     m_nameSet->Set(method->Name(), method);
+}
+
+bool CClass::TryRegisterStaticMethod(CMethod* method)
+{
+    if(m_nameSet->Contains(method->Name())) {
+        return false;
+    }
+
+    this->RegisterStaticMethod(method);
+    return true;
 }
 
 void CClass::RegisterInstanceCtor(CMethod* method)
