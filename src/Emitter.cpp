@@ -35,12 +35,14 @@ struct SEmitter
     STextBuilder methodBodyCB;
     STextBuilder captureCB;
     STextBuilder rewriteCB;
-    Auto<CArrayList<CField*> > staticHeapFields; // used when emitting static ctors
+    Auto<CArrayList<CField*>> staticHeapFields; // used when emitting static ctors
+    Auto<CArrayList<CField*>> staticValueTypeFields; // valuetypes have special handling
 
     SEmitter(CDomain* _domain, STextBuilder& cb)
         : domain(_domain),
           mainCB(cb),
-          staticHeapFields(new CArrayList<CField*>())
+          staticHeapFields(new CArrayList<CField*>()),
+          staticValueTypeFields(new CArrayList<CField*>())
     {
     }
 
@@ -262,7 +264,14 @@ void SEmitter::emitStructHeader(const CClass* klass, bool isFull)
 
             mainCB.Emit("static %t ", &field->Type);
             emitStaticFieldName(mainCB, field);
-            mainCB.Emit(" = 0;\n");
+
+            if(field->Type.IsStructClass()) {
+                // Composite valuetypes are initialized by calling _soX_static_vt which zero-initializes the value and registers GC roots if any.
+                mainCB.Emit(";\n");
+            } else {
+                // Reference types and primitives (int, float, bool, intptr) can be zero-initialized.
+                mainCB.Emit(" = 0;\n");
+            }
         }
     }
 }
@@ -1956,14 +1965,17 @@ void SEmitter::emitStaticCtorDtor(const CClass* klass)
     // defined or not -- because we need to register static fields as roots, and we do it in static ctors (stage 0).
     if(klass->StaticCtor() || klass->StaticFields()->Count() > 0) {
 
-        // Only heap objects.
         staticHeapFields->Clear();
+        staticValueTypeFields->Clear();
+
         const CArrayList<CField*>* staticFields = klass->StaticFields();
         for(int i = 0; i < staticFields->Count(); i++) {
             CField* staticField = staticFields->Array()[i];
 
-            if(staticField->Type.PrimType == E_PRIMTYPE_OBJECT) {
+            if(staticField->Type.IsHeapClass()) {
                 staticHeapFields->Add(staticField);
+            } else if(staticField->Type.IsStructClass()) {
+                staticValueTypeFields->Add(staticField);
             }
         }
 
@@ -1973,12 +1985,11 @@ void SEmitter::emitStaticCtorDtor(const CClass* klass)
                 //   Registers static heap fields' locations as gc roots (stage 0).
                 // ******************************************************************
 
-                // NOTE Checks for the number of static fields because there may be none.
                 if(staticHeapFields->Count()) {
                     mainCB.Emit("void* rootRefs[%d] = {\n", staticHeapFields->Count());
                     for(int i = 0; i < staticHeapFields->Count(); i++) {
                         const CField* staticField = staticHeapFields->Array()[i];
-                        mainCB.Emit("&_so_%s_%s", &klass->FlatName(), &staticField->Name);
+                        mainCB.Emit("&_so_%s_%s", &klass->FlatName(), &staticField->Name); // TODO move out such uses to a separate helper method
 
                         if(i < staticHeapFields->Count() - 1) {
                             mainCB.Emit(", ");
@@ -1989,6 +2000,16 @@ void SEmitter::emitStaticCtorDtor(const CClass* klass)
                                 &domain->MemoryManager(),
                                 staticHeapFields->Count());
                 }
+
+                // ***************************************************************************************
+                //   Initializes static valuetype fields and GC-roots references inside them (stage 0).
+                // ***************************************************************************************
+
+                for(int i = 0; i < staticValueTypeFields->Count(); i++) {
+                    const CField* staticField = staticValueTypeFields->Array()[i];
+                    mainCB.Emit("_soX_static_vt((void*)%p, &_so_%s_%s, (void*)%p);\n", &domain->MemoryManager(), &klass->FlatName(), &staticField->Name, (void*)staticField->Type.ResolvedClass);
+                }
+
             mainCB.Emit( "} else {\n");
 
             // ****************************************
@@ -2063,6 +2084,7 @@ void SEmitter::emit()
     mainCB.Emit("extern void* _soX_gc_alloc(void* mm, int sz, void** vtable);\n"
                 "extern void* _soX_gc_alloc_env(void* mm, void* objClass);\n"
                 "extern void _soX_gc_roots(void* mm, void** rootRefs, int count);\n"
+                "extern void _soX_static_vt(void* mm, void* obj, void* objClass);\n"
                 "extern void _soX_regvtable(void* klass, void** vtable);\n"
                 "extern void _soX_patchstrings();\n"
                 "extern void* _soX_downcast(void* klass, void* objptr);\n"

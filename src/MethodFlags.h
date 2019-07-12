@@ -79,6 +79,8 @@ typedef int EMethodFlags;
 
 #define E_METHODFLAGS_IS_INLINABLE (1 << 10)
 
+#define E_METHODFLAGS_COMPILER_GENERATED (1 << 11)
+
 } }
 
 #endif // METHODFLAGS_H_INCLUDED

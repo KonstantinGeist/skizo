@@ -110,6 +110,10 @@ class CustomToStringReturnsNull {
 struct EmbedCustomStringReturnsNull {
     field m_dummyField: int;
 
+    ctor (create dummyField: int) {
+        m_dummyField = dummyField;
+    }
+
     method ( null_ ): CustomToStringReturnsNull {
         return (CustomToStringReturnsNull createDefault);
     }
@@ -117,6 +121,10 @@ struct EmbedCustomStringReturnsNull {
 
 struct CustomGetReturnsNull {
     field m_dummyField: int;
+
+    ctor (create dummyField: int) {
+        m_dummyField = dummyField;
+    }
 
     method (get i: int): string {
         return null;
@@ -174,14 +182,14 @@ static class TemplateTest {
     }
 
     static method (testCustomGetReturnsNull) {
-        p := (CustomGetReturnsNull createDefault);
+        p := (CustomGetReturnsNull create 1);
         t := (Template create "{666}" (Type of p));
         r := (t render p);
         assert(r == "");
     }
 
     static method (testToStringReturnsNull) {
-        p := (EmbedCustomStringReturnsNull createDefault);
+        p := (EmbedCustomStringReturnsNull create 1);
         t := (Template create "{null_}" (Type of p));
         r := (t render p);
         assert(r == "");

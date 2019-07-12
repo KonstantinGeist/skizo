@@ -78,6 +78,7 @@ public:
     bool ECallAttributesResolved() const { return m_flags & E_METHODFLAGS_ECALL_ATTRIBUTES_RESOLVED; }
     bool IsInferred() const { return m_flags & E_METHODFLAGS_IS_INFERRED; }
     bool IsInlinable() const { return m_flags & E_METHODFLAGS_IS_INLINABLE; }
+    bool IsCompilerGenerated() const { return m_flags & E_METHODFLAGS_COMPILER_GENERATED; }
 
     /**
      * The name of the method.

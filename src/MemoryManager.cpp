@@ -155,9 +155,28 @@ void SMemoryManager::AddGCRoots(void** rootRefs, int count)
     }    
 }
 
+void SMemoryManager::InitializeStaticValueTypeField(void* obj, CClass* objClass)
+{
+    const SGCInfo& gcInfo = objClass->GCInfo();
+
+    // Zero-initializes the static valuetype field.
+    memset(obj, 0, gcInfo.ContentSize);
+
+    // Registers GC roots.
+    for(int i = 0; i < gcInfo.GCMapSize; i++) {
+        const int offset = gcInfo.GCMap[i];
+        m_roots->Add((char*)obj + offset);
+    }
+}
+
 void SKIZO_API _soX_gc_roots(SMemoryManager* mm, void** rootRefs, int count)
 {
     mm->AddGCRoots(rootRefs, count);
+}
+
+void SKIZO_API _soX_static_vt(SMemoryManager* mm, void* obj, void* objClass)
+{
+    mm->InitializeStaticValueTypeField(obj, (CClass*)objClass);
 }
 
 }

@@ -500,6 +500,7 @@ CDomain* CDomain::CreateDomain(const SDomainCreation& creation)
             domain->registerICall("_soX_gc_alloc", (void*)_soX_gc_alloc);
             domain->registerICall("_soX_gc_alloc_env", (void*)_soX_gc_alloc_env);
             domain->registerICall("_soX_gc_roots", (void*)_soX_gc_roots);
+            domain->registerICall("_soX_static_vt", (void*)_soX_static_vt);
             domain->registerICall("_soX_regvtable", (void*)_soX_regvtable);
             domain->registerICall("_soX_patchstrings", (void*)_soX_patchstrings);
             domain->registerICall("_soX_downcast", (void*)_soX_downcast);

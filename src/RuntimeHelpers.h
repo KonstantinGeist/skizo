@@ -92,6 +92,11 @@ void* _soX_gc_alloc_env(SMemoryManager* mm, void* objClass);
  */
 void SKIZO_API _soX_gc_roots(SMemoryManager* mm, void** rootRefs, int count);
 
+/**
+ * Initializes a static valuetype variable and GC-roots all its heap references.
+ */
+void SKIZO_API _soX_static_vt(SMemoryManager* mm, void* obj, void* objClass);
+
 // ***********
 //   RUNTIME
 // ***********

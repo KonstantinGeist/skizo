@@ -2046,6 +2046,7 @@ again:
             defaultCtor->SetName(domain->NewSlice("createDefault"));
             defaultCtor->SetMethodKind(E_METHODKIND_CTOR);
             defaultCtor->Signature().ReturnType.SetObject(klass->FlatName());
+            defaultCtor->Flags() |= E_METHODFLAGS_COMPILER_GENERATED;
             klass->AddInstanceCtor(defaultCtor);
             klass->AddToNameSet(defaultCtor->Name(), defaultCtor);
         }

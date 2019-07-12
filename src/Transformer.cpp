@@ -66,6 +66,7 @@ struct STransformer
     void inferConsts(CClass* pClass);
     void inferFields(CClass* pClass);
     void inferEventFields(CClass* pClass);
+    void inferInstanceCtors(CClass* pClass);
     void inferMethod(CMethod* method);
 
     // callExprPos simply tells if it's ok to have class names here (if it's an ident)
@@ -381,14 +382,7 @@ void SkizoTransform(CDomain* domain)
         // modifies methods and can also create a new ctor.
         // IMPORTANT Should follow AFTER ::inferFields(..) because depends on resolved types of the fields.
         transformer.inferEventFields(pClass);
-
-        {
-            const CArrayList<CMethod*>* instanceCtors = pClass->InstanceCtors();
-            for(int j = 0; j < instanceCtors->Count(); j++) {
-                transformer.inferMethod(instanceCtors->Array()[j]);
-            }
-        }
-
+        transformer.inferInstanceCtors(pClass);
         transformer.inferMethod(pClass->StaticCtor());
 
         {
@@ -551,6 +545,21 @@ void STransformer::inferEventFields(CClass* pClass)
 
         // We don't need the list anymore.
         pClass->ClearEventFields();
+    }
+}
+
+void STransformer::inferInstanceCtors(CClass* pClass)
+{
+    const bool isStructClass = pClass->PrimitiveType() == E_PRIMTYPE_OBJECT && pClass->IsValueType();
+
+    const CArrayList<CMethod*>* instanceCtors = pClass->InstanceCtors();
+    for(int j = 0; j < instanceCtors->Count(); j++) {
+        CMethod* instanceCtor = instanceCtors->Array()[j];
+        if(isStructClass && !instanceCtor->IsCompilerGenerated() && instanceCtor->Signature().Params->Count() == 0) {
+            ScriptUtils::FailC("Structs aren't allowed to have explicit parameterless instance constructors.", pClass);
+        }
+
+        inferMethod(instanceCtor);
     }
 }
 

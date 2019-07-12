@@ -23,6 +23,8 @@
 
 namespace skizo { namespace script {
 
+class CClass;
+
 /**
  * For use by SMemoryManager::AddGCRoot(..) and SMemoryManager::RemoveGCRoot(..)
  */
@@ -121,6 +123,11 @@ public:
      */
     void AddGCRoots(void** rootRefs, int count);
 
+    /**
+     * Implements _soX_static_vt
+     */
+    void InitializeStaticValueTypeField(void* obj, CClass* objClass);
+
     SBumpPointerAllocator& BumpPointerAllocator() { return m_bumpPointerAllocator; }
     const SBumpPointerAllocator& BumpPointerAllocator() const { return m_bumpPointerAllocator; }
 
@@ -129,7 +136,7 @@ public:
     /**
      * Set in CDomain::CreateDomain(..); used by GC to quickly check if an object is a map (they have special GC maps).
      */
-    class CClass* MapClass() const { return m_mapClass; }
+    CClass* MapClass() const { return m_mapClass; }
     void SetMapClass(CClass* value) { m_mapClass = value; }
 
 private:
