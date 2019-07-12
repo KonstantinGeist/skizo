@@ -1,0 +1,3 @@
+static class Guid {
+    static native method (generate): string;
+}
