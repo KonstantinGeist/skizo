@@ -56,13 +56,13 @@ public:
      * Forces a garbage collection.
      * Ignored if called inside a destructor.
      *
-     * If judgementDay is set to true, the garbage collector sweeps out all objects, even if those that are reachable.
+     * If domainTeardown is set to true, the garbage collector sweeps out all objects, even if those that are reachable.
      * Used during domain teardown.
      *
      * @warning Internal code should not schedule garbage collection before code emission, as vtables of string
      * literals aren't patched yet.
      */
-    void CollectGarbage(bool judgementDay = false);
+    void CollectGarbage(bool domainTeardown = false);
 
     /**
      * Validates the pointer points to a valid Skizo object.

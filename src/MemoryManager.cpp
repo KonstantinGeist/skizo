@@ -339,7 +339,7 @@ void SMemoryManager::sweep(void* rawObj, void* ctx)
 }
 
 // WARNING don't introduce RAII
-void SMemoryManager::CollectGarbage(bool judgementDay)
+void SMemoryManager::CollectGarbage(bool domainTeardown)
 {
     // See SMemoryManager::m_disableGC for details.
     if(m_disableGC) {
@@ -356,8 +356,8 @@ void SMemoryManager::CollectGarbage(bool judgementDay)
     //   Mark phase.
     // ***************
 
-    // Mark phase is ignored during the "judgementDay" collection, i.e. on domain teardown.
-    if(!judgementDay) {
+    // Mark phase is ignored during the "domainTeardown" collection, i.e. on domain teardown.
+    if(!domainTeardown) {
         for(SLinkedListNode<void*>* node = m_roots->FirstNode(); node; node = node->Next) {
             // WARNING! m_roots are not pointers to actual variables! m_roots are references to _the locations_ that hold
             // the variables! It's important.
@@ -414,7 +414,7 @@ doGC:
 
     // On domain teardown, we finally get rid of string literals.
     // See "icalls/string.cpp" for more information on how string literals are managed.
-    if(judgementDay) {
+    if(domainTeardown) {
         for(int i = 0; i < m_stringLiterals->Count(); i++) {
             void* strLiteral = (SStringHeader*)m_stringLiterals->Array()[i];
             _so_string_dtor(strLiteral);
@@ -431,7 +431,7 @@ doGC:
     // are disabled so that such garbage was never allocated again.
     // ********************************************************************
 
-    if(judgementDay && m_poolAllocator.GetObjectCount() && m_dtorsEnabled) {
+    if(domainTeardown && m_poolAllocator.GetObjectCount() && m_dtorsEnabled) {
         m_dtorsEnabled = false;
         goto doGC;
     }

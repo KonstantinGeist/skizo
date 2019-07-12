@@ -53,7 +53,7 @@
 //  therefore never attempting to free them.
 //
 //  String literals are only destroyed on domain teardown
-//  (SMemoryManager::CollectGarbage(..) with "judgementDay" flag set).
+//  (SMemoryManager::CollectGarbage(..) with "domainTeardown" flag set).
 // ***********************************************************************************
 
 namespace skizo { namespace script {
