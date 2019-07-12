@@ -846,7 +846,7 @@ void SEmitter::emitArrayCreationExpr(STextBuilder& cb, const CMethod* method, co
     SKIZO_REQ_PTR(arrayCreationExpr->InferredType.ResolvedClass);
 
     // _soX_newarray refers to the pre-created array class for array creation.
-    cb.Emit("(_soX_newarray(");
+    cb.Emit("(_soX_newarray((void*)%p, ", (void*)domain);
     emitValueExpr(cb, method, arrayCreationExpr->Expr);
     cb.Emit(", _soX_vtbl_%s))", &arrayCreationExpr->InferredType.ResolvedClass->FlatName());
 }
@@ -2094,7 +2094,7 @@ void SEmitter::emit()
                 "extern _so_bool _soX_is(void* obj, void* type);\n"
                 "extern void _soX_zero(void* a, int sz);\n"
                 "extern _so_bool _soX_biteq(void* a, void* b, int sz)\n;"
-                "extern void* _soX_newarray(int arrayLength, void** vtable);\n"
+                "extern void* _soX_newarray(void* domain, int arrayLength, void** vtable);\n"
                 "extern void _soX_abort0(int errCode);\n"
                 "extern void _soX_abort_e(void* errObj);\n"
                 "extern void _soX_cctor(void* pClass, void* cctor);\n"
@@ -2321,9 +2321,10 @@ void SEmitter::emitArrayInitHelper(const CArrayInitializationType* initType, int
     //   Body.
     // *********
 
-    mainCB.Emit("%t self = (%t)_soX_newarray(%d, _soX_vtbl_%s);\n",
+    mainCB.Emit("%t self = (%t)_soX_newarray((void*)%p, %d, _soX_vtbl_%s);\n",
                              &initType->ArrayType,
                              &initType->ArrayType,
+                             (void*)domain,
                              initType->Arity,
                              &initType->ArrayType.ResolvedClass->FlatName());
 

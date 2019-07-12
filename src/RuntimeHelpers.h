@@ -226,7 +226,7 @@ void SKIZO_API _soX_checktype(void* pClass);
  * Creates a new array.
  * @note "vtable" is the vtable of the generated array class, not the element type!
  */
-void* SKIZO_API _soX_newarray(int arrayLength, void** vtable);
+void* SKIZO_API _soX_newarray(void* domain, int arrayLength, void** vtable);
 
 /**
  * If SDomainCreation::StackTraceInfo is set true, the emitter emits this code at the beginning

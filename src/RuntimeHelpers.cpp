@@ -35,9 +35,9 @@ extern "C" {
 //   _soX_newarray.
 // ******************
 
-void* SKIZO_API _soX_newarray(int arraySize, void** vtable)
+void* SKIZO_API _soX_newarray(void* domain, int arraySize, void** vtable)
 {
-    return CDomain::ForCurrentThread()->CreateArray(arraySize, vtable);
+    return ((CDomain*)domain)->CreateArray(arraySize, vtable);
 }
 
 // *****************
