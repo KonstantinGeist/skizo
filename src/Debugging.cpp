@@ -27,6 +27,179 @@ namespace skizo { namespace script {
 using namespace skizo::core;
 using namespace skizo::collections;
 
+namespace
+{
+
+class CLocalDebugInfo: public CObject
+{
+public:
+    void* ptr;
+    CClass* klass; // NOTE the real underlying class of the object, not the interface
+};
+typedef CHashMap<const CString*, CLocalDebugInfo*> CLocalDebugInfoMap;
+
+struct SDebuggerCommandDesc
+{
+    const char* Name;
+    const int ArgumentCount;
+    const char* Help;
+    bool ShouldEndPromptLoop;
+
+    SDebuggerCommandDesc(const char* name, int argumentCount, const char* help, bool shouldEndPromptLoop = false)
+        : Name(name),
+          ArgumentCount(argumentCount),
+          Help(help),
+          ShouldEndPromptLoop(shouldEndPromptLoop)
+    {
+    }
+};
+
+struct SDebuggerCommandContext
+{
+    const CDomain* Domain;
+    const CArrayList<const CString*>* CmdArgs;
+    const CLocalDebugInfoMap* DebugInfoMap;
+    const class CDebuggerCommandList* CommandList;
+
+    SDebuggerCommandContext(const CDomain* domain, const CArrayList<const CString*>* cmdArgs, const CLocalDebugInfoMap* debugInfoMap, const CDebuggerCommandList* cmdList)
+        : Domain(domain),
+          CmdArgs(cmdArgs),
+          DebugInfoMap(debugInfoMap),
+          CommandList(cmdList)
+    {
+    }
+};
+
+class CDebuggerCommand: public CObject
+{
+public:
+    virtual SDebuggerCommandDesc GetDesc() const = 0;
+    virtual const CString* Process(const SDebuggerCommandContext& context) const = 0;
+};
+
+class CDebuggerCommandList: public CObject
+{
+public:
+    CDebuggerCommandList()
+        : m_commands(new CArrayList<CDebuggerCommand*>())
+    {
+    }
+
+    template <class T>
+    void AddCommand()
+    {
+        Auto<T> cmd (new T());
+        m_commands->Add(cmd);
+    }
+
+    CDebuggerCommand* MatchedCommand(const CArrayList<const CString*>* cmdArgs) const
+    {
+        const int argCount = cmdArgs->Count();
+        if(argCount == 0) {
+            return nullptr;
+        }
+
+        const CString* head = cmdArgs->Array()[0];
+
+        for(int i = 0; i < m_commands->Count(); i++) {
+            CDebuggerCommand* candidate = m_commands->Array()[i];
+            const SDebuggerCommandDesc desc = candidate->GetDesc();
+
+            if((argCount - 1) == desc.ArgumentCount // argCount without the head
+            && head->EqualsASCII(desc.Name))
+            {
+                return candidate;
+            }
+        }
+
+        return nullptr;
+    }
+
+    void PrintHelp() const
+    {
+        Auto<CStringBuilder> sb (new CStringBuilder());
+
+        for(int i = 0; i < m_commands->Count(); i++) {
+            const SDebuggerCommandDesc desc = m_commands->Array()[i]->GetDesc();
+
+            Auto<const CString> name (CString::FromASCII(desc.Name));
+            Auto<const CString> help (CString::FromASCII(desc.Help));
+
+            const int tabIndex = help->FindChar(SKIZO_CHAR('\t'));
+
+            sb->Append(name);
+            sb->Append(SKIZO_CHAR(' '));
+            if(tabIndex != -1) {
+                sb->Append(help, 0, tabIndex);
+            }
+
+            constexpr int MAX_NAME = 40;
+            const int padCount = MAX_NAME - (name->Length() + 1 + (tabIndex > 0? tabIndex: 0));
+            for(int i = 0; i < padCount; i++) {
+                sb->Append(SKIZO_CHAR(' '));
+            }
+
+            sb->Append(help, tabIndex + 1);
+            sb->AppendLine();
+        }
+
+        Auto<const CString> str (sb->ToString());
+        Console::WriteLine(str);
+    }
+
+private:
+    Auto<CArrayList<CDebuggerCommand*>> m_commands;
+};
+
+class CContinueCommand: public CDebuggerCommand
+{
+public:
+    virtual SDebuggerCommandDesc GetDesc() const override
+    {
+        return SDebuggerCommandDesc("cont", 0, "continue (exit this breakpoint)", true); // shouldEndPromptLoop=true
+    }
+
+    virtual const CString* Process(const SDebuggerCommandContext& /*context*/) const override
+    {
+        return nullptr;
+    }
+};
+
+class CShowInstancePropertyCommand: public CDebuggerCommand
+{
+public:
+    virtual SDebuggerCommandDesc GetDesc() const override
+    {
+        return SDebuggerCommandDesc("show-inst-prop", 2, "$local$ $prop$\tlist instance properties");
+    }
+
+    virtual const CString* Process(const SDebuggerCommandContext& context) const override;
+};
+
+class CListInstancePropertiesCommand: public CDebuggerCommand
+{
+public:
+    virtual SDebuggerCommandDesc GetDesc() const override
+    {
+        return SDebuggerCommandDesc("list-inst-props", 1, "$local$\tshow instance property");
+    }
+
+    virtual const CString* Process(const SDebuggerCommandContext& context) const override;
+};
+
+class CHelpCommand: public CDebuggerCommand
+{
+public:
+    virtual SDebuggerCommandDesc GetDesc() const override
+    {
+        return SDebuggerCommandDesc("help", 0, "print this help information");
+    }
+
+    virtual const CString* Process(const SDebuggerCommandContext& context) const override;
+};
+
+}
+
 static const CString* getStringRepr_failable(const void* obj, const CClass* objClass, const CDomain* domain)
 {
     auto failable = (const SFailableHeader*)obj;
@@ -387,14 +560,6 @@ void CDomain::PrintStackTrace() const
     }
 }
 
-class CLocalDebugInfo: public CObject
-{
-public:
-    void* ptr;
-    CClass* klass; // NOTE the real underlying class of the object, not the interface
-};
-typedef CHashMap<const CString*, CLocalDebugInfo*> CLocalDebugInfoMap;
-
 static CField* instancePropertyFieldByName(const CClass* klass, const CString* name)
 {
     const SStringSlice slice (name);
@@ -407,15 +572,16 @@ static CField* instancePropertyFieldByName(const CClass* klass, const CString* n
     }
 }
 
-static const CString* processPropCommand(const CDomain* domain, const CArrayList<const CString*>* cmdArgs, const CLocalDebugInfoMap* debugInfoMap)
+const CString* CShowInstancePropertyCommand::Process(const SDebuggerCommandContext& context) const
 {
+    const CArrayList<const CString*>* cmdArgs = context.CmdArgs;
     SKIZO_REQ(cmdArgs->Count() >= 3, EC_ILLEGAL_ARGUMENT);
     const CString* localName = cmdArgs->Array()[1];
     const CString* fieldName = cmdArgs->Array()[2];
 
     CLocalDebugInfo* debugInfo;
 
-    if(debugInfoMap->TryGet(localName, &debugInfo)) {
+    if(context.DebugInfoMap->TryGet(localName, &debugInfo)) {
         debugInfo->Unref();
 
         const CField* field = instancePropertyFieldByName(debugInfo->klass, fieldName);
@@ -426,9 +592,9 @@ static const CString* processPropCommand(const CDomain* domain, const CArrayList
 
             Auto<const CString> repr;
             if(fieldType->IsRefType()) {
-                repr.SetPtr(domain->GetStringRepresentation(*((void**)((char*)debugInfo->ptr + field->Offset)), fieldType));
+                repr.SetPtr(context.Domain->GetStringRepresentation(*((void**)((char*)debugInfo->ptr + field->Offset)), fieldType));
             } else {
-                repr.SetPtr(domain->GetStringRepresentation((char*)debugInfo->ptr + field->Offset, fieldType));
+                repr.SetPtr(context.Domain->GetStringRepresentation((char*)debugInfo->ptr + field->Offset, fieldType));
             }
 
             return ScriptUtils::UnescapeString(repr);
@@ -442,14 +608,15 @@ static const CString* processPropCommand(const CDomain* domain, const CArrayList
     return nullptr;
 }
 
-static const CString* processListInstPropsCommand(const CDomain* domain, const CArrayList<const CString*>* cmdArgs, const CLocalDebugInfoMap* debugInfoMap)
+const CString* CListInstancePropertiesCommand::Process(const SDebuggerCommandContext& context) const
 {
+    const CArrayList<const CString*>* cmdArgs = context.CmdArgs;
     SKIZO_REQ(cmdArgs->Count() >= 2, EC_ILLEGAL_ARGUMENT);
     const CString* localName = cmdArgs->Array()[1];
 
     CLocalDebugInfo* debugInfo;
 
-    if(debugInfoMap->TryGet(localName, &debugInfo)) {
+    if(context.DebugInfoMap->TryGet(localName, &debugInfo)) {
         debugInfo->Unref();
         const CClass* objClass = debugInfo->klass;
 
@@ -461,7 +628,7 @@ static const CString* processListInstPropsCommand(const CDomain* domain, const C
             if(potentialProp->TargetField()) {
                 Auto<const CString> propName (potentialProp->Name().ToString());
                 sb->Append(propName);
-                sb->Append(SKIZO_CHAR('\n'));
+                sb->AppendLine();
             }
         }
         if(sb->Length() == 0) {
@@ -475,49 +642,44 @@ static const CString* processListInstPropsCommand(const CDomain* domain, const C
     return nullptr;
 }
 
+const CString* CHelpCommand::Process(const SDebuggerCommandContext& context) const
+{
+    context.CommandList->PrintHelp();
+    return nullptr;
+}
+
 static void promptLoop(const CDomain* domain, const CLocalDebugInfoMap* debugInfoMap)
 {
-    Auto<const CString> cmd;
-
     // ****************
     //   Prompt loop.
     // *****************
 
+    Auto<CDebuggerCommandList> cmdList (new CDebuggerCommandList());
+    cmdList->AddCommand<CContinueCommand>();
+    cmdList->AddCommand<CShowInstancePropertyCommand>();
+    cmdList->AddCommand<CListInstancePropertiesCommand>();
+    cmdList->AddCommand<CHelpCommand>();
+
     while(true) {
         printf("> "); // prompt
-        cmd.SetPtr (Console::ReadLine());
+        Auto<const CString> cmd (Console::ReadLine());
 
-        if(CString::IsNullOrEmpty(cmd)) {
-            // The prompt loop is ended with an empty command.
-            break;
-        } else {
-            Auto<CArrayList<const CString*> > cmdArgs (cmd->Split(SKIZO_CHAR(' ')));
-            if(cmdArgs->Count() == 0) {
-                break;
-            } else {
-                const CString* cmdHead = cmdArgs->Array()[0];
-                Auto<const CString> res;
+        Auto<CArrayList<const CString*> > cmdArgs (cmd? cmd->Split(SKIZO_CHAR(' ')): new CArrayList<const CString*>());
+        const SDebuggerCommandContext context (domain, cmdArgs, debugInfoMap, cmdList);
 
-                // ********
-                //   PROP
-                // ********
+        const CDebuggerCommand* matchedCommand = cmdList->MatchedCommand(cmdArgs);
+        if(matchedCommand) {
 
-                if(cmdHead->EqualsASCII("p") && cmdArgs->Count() == 3) {
-                    res.SetPtr(processPropCommand(domain, cmdArgs, debugInfoMap));
-                } else if(cmdHead->EqualsASCII("lip") && cmdArgs->Count() == 2) {
-                    res.SetPtr(processListInstPropsCommand(domain, cmdArgs, debugInfoMap));
-                } else if(cmdHead->EqualsASCII("help") && cmdArgs->Count() == 1) {
-                    printf("p $local$ $property$ \t\tprint the property defined in the local\n"
-                           "lip $local$ \t\t\tprint all instance properties of the local\n");
-                } else {
-                    printf("Unrecognized command.\n");
-                }
-
-                if(res) {
-                    Console::WriteLine(res);
-                    res.SetPtr(nullptr);
-                }
+            Auto<const CString> result (matchedCommand->Process(context));
+            if(result) {
+                Console::WriteLine(result);
             }
+            if(matchedCommand->GetDesc().ShouldEndPromptLoop) {
+                break;
+            }
+
+        } else {
+            printf("Unrecognized or ill-formed command. Print 'help' for more information.\n");
         }
     }
 }

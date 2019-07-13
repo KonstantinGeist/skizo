@@ -565,8 +565,10 @@ void STransformer::inferInstanceCtors(CClass* pClass)
 
 void STransformer::inferBreakExpr(CBreakExpression* breakExpr)
 {
-    if(!domain->SoftDebuggingEnabled() || curMethod->IsUnsafe()) {
+    if(!domain->SoftDebuggingEnabled()) {
         ScriptUtils::WarnE("'Break' statement ignored (/softdebug:true required).", breakExpr);
+    } else if(curMethod->IsUnsafe()) {
+        ScriptUtils::WarnE("'Break' statement ignored (unsafe method).", breakExpr);
     } else {
         // 'Break' statement is only a marker which tells where to place a breakpoint.
         curMethod->Flags() |= E_METHODFLAGS_HAS_BREAK_EXPRS;
