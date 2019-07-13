@@ -170,7 +170,7 @@ class CShowInstancePropertyCommand: public CDebuggerCommand
 public:
     virtual SDebuggerCommandDesc GetDesc() const override
     {
-        return SDebuggerCommandDesc("show-inst-prop", 2, "$local$ $prop$\tlist instance properties");
+        return SDebuggerCommandDesc("show-inst-prop", 2, "$local$ $prop$\tshow instance property");
     }
 
     virtual const CString* Process(const SDebuggerCommandContext& context) const override;
@@ -181,7 +181,7 @@ class CListInstancePropertiesCommand: public CDebuggerCommand
 public:
     virtual SDebuggerCommandDesc GetDesc() const override
     {
-        return SDebuggerCommandDesc("list-inst-props", 1, "$local$\tshow instance property");
+        return SDebuggerCommandDesc("list-inst-props", 1, "$local$\tlist instance properties");
     }
 
     virtual const CString* Process(const SDebuggerCommandContext& context) const override;
