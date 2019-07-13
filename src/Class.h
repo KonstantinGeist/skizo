@@ -608,6 +608,10 @@ private:
     mutable skizo::core::Auto<skizo::collections::CHashMap<const void*, bool> > m_interfaceCache;
 
     mutable skizo::core::SNullable<bool> m_hasReferencesForRemoting;
+
+    // Cached for GetMapMethods(..)
+    mutable FHashCode m_hashCodeImpl;
+    mutable FEquals m_equalsImpl;
 };
 
 } }

@@ -61,7 +61,9 @@ CClass::CClass(class CDomain* declaringDomain)
       m_instanceMethodMap(new CHashMap<SStringSlice, CMethod*>()),
       m_staticMethods(new CArrayList<CMethod*>()),
       m_nameSet(new CHashMap<SStringSlice, CMember*>()),
-      m_dtorImpl(nullptr)
+      m_dtorImpl(nullptr),
+      m_hashCodeImpl(nullptr),
+      m_equalsImpl(nullptr)
 {
 }
 
@@ -839,6 +841,12 @@ bool CClass::HasBaseDtors() const
 
 void CClass::GetMapMethods(void* obj, FHashCode* out_hashCode, FEquals* out_equals) const
 {
+    if(m_hashCodeImpl && m_equalsImpl) {
+        *out_hashCode = m_hashCodeImpl;
+        *out_equals = m_equalsImpl;
+        return;
+    }
+
     *out_hashCode = nullptr;
     *out_equals = nullptr;
 
@@ -849,7 +857,7 @@ void CClass::GetMapMethods(void* obj, FHashCode* out_hashCode, FEquals* out_equa
         && pMethod->Signature().ReturnType.PrimType == E_PRIMTYPE_INT
         && pMethod->Name().EqualsAscii("hashCode"))
         {
-            *out_hashCode = (FHashCode)so_virtmeth_of(obj, i);
+            *out_hashCode = m_hashCodeImpl = (FHashCode)so_virtmeth_of(obj, i);
         }
 
         if(pMethod->Signature().ReturnType.PrimType == E_PRIMTYPE_BOOL
@@ -857,7 +865,7 @@ void CClass::GetMapMethods(void* obj, FHashCode* out_hashCode, FEquals* out_equa
         && (pMethod->Signature().Params->Item(0)->Type.ResolvedClass->m_flatName.EqualsAscii("any"))
         && pMethod->Name().EqualsAscii("equals"))
         {
-            *out_equals = (FEquals)so_virtmeth_of(obj, i);
+            *out_equals = m_equalsImpl = (FEquals)so_virtmeth_of(obj, i);
         }
     }
 }
