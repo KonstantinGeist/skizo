@@ -2017,7 +2017,7 @@ again:
                 ScriptUtils::FailT("An 'extend' definition doesn't support the 'nativeSize' attribute.", token);
             }
             if(!klass->IsValueType()) {
-                ScriptUtils::FailT("The 'nativeSize' attribute is applicable only to valuetypes.", token);
+                ScriptUtils::FailT("The 'nativeSize' attribute is applicable only to structs.", token);
             }
 
             if(klass->InstanceFields()->Count() > 0) {
