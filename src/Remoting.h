@@ -29,13 +29,13 @@ namespace skizo { namespace script {
  * Domains communicate via domain handles.
  * Domain::runPath(..)/Domain::runString(..) in Skizo code return a domain handle.
  *
- * The handle is stored in two places: the SkizoDomainThread instance of the target domain (see icalls/Domain.cpp)
+ * The handle is stored in two places: the CRemoteDomainThread instance of the target domain (see icalls/Domain.cpp)
  * and a wrapper object in Skizo. So, the handle is destroyed when the domain finishes execution and
  * no other Skizo objects refer to it.
  */
 class CDomainHandle: public skizo::core::CAtomicObject
 {
-    friend class SkizoDomainThread;
+    friend class CRemoteDomainThread;
 
 public:
     class CDomain* GetDomain() const;

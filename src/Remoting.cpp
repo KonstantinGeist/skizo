@@ -164,13 +164,13 @@ void CDomainHandle::SendMessageSync(CDomainMessage* msg, void* blockingRet, int 
 }
 
 // ***********************
-//   SkizoDomainThread
+//   RemoteDomainThread
 // ***********************
 
-#define DEVILS_NUMBER 666
+#define REMOTE_DOMAIN_COOKIE 1234
 
 // Each new domain corresponds to a separate thread.
-class SkizoDomainThread: public CThread
+class CRemoteDomainThread: public CThread
 {
 public:
     SDomainCreation DomainCreation;
@@ -184,12 +184,12 @@ public:
     // See SkizoDomainHandle.h for more info on this.
     Auto<CDomainHandle> DomainHandle;
     
-    SkizoDomainThread()
+    CRemoteDomainThread()
         : SearchPaths(new CArrayList<char*>())
     {
     }
 
-    virtual ~SkizoDomainThread()
+    virtual ~CRemoteDomainThread()
     {
         for(int i = 0; i < this->SearchPaths->Count(); i++) {
             CString::FreeUtf8(this->SearchPaths->Array()[i]);
@@ -217,7 +217,7 @@ public:
 
     virtual void OnStart() override
     {
-        main(DEVILS_NUMBER);
+        main(REMOTE_DOMAIN_COOKIE);
     }
 
     // If the source is a method name, parse it, get the declaring module of the specified method.
@@ -289,7 +289,7 @@ public:
         for(int i = 0; i < searchPaths->Count(); i++) {
             char* searchPath = searchPaths->Array()[i]->ToUtf8();
             this->DomainCreation.AddSearchPath(searchPath);
-            // Makes the path live, see SkizoDomainThread::SearchPaths for more info.
+            // Makes the path live, see CRemoteDomainThread::SearchPaths for more info.
             this->SearchPaths->Add(searchPath);
         }
 
@@ -304,7 +304,7 @@ public:
 
 CDomainHandle* CDomain::CreateRemoteDomain(const CString* source, ESourceKind sourceKind, const CArrayList<const CString*>* permArray)
 {
-    Auto<SkizoDomainThread> domainThread (new SkizoDomainThread());
+    Auto<CRemoteDomainThread> domainThread (new CRemoteDomainThread());
     return domainThread->PreStart(source, sourceKind, permArray);
 }
 
