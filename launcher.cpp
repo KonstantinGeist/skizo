@@ -52,9 +52,7 @@ static int mainImpl(int argc, char **argv)
   int r = 0;
 
   {
-    #ifdef SKIZO_DEBUG_LEAKS
-        TrackAllocations(true);
-    #else
+    #ifndef SKIZO_DEBUG_MODE
         #ifdef SKIZO_BASIC_LEAK_DETECTOR
         SuppressBasicLeakDetector(true);
         #endif
