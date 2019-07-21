@@ -518,6 +518,7 @@ CDomain* CDomain::CreateDomain(const SDomainCreation& creation)
             domain->registerICall("_soX_newarray", (void*)_soX_newarray);
             domain->registerICall("_soX_addhandler", (void*)_soX_addhandler);
             domain->registerICall("_soX_msgsnd_sync", (void*)_soX_msgsnd_sync);
+            domain->registerICall("_soX_msgsnd_async", (void*)_soX_msgsnd_async);
             domain->registerICall("_soX_unpack", (void*)_soX_unpack);
             domain->registerICall("_so_int_op_divide", (void*)_so_int_op_divide);
 

@@ -58,10 +58,15 @@ public:
 
     /**
      * Adds the message to the domain queue of the referenced domain.
-     * The message blocks the thread until the function returns its result (if any) in a memory area referenced by blockingRet.
+     * The message blocks the thread until the function returns.
      * Thread-safe.
      */
-    void SendMessageSync(class CDomainMessage* msg, void* blockingRet, int timeout);
+    void SendMessageSync(class CDomainMessage* msg, int timeout);
+
+    /**
+     * Same as SendMessageSync except doesn't block.
+     */
+    void SendMessageAsync(class CDomainMessage* msg);
 
 protected: // internal
     CDomainHandle();

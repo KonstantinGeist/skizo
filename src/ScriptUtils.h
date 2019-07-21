@@ -66,7 +66,7 @@ const skizo::core::CString* UnescapeString(const skizo::core::CString* input);
 /**
  * Generates a param name where it's missing...
  */
-SStringSlice NParamName(skizo::script::CDomain* pDomain, int index);
+SStringSlice NParamName(const skizo::script::CDomain* pDomain, int index);
 
 /**
  * Converts a raw GC-allocated array to a list of strings.

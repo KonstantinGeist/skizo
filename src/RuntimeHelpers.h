@@ -281,6 +281,11 @@ int SKIZO_API _so_int_op_divide(int a, int b);
 void SKIZO_API _soX_msgsnd_sync(void* hDomain, void* soObjName, void* pMethod, void** args, void* blockingRet);
 
 /**
+ * Same as _soX_msgsnd_sync, except there's no blocking to wait for the result. Control flow returns immediately.
+ */
+void SKIZO_API _soX_msgsnd_async(void* hDomain, void* soObjName, void* pMethod, void** args);
+
+/**
  * Used in the emitter. Every foreign proxy generates also "server stubs", special thunks of code
  * that convert messages into native C stack frames.
  * 'args' is a stack-allocated buffer which holds temporary variables which will be passed to the target native

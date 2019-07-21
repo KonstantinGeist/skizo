@@ -26,6 +26,39 @@ namespace skizo { namespace script {
 using namespace skizo::core;
 using namespace skizo::collections;
 
+static void addForeignProxyMethod(const CDomain* domain, CClass* klass, const CMethod* inputMethod, bool isAsync)
+{
+    Auto<CMethod> newMethod (new CMethod(klass));
+
+    if(isAsync) {
+        newMethod->SetSpecialMethod(E_SPECIALMETHOD_FOREIGNASYNC);
+
+        Auto<const CString> asyncName (inputMethod->Name().ToString());
+        asyncName.SetPtr(asyncName->Concat("Async"));
+        newMethod->SetName(domain->NewSlice(asyncName));
+    } else {
+        newMethod->SetSpecialMethod(E_SPECIALMETHOD_FOREIGNSYNC);
+        newMethod->Signature().ReturnType = inputMethod->Signature().ReturnType;
+        newMethod->SetName(inputMethod->Name());
+    }
+
+    int paramCount = inputMethod->Signature().Params->Count();
+    for(int j = 0; j < paramCount; j++) {
+        Auto<CParam> paramCopy (inputMethod->Signature().Params->Array()[j]->Clone());
+        paramCopy->IsCaptured = false; // ?!
+        paramCopy->DeclaringMethod = newMethod;
+
+        // Some built-in icalls don't provide param names. Generate them, then (otherwise, TCC fails).
+        if(paramCopy->Name.IsEmpty()) {
+            paramCopy->Name = ScriptUtils::NParamName(domain, j);
+        }
+
+        newMethod->Signature().Params->Add(paramCopy);
+    }
+
+    klass->RegisterInstanceMethod(newMethod);
+}
+
 bool CDomain::ResolveTypeRef(STypeRef& typeRef)
 {
     if(typeRef.ResolvedClass) {
@@ -543,25 +576,10 @@ bool CDomain::resolveForeignProxy(STypeRef& typeRef)
     for(int i = 0; i < instanceMethods->Count(); i++) {
         const CMethod* inputMethod = instanceMethods->Array()[i];
 
-        Auto<CMethod> newMethod (new CMethod(klass));
-        newMethod->SetName(inputMethod->Name());
-        newMethod->Signature().ReturnType = inputMethod->Signature().ReturnType;
-        newMethod->SetSpecialMethod(E_SPECIALMETHOD_FOREIGNSYNC);
-
-        int paramCount = inputMethod->Signature().Params->Count();
-        for(int j = 0; j < paramCount; j++) {
-            Auto<CParam> paramCopy (inputMethod->Signature().Params->Array()[j]->Clone());
-            paramCopy->IsCaptured = false; // ?!
-            paramCopy->DeclaringMethod = newMethod;
-
-            // Some built-in icalls don't provide param names. Generate them, then (otherwise, TCC fails).
-            if(paramCopy->Name.IsEmpty()) {
-                paramCopy->Name = ScriptUtils::NParamName(this, j);
-            }
-
-            newMethod->Signature().Params->Add(paramCopy);
+        addForeignProxyMethod(this, klass, inputMethod, false); // isAsync=false
+        if(inputMethod->Signature().ReturnType.IsVoid()) {
+            addForeignProxyMethod(this, klass, inputMethod, true); // isAsync=true
         }
-        klass->RegisterInstanceMethod(newMethod);
     }
 
     // ***************************************************************************************************

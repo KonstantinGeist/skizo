@@ -167,7 +167,7 @@ const CString* UnescapeString(const CString* input)
     return sb->ToString();
 }
 
-SStringSlice NParamName(CDomain* pDomain, int index)
+SStringSlice NParamName(const CDomain* pDomain, int index)
 {
     // TODO simplify
     Auto<const CString> a (CString::Format("_soX_param_%d", index));

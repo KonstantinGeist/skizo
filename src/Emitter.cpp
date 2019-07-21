@@ -103,8 +103,9 @@ struct SEmitter
     void emitEventFire(STextBuilder& cb, const CMethod* method);
     void emitDisallowedECall(STextBuilder& cb, const CMethod* method);
     void emitEnumFromInt(STextBuilder& cb, const CMethod* method);
-    void emitRemoteMethodClientStub(STextBuilder& cb, const CMethod* method);
-    void emitRemoteMethodServerStubSync(const CMethod* method, const CClass* specificClass);
+    void emitRemoteMethodClientStubSync(STextBuilder& cb, const CMethod* method);
+    void emitRemoteMethodClientStubAsync(STextBuilder& cb, const CMethod* method);
+    void emitRemoteMethodServerStub(const CMethod* method, const CClass* specificClass);
     void emitFunctionBodies(const CClass* klass);
     void emitFunctionName(STextBuilder& cb, const CMethod* method, bool isVirtCallHelper = false);
     void emitInstanceFields(const CClass* klass);
@@ -1448,8 +1449,7 @@ void SEmitter::emitEventFire(STextBuilder& cb, const CMethod* method)
             "}\n");
 }
 
-// TODO pushframe/popframe etc.?
-void SEmitter::emitRemoteMethodClientStub(STextBuilder& cb, const CMethod* method)
+void SEmitter::emitRemoteMethodClientStubSync(STextBuilder& cb, const CMethod* method)
 {
     const CSignature& sig = method->Signature();
 
@@ -1494,9 +1494,44 @@ void SEmitter::emitRemoteMethodClientStub(STextBuilder& cb, const CMethod* metho
     }
 }
 
-void SEmitter::emitRemoteMethodServerStubSync(const CMethod* method, const CClass* specificClass)
+// TODO pushframe/popframe etc.?
+void SEmitter::emitRemoteMethodClientStubAsync(STextBuilder& cb, const CMethod* method)
 {
-    SKIZO_REQ_EQUALS(method->SpecialMethod(), E_SPECIALMETHOD_FOREIGNSYNC);
+    const CSignature& sig = method->Signature();
+
+    // Emits the arg array.
+    const int paramCount = sig.Params->Count();
+    if(paramCount) {
+        cb.Emit("void* _soX_args[%d] = { ", paramCount);
+        for(int i = 0; i < paramCount; i++) {
+            const CParam* param = sig.Params->Array()[i];
+
+            SKIZO_REQ_PTR(param->Type.ResolvedClass);
+
+            if(param->Type.ResolvedClass->IsValueType()) {
+                cb.Emit("&l_%s", &param->Name);
+            } else {
+                cb.Emit("l_%s", &param->Name);
+            }
+
+            if(i < paramCount - 1) {
+                cb.Emit(", ");
+            }
+        }
+        cb.Emit(" };\n");
+    }
+
+    // The actual call.
+    cb.Emit("_soX_msgsnd_async(self->_so_%s_m_hdomain, self->_so_%s_m_name, (void*)%p, %S);\n",
+                                 &method->DeclaringClass()->FlatName(),
+                                 &method->DeclaringClass()->FlatName(),
+                                 method,
+                                 paramCount? "_soX_args": "(void*)0");
+
+}
+
+void SEmitter::emitRemoteMethodServerStub(const CMethod* method, const CClass* specificClass)
+{
     const CClass* pProxyClass = method->DeclaringClass();
 
     const CClass* wrappedClass = pProxyClass->ResolvedWrappedClass();
@@ -1608,11 +1643,11 @@ void SEmitter::emitFunctionBody(STextBuilder& cb, const CMethod* method)
                 break;
 
             case E_SPECIALMETHOD_FOREIGNSYNC:
-                emitRemoteMethodClientStub(cb, method);
+                emitRemoteMethodClientStubSync(cb, method);
                 break;
 
             case E_SPECIALMETHOD_FOREIGNASYNC:
-                SKIZO_REQ_NEVER // TODO
+                emitRemoteMethodClientStubAsync(cb, method);
                 break;
 
             case E_SPECIALMETHOD_ENUM_FROM_INT:
@@ -2101,6 +2136,7 @@ void SEmitter::emit()
                 "extern void _soX_checktype(void* pClass);\n"
                 "extern void _soX_addhandler(void* event, void* handler);\n"
                 "extern void _soX_msgsnd_sync(void* hDomain, void* soObjName, void* method, void** args, void* blockingRet);\n"
+                "extern void _soX_msgsnd_async(void* hDomain, void* soObjName, void* method, void** args);\n"
                 "extern void _soX_unpack(void** args, void* daMsg, void* method);\n"
                 "extern int _so_int_op_divide(int a, int b);\n");
 
@@ -2236,10 +2272,9 @@ void SEmitter::emit()
             for(int i = 0; i < instanceMethods->Count(); i++) {
                 const CMethod* m = instanceMethods->Array()[i];
 
+                // NOTE don't generate a stub for async because it is shared with sync (which is always present).
                 if(m->SpecialMethod() == E_SPECIALMETHOD_FOREIGNSYNC) {
-                    emitRemoteMethodServerStubSync(m, foreignProxyClass);
-                } else {
-                    // TODO ?
+                    emitRemoteMethodServerStub(m, foreignProxyClass);
                 }
             }
         }

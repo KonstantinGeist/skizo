@@ -29,7 +29,7 @@ namespace skizo { namespace script {
 using namespace skizo::core;
 using namespace skizo::collections;
 
-static void coreStringToFlatString(so_char16* buf, int bufSize, const CString* str, const char* errorMsg)
+static void objectNameToFlatString(so_char16* buf, int bufSize, const CString* str, const char* errorMsg)
 {
     if(str->Length() >= bufSize + 1) {
         CDomain::Abort(errorMsg);
@@ -37,7 +37,7 @@ static void coreStringToFlatString(so_char16* buf, int bufSize, const CString* s
     so_wcscpy_16bit(buf, str->Chars());
 }
 
-static void stringSliceToFlatString(so_char16* buf, int bufSize, const SStringSlice& slice, const char* errorMsg)
+static void methodNameToFlatString(so_char16* buf, int bufSize, const SStringSlice& slice, bool isAsync, const char* errorMsg)
 {
     const int length = slice.End - slice.Start;
     if(length >= bufSize + 1) {
@@ -45,7 +45,14 @@ static void stringSliceToFlatString(so_char16* buf, int bufSize, const SStringSl
     }
     const so_char16* src = slice.String->Chars() + slice.Start;
     memcpy(buf, src, length * sizeof(so_char16));
-    buf[length] = 0;
+
+    if(isAsync) {
+       // All async methods end with suffix `Async`. They should be stripped before landing in the server stub
+       // which isn't aware of async methods.
+       buf[length - 5] = 0; // 5 = length of `Async`
+    } else {
+        buf[length] = 0;
+    }
 }
 
 // ***********************
@@ -146,7 +153,7 @@ bool CDomainHandle::Wait(int timeout)
     return true;
 }
 
-void CDomainHandle::SendMessageSync(CDomainMessage* msg, void* blockingRet, int timeout)
+void CDomainHandle::SendMessageSync(CDomainMessage* msg, int timeout)
 {
     Auto<CDomain> domain (getDomain());
     if(domain) { // The domain might have been destroyed.
@@ -154,12 +161,22 @@ void CDomainHandle::SendMessageSync(CDomainMessage* msg, void* blockingRet, int 
 
         const bool b = CThread::Wait(msg->ResultWaitObject, timeout);
         if(!b) {
-            CDomain::Abort("Cross-domain method call timed out (target domain too busy, terminated or never enters Domain::listen(..))");
+            CDomain::Abort("A blocking cross-domain method call timed out (target domain too busy, terminated or never enters Domain::listen(..))");
         }
 
         if(msg->ErrorMessage) {
             CDomain::Abort((char*)msg->ErrorMessage, msg->FreeErrorMessage);
         }
+    } else {
+        CDomain::Abort("Can't make a cross-domain method call because the target domain was destroyed.");
+    }
+}
+
+void CDomainHandle::SendMessageAsync(class CDomainMessage* msg)
+{
+    Auto<CDomain> domain (getDomain());
+    if(domain) { // The domain might have been destroyed.
+        domain->EnqueueMessage(msg);
     } else {
         CDomain::Abort("Can't make a cross-domain method call because the target domain was destroyed.");
     }
@@ -351,7 +368,7 @@ private:
 
     void abortValidEntryPointNotFound()
     {
-        CDomain::Abort("Domain creation fail: valid entrypoint not found.");
+        CDomain::Abort("Domain creation failure: valid entrypoint not found.");
     }
 };
 
@@ -936,8 +953,8 @@ void SKIZO_API _soX_msgsnd_sync(void* _hDomain, void* soObjName, void* _pMethod,
     CDomainHandle* hDomain = ((SDomainHandleHeader*)_hDomain)->wrapped;
 
     Auto<CDomainMessage> msg (new CDomainMessage());
-    coreStringToFlatString(&msg->ObjectName[0], SKIZO_OBJECTNAME_SIZE, so_string_of(soObjName), "Object name too large.");
-    stringSliceToFlatString(&msg->MethodName[0], SKIZO_METHODNAME_SIZE, pMethod->Name(), "Method name too large.");
+    objectNameToFlatString(&msg->ObjectName[0], SKIZO_OBJECTNAME_SIZE, so_string_of(soObjName), "Object name too large.");
+    methodNameToFlatString(&msg->MethodName[0], SKIZO_METHODNAME_SIZE, pMethod->Name(), false, "Method name too large."); // isAsync=false
     msg->ResultWaitObject.SetVal(pDomain->ResultWaitObject());
 
     SSerializationContext context (hDomain);
@@ -955,17 +972,9 @@ void SKIZO_API _soX_msgsnd_sync(void* _hDomain, void* soObjName, void* _pMethod,
                                                                   SKIZO_DOMAINMESSAGE_SIZE - newLength,
                                                                  &context);
         if(bytesWritten < 0) {
-
-            // Unref all possible string parameters we've ref'd so far (see CClass::serialize for more info).
-            for(int j = 0; j <= i; j++) {
-                if(args[j] && (sig.Params->Array()[j]->Type.ResolvedClass == pDomain->StringClass())) {
-                    so_string_of(args[j])->Unref();
-                }
-            }
-
+            // TODO free string contents
             CDomain::Abort(MSG_FROM_RETURN(bytesWritten));
             return;
-
         }
 
         newLength += bytesWritten;
@@ -973,14 +982,7 @@ void SKIZO_API _soX_msgsnd_sync(void* _hDomain, void* soObjName, void* _pMethod,
 
     msg->BufferLength = newLength;
 
-    // Uncomment for testing/debugging.
-    /*for(int i = 0; i < newLength; i++) {
-        printf("%d ", msg->Buffer[i]);
-        if((i + 1) % 4 == 0)
-            printf("  ");
-    }*/
-
-    hDomain->SendMessageSync(msg, blockingRet, REMOTECALL_TIMEOUT);
+    hDomain->SendMessageSync(msg, REMOTECALL_TIMEOUT);
 
     // Extract the value.
     if(!sig.ReturnType.IsVoid()) {
@@ -994,6 +996,44 @@ void SKIZO_API _soX_msgsnd_sync(void* _hDomain, void* soObjName, void* _pMethod,
             CDomain::Abort(MSG_FROM_RETURN(bytesRead));
         }
     }
+}
+
+void SKIZO_API _soX_msgsnd_async(void* _hDomain, void* soObjName, void* _pMethod, void** args)
+{
+    const CMethod* pMethod = (const CMethod*)_pMethod;
+    SKIZO_REQ_PTR(soObjName);
+    CDomainHandle* hDomain = ((SDomainHandleHeader*)_hDomain)->wrapped;
+
+    Auto<CDomainMessage> msg (new CDomainMessage());
+    objectNameToFlatString(&msg->ObjectName[0], SKIZO_OBJECTNAME_SIZE, so_string_of(soObjName), "Object name too large.");
+    methodNameToFlatString(&msg->MethodName[0], SKIZO_METHODNAME_SIZE, pMethod->Name(), true, "Method name too large."); // isAsync=true
+
+    SSerializationContext context (hDomain);
+
+    const CSignature& sig = pMethod->Signature();
+    int newLength = 0;
+    for(int i = 0; i < sig.Params->Count(); i++) {
+        const CParam* param = sig.Params->Array()[i];
+
+        SKIZO_REQ_PTR(param->Type.ResolvedClass);
+        const CClass* paramClass = param->Type.ResolvedClass;
+
+        const int bytesWritten = paramClass->SerializeForRemoting(args[i],
+                                                                  msg->Buffer + newLength,
+                                                                  SKIZO_DOMAINMESSAGE_SIZE - newLength,
+                                                                 &context);
+        if(bytesWritten < 0) {
+            // TODO free string contents
+            CDomain::Abort(MSG_FROM_RETURN(bytesWritten));
+            return;
+        }
+
+        newLength += bytesWritten;
+    }
+
+    msg->BufferLength = newLength;
+
+    hDomain->SendMessageAsync(msg);
 }
 
 // ********************
@@ -1364,9 +1404,6 @@ void CDomain::Listen(void* soStopPred)
 
             if(isBlocking) {
                 msg->ResultWaitObject->Pulse();
-            } else {
-                // TODO add the result to the queue of the original domain
-                SKIZO_REQ_NEVER
             }
         }
     }
