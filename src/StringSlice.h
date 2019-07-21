@@ -35,6 +35,7 @@ struct SStringSlice
     SStringSlice(const SStringSlice& slice);
     bool Equals(const skizo::core::CString* str) const;
     bool Equals(const SStringSlice& slice) const;
+    bool Equals(const so_char16* chars) const;
     bool EqualsAscii(const char* str) const;
     bool StartsWithAscii(const char* str) const;
     void DebugPrint() const;

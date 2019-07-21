@@ -13,6 +13,7 @@
 
 #include "StringSlice.h"
 #include "Exception.h"
+#include "Marshal.h"
 #include "ScriptUtils.h"
 
 namespace skizo { namespace script {
@@ -97,6 +98,23 @@ bool SStringSlice::EqualsAscii(const char* str) const
     const so_char16* slicecs = this->String->Chars();
     for(int i = 0; i < strLen; i++) {
         if(str[i] != (char)slicecs[this->Start + i]) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool SStringSlice::Equals(const so_char16* str) const
+{
+    const int strLen = so_wcslen_16bit(str);
+    if((this->End - this->Start) != strLen) {
+        return false;
+    }
+
+    const so_char16* slicecs = this->String->Chars();
+    for(int i = 0; i < strLen; i++) {
+        if(str[i] != slicecs[this->Start + i]) {
             return false;
         }
     }

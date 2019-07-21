@@ -36,7 +36,8 @@ CMethod::CMethod(CClass* declaringClass)
           m_baseMethod(nullptr), m_parentMethod(nullptr),
           m_closureEnvClass(nullptr),
           m_numberOfCalls(0), m_totalTimeInMs(0),
-          m_targetField(nullptr)
+          m_targetField(nullptr),
+          m_serverStubImpl(nullptr)
 {
     m_flags = E_METHODFLAGS_NONE;
 }

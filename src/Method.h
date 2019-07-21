@@ -299,6 +299,15 @@ public:
      */
     void* InvokeDynamic(void* thisObj, void* args) const;
 
+    // ***************
+    //    Remoting.
+    // ***************
+
+    /**
+     * Returns the server stub implementation of this method (if any). Used by the remoting system.
+     */
+    void* GetServerStubImpl() const;
+
 private:
     CClass* m_declaringClass;
     class CClass* m_declaringExtClass;
@@ -324,6 +333,8 @@ private:
     class CField* m_targetField;
     mutable SThunkInfo m_thunkInfo;
     EMethodFlags m_flags;
+
+    mutable void* m_serverStubImpl;
 };
 
 } }

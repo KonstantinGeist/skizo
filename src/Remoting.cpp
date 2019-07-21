@@ -16,107 +16,111 @@
 #include "Contract.h"
 #include "Domain.h"
 #include "icall.h"
+#include "Marshal.h"
 #include "MemoryManager.h"
 #include "ModuleDesc.h"
 #include "RuntimeHelpers.h"
 
-#define DOMAIN_TIMEOUT 1000
-#define MESSAGEQUEUE_TIMEOUT 300
-#define REMOTECALL_TIMEOUT 1000
+#define DOMAIN_TIMEOUT 3000
+#define MESSAGEQUEUE_TIMEOUT 100
+#define REMOTECALL_TIMEOUT 2000
 
 namespace skizo { namespace script {
 using namespace skizo::core;
 using namespace skizo::collections;
 
+static void coreStringToFlatString(so_char16* buf, int bufSize, const CString* str, const char* errorMsg)
+{
+    if(str->Length() >= bufSize + 1) {
+        CDomain::Abort(errorMsg);
+    }
+    so_wcscpy_16bit(buf, str->Chars());
+}
+
+static void stringSliceToFlatString(so_char16* buf, int bufSize, const SStringSlice& slice, const char* errorMsg)
+{
+    const int length = slice.End - slice.Start;
+    if(length >= bufSize + 1) {
+        CDomain::Abort(errorMsg);
+    }
+    const so_char16* src = slice.String->Chars() + slice.Start;
+    memcpy(buf, src, length * sizeof(so_char16));
+    buf[length] = 0;
+}
+
 // ***********************
-//   CDomainHandle
+//      CDomainHandle
 // ***********************
 
 CDomainHandle::CDomainHandle()
-    : Mutex(new CMutex()),
-      WaitObject(new CWaitObject(false, false)), // Non-signaled, manual reset.
+    : DomainMutex(new CMutex()),
+      ReadinessWaitObject(new CWaitObject(false, false)), // Non-signaled, manual reset.
       Domain(nullptr)
 {
 }
 
-bool CDomainHandle::waitForDomain(bool doThrow) const
+bool CDomainHandle::waitForDomainReadiness(bool doThrowOnTimeout) const
 {
-    const bool b = CThread::Wait(this->WaitObject, DOMAIN_TIMEOUT); // TODO timeout?
-    if(doThrow && !b) {
+    if(!this->ReadinessWaitObject) {
+        return true;
+    }
+    const bool b = CThread::Wait(this->ReadinessWaitObject, DOMAIN_TIMEOUT);
+    if(doThrowOnTimeout && !b) {
         CDomain::Abort("Target domain does not respond.");
+    }
+    if(b) {
+        this->ReadinessWaitObject.SetPtr(nullptr);
     }
     return b;
 }
 
-void CDomainHandle::UpdateDomainValue(class CDomain* domain)
+void CDomainHandle::SetDomain(class CDomain* domain)
 {
-    SKIZO_LOCK_AB(this->Mutex) {
+    SKIZO_LOCK_AB(this->DomainMutex) {
         this->Domain = domain;
-    } SKIZO_END_LOCK_AB(this->Mutex);
+    } SKIZO_END_LOCK_AB(this->DomainMutex);
 }
 
-void CDomainHandle::Pulse()
+void CDomainHandle::SignalDomainIsReady()
 {
-    this->WaitObject->Pulse();
+    this->ReadinessWaitObject->Pulse();
 }
 
-CDomain* CDomainHandle::GetDomain() const
+CDomain* CDomainHandle::getDomain() const
 {
-    this->waitForDomain();
+    waitForDomainReadiness();
 
     CDomain* r = nullptr;
-    SKIZO_LOCK_AB(this->Mutex) {
+    SKIZO_LOCK_AB(this->DomainMutex) {
         r = this->Domain;
         if(r) {
             r->Ref();
         }
-    } SKIZO_END_LOCK_AB(this->Mutex);
-
-    return r;
-}
-
-CThread* CDomainHandle::GetThread() const
-{
-    this->waitForDomain();
-
-    CThread* r = nullptr;
-    SKIZO_LOCK_AB(this->Mutex) {
-        if(this->Domain) {
-            r = this->Domain->Thread();
-            r->Ref();
-        }
-    } SKIZO_END_LOCK_AB(this->Mutex);
+    } SKIZO_END_LOCK_AB(this->DomainMutex);
 
     return r;
 }
 
 bool CDomainHandle::IsAlive() const
 {
-    CDomain* domain = this->GetDomain();
-    if(domain) {
-        domain->Unref();
-    }
+    Auto<CDomain> domain (getDomain());
     return domain? true: false;
 }
 
 bool CDomainHandle::Wait(int timeout)
 {
-    // ************************************************
-    // Replicates ::GetThread(..), except returns false
-    // instead of aborting.
-    // ************************************************
-    const bool b = this->waitForDomain(false);
+    const bool b = waitForDomainReadiness(false);
     if(!b) {
         return b;
     }
 
     CThread* domainThread = nullptr;
-    SKIZO_LOCK_AB(this->Mutex) {
+    SKIZO_LOCK_AB(this->DomainMutex) {
         if(this->Domain) {
             domainThread = this->Domain->Thread();
             domainThread->Ref();
         }
-    } SKIZO_END_LOCK_AB(this->Mutex);
+    } SKIZO_END_LOCK_AB(this->DomainMutex);
     // **********************************************
 
     if(domainThread) { // The domain might have been destroyed.
@@ -144,19 +148,17 @@ bool CDomainHandle::Wait(int timeout)
 
 void CDomainHandle::SendMessageSync(CDomainMessage* msg, void* blockingRet, int timeout)
 {
-    Auto<CDomain> domain (this->GetDomain());
+    Auto<CDomain> domain (getDomain());
     if(domain) { // The domain might have been destroyed.
         domain->EnqueueMessage(msg);
 
-        {
-            const bool b = CThread::Wait(msg->ResultWaitObject, timeout);
-            if(!b) {
-                CDomain::Abort("Cross-domain method call timed out (target domain too busy, terminated or never enters Domain::listen(..))");
-            }
+        const bool b = CThread::Wait(msg->ResultWaitObject, timeout);
+        if(!b) {
+            CDomain::Abort("Cross-domain method call timed out (target domain too busy, terminated or never enters Domain::listen(..))");
+        }
 
-            if(msg->ErrorMessage) {
-                CDomain::Abort(msg->ErrorMessage);
-            }
+        if(msg->ErrorMessage) {
+            CDomain::Abort((char*)msg->ErrorMessage, msg->FreeErrorMessage);
         }
     } else {
         CDomain::Abort("Can't make a cross-domain method call because the target domain was destroyed.");
@@ -173,112 +175,87 @@ void CDomainHandle::SendMessageSync(CDomainMessage* msg, void* blockingRet, int 
 class CRemoteDomainThread: public CThread
 {
 public:
+    // WARNING Used to pass flags from the original thread to the remote thread.
+    // Don't save objects with non-atomic reference counting here to avoid thread sharing. 
     SDomainCreation DomainCreation;
 
-     // DomainCreation.Source doesn't Ref() the source string.
-    Auto<const CString> Source, EntryPointClass, EntryPointMethod;
+    // NOTE UTF8 strings are used to avoid unsafe thread sharing of CString's.
+    char *Source, *EntryPointClass, *EntryPointMethod;
+    Auto<CArrayList<char*>> SearchPaths;
+    Auto<CArrayList<char*>> Permissions;
 
-    // Saves paths to make them live. Destroys on thread destruction.
-    Auto<CArrayList<char*> > SearchPaths;
-
-    // See SkizoDomainHandle.h for more info on this.
     Auto<CDomainHandle> DomainHandle;
-    
+
     CRemoteDomainThread()
-        : SearchPaths(new CArrayList<char*>())
+        : Source(nullptr), EntryPointClass(nullptr), EntryPointMethod(nullptr),
+          SearchPaths(new CArrayList<char*>()),
+          Permissions(new CArrayList<char*>())
     {
     }
 
     virtual ~CRemoteDomainThread()
     {
+        CString::FreeUtf8(this->Source);
+        CString::FreeUtf8(this->EntryPointClass);
+        CString::FreeUtf8(this->EntryPointMethod);
+
         for(int i = 0; i < this->SearchPaths->Count(); i++) {
             CString::FreeUtf8(this->SearchPaths->Array()[i]);
         }
+
+        for(int i = 0; i < this->Permissions->Count(); i++) {
+            CString::FreeUtf8(this->Permissions->Array()[i]);
+        }
     }
 
-    void main(int stackBase)
+    CDomainHandle* PrepareOnCurrentThreadAndStart(const CString* source, ESourceKind sourceKind, const CArrayList<const CString*>* permArray)
     {
-        this->DomainCreation.StackBase = &stackBase;
+        this->DomainHandle.SetPtr(new CDomainHandle());
+
+        prepareDomainCreationOnCurrentThread(source, sourceKind, permArray);
+        this->Start();
+
+        // The domain handle will be wrapped by a Skizo object. It will hold a strong reference to this object (tied to GC collections).
+        this->DomainHandle->Ref();
+        return this->DomainHandle;
+    }
+
+protected:
+    virtual void OnStart() override
+    {
+        remoteMain(REMOTE_DOMAIN_COOKIE);
+    }
+
+private:
+    void remoteMain(int stackBase)
+    {
+        prepareDomainCreationOnRemoteThread(&stackBase);
 
         Auto<CDomain> domain;
-
         try {
             domain.SetPtr(CDomain::CreateDomain(this->DomainCreation));
         } catch (const SoDomainAbortException& e) {
             printf("ABORT (domain creation): %s\n", e.Message); // TODO generic error/output interface
             _so_StackTrace_print();
+            freeOnRemoteThread();
             return;
         }
-        this->DomainHandle->UpdateDomainValue(domain);
-        this->DomainHandle->Pulse();
+
+        this->DomainHandle->SetDomain(domain);
+        this->DomainHandle->SignalDomainIsReady();
         domain->InvokeEntryPoint();
-        this->DomainHandle->UpdateDomainValue(nullptr);
+        this->DomainHandle->SetDomain(nullptr);
+
+        freeOnRemoteThread();
     }
 
-    virtual void OnStart() override
+    void prepareDomainCreationOnCurrentThread(const CString* source, ESourceKind sourceKind, const CArrayList<const CString*>* permArray)
     {
-        main(REMOTE_DOMAIN_COOKIE);
-    }
-
-    // If the source is a method name, parse it, get the declaring module of the specified method.
-    // Implements Domain::runMethod(..) and Domain::runMethodUntrusted(..)
-    #define SO_VALIDENTRYPOINT_NOT_FOUND "Domain creation fail: valid entrypoint not found."
-    void setSourceForMethodName()
-    {
-        // Extracts the class and method names.
-        Auto<CArrayList<const CString*> > parts (this->Source->Split(SKIZO_CHAR('/')));
-        if(parts->Count() != 2) {
-            CDomain::Abort("Method name must be in the form \"Class/method\".");
-        }
-        const CString* entryPointClass = parts->Item(0);
-        const CString* entryPointMethod = parts->Item(1);
-
-        // Finds the class and the method in the metadata of the current domain.
-        const CDomain* curDomain = CDomain::ForCurrentThread();
-        const CClass* klass = curDomain->ClassByNiceName(entryPointClass); // NOTE Nice names are used.
-        if(!klass) {
-            CDomain::Abort(SO_VALIDENTRYPOINT_NOT_FOUND);
-        }
-        const SStringSlice methodName (entryPointMethod);
-        const CMethod* method = klass->MyMethod(methodName, true, E_METHODKIND_NORMAL);
-        if(!method || !method->IsValidEntryPoint()) {
-            CDomain::Abort(SO_VALIDENTRYPOINT_NOT_FOUND);
-        }
-        if(!method->Source().Module || !method->Source().Module->FilePath) { // just in case
-            CDomain::Abort(SO_VALIDENTRYPOINT_NOT_FOUND);
-        }
-
-        // Finally: the corrected source path is set, the entrypoint is remembered.
-        this->Source.SetVal(method->Source().Module->FilePath);
-        this->DomainCreation.EntryPointClass = entryPointClass;
-        this->DomainCreation.EntryPointMethod = entryPointMethod;
-        this->EntryPointClass.SetVal(entryPointClass);
-        this->EntryPointMethod.SetVal(entryPointMethod);
-    }
-
-    CDomainHandle* PreStart(const CString* source, ESourceKind sourceKind, const CArrayList<const CString*>* permArray)
-    {
-        this->DomainHandle.SetPtr(new CDomainHandle());
-
-        this->Source.SetVal(source);
-        CDomain* pCurDomain = CDomain::ForCurrentThread();
-
-        if(sourceKind == E_SOURCEKIND_METHODNAME) {
-            // NOTE Mutates "this->Source" and "this->DomainCreation" (sets EntryPointClass and EntryPointMethod).
-            setSourceForMethodName();
-        }
-
-        this->DomainCreation.Source = this->Source;
+        setSources(sourceKind, source);
         this->DomainCreation.UseSourceAsPath = (sourceKind == E_SOURCEKIND_PATH || sourceKind == E_SOURCEKIND_METHODNAME);
 
-        if(permArray) { // passed from Domain::runGenericImpl(..) which treats the domain as untrusted if permArray is non-null
-            this->DomainCreation.IsUntrusted = true;
-            for(int i = 0; i < permArray->Count(); i++) {
-                this->DomainCreation.AddPermission(permArray->Array()[i]);
-            }
-        }
-
         // NOTE The new domain inherits some of the settings.
+        const CDomain* pCurDomain = CDomain::ForCurrentThread();
         this->DomainCreation.StackTraceEnabled = pCurDomain->StackTraceEnabled();
         this->DomainCreation.ExplicitNullCheck = pCurDomain->ExplicitNullCheck();
         this->DomainCreation.InlineBranching = pCurDomain->InlineBranching();
@@ -287,25 +264,101 @@ public:
         // Inherits the search paths.
         const CArrayList<const CString*>* searchPaths = pCurDomain->SearchPaths();
         for(int i = 0; i < searchPaths->Count(); i++) {
-            char* searchPath = searchPaths->Array()[i]->ToUtf8();
-            this->DomainCreation.AddSearchPath(searchPath);
-            // Makes the path live, see CRemoteDomainThread::SearchPaths for more info.
-            this->SearchPaths->Add(searchPath);
+            this->SearchPaths->Add(searchPaths->Array()[i]->ToUtf8());
         }
 
-        this->Start();
+        // Passed from Domain::runGenericImpl(..) which treats the domain as untrusted if permArray is non-null.
+        if(permArray) {
+            this->DomainCreation.IsUntrusted = true;
 
-        // The domain handle will be wrapped by a Skizo object.
-        // It's that object's responsibility to release the handle.
-        this->DomainHandle->Ref();
-        return this->DomainHandle;
+            for(int i = 0; i < permArray->Count(); i++) {
+                this->Permissions->Add(permArray->Array()[i]->ToUtf8());
+            }
+        }
+    }
+
+    void prepareDomainCreationOnRemoteThread(void* stackBase)
+    {
+        this->DomainCreation.StackBase = stackBase;
+        this->DomainCreation.Source = CString::FromUtf8(this->Source);
+        this->DomainCreation.EntryPointClass = this->EntryPointClass? CString::FromUtf8(this->EntryPointClass): nullptr;
+        this->DomainCreation.EntryPointMethod = this->EntryPointMethod? CString::FromUtf8(this->EntryPointMethod): nullptr;
+
+        for(int i = 0; i < this->SearchPaths->Count(); i++) {
+            char* searchPath = this->SearchPaths->Array()[i];
+            this->DomainCreation.AddSearchPath(searchPath);
+        }
+
+        for(int i = 0; i < this->Permissions->Count(); i++) {
+            char* permission = this->Permissions->Array()[i];
+            Auto<const CString> soPermission (CString::FromUtf8(permission));
+            this->DomainCreation.AddPermission(soPermission);
+        }
+    }
+
+    void freeOnRemoteThread()
+    {
+        this->DomainCreation.Source->Unref();
+        if(this->DomainCreation.EntryPointClass) {
+            this->DomainCreation.EntryPointClass->Unref();
+            this->DomainCreation.EntryPointClass = nullptr;
+        }
+        if(this->DomainCreation.EntryPointMethod) {
+            this->DomainCreation.EntryPointMethod->Unref();
+            this->DomainCreation.EntryPointMethod = nullptr;
+        }
+    }
+
+    // If the source is a method name, parse it, get the declaring module of the specified method.
+    // Implements Domain::runMethod(..) and Domain::runMethodUntrusted(..)
+    void setSources(ESourceKind sourceKind, const CString* source)
+    {
+        if(sourceKind == E_SOURCEKIND_METHODNAME) {
+            // Extracts the class and method names.
+            Auto<CArrayList<const CString*> > parts (source->Split(SKIZO_CHAR('/')));
+            if(parts->Count() != 2) {
+                CDomain::Abort("Method name must be in the form \"Class/method\".");
+            }
+
+            const CString* entryPointClass = parts->Item(0);
+            const CString* entryPointMethod = parts->Item(1);
+
+            // Finds the class and the method in the metadata of the current domain.
+            const CDomain* curDomain = CDomain::ForCurrentThread();
+            const CClass* klass = curDomain->ClassByNiceName(entryPointClass); // NOTE Nice names are used.
+            if(!klass) {
+                abortValidEntryPointNotFound();
+            }
+
+            const SStringSlice methodName (entryPointMethod);
+            const CMethod* method = klass->MyMethod(methodName, true, E_METHODKIND_NORMAL);
+            if(!method || !method->IsValidEntryPoint()) {
+                abortValidEntryPointNotFound();
+            }
+
+            if(!method->Source().Module || !method->Source().Module->FilePath) { // just in case
+                abortValidEntryPointNotFound();
+            }
+
+            // Finally: the corrected source path is set, the entrypoint is remembered.
+            this->Source = method->Source().Module->FilePath->ToUtf8();
+            this->EntryPointClass = entryPointClass->ToUtf8();
+            this->EntryPointMethod = entryPointMethod->ToUtf8();
+        } else {
+            this->Source = source->ToUtf8();
+        }
+    }
+
+    void abortValidEntryPointNotFound()
+    {
+        CDomain::Abort("Domain creation fail: valid entrypoint not found.");
     }
 };
 
 CDomainHandle* CDomain::CreateRemoteDomain(const CString* source, ESourceKind sourceKind, const CArrayList<const CString*>* permArray)
 {
     Auto<CRemoteDomainThread> domainThread (new CRemoteDomainThread());
-    return domainThread->PreStart(source, sourceKind, permArray);
+    return domainThread->PrepareOnCurrentThreadAndStart(source, sourceKind, permArray);
 }
 
 // *****************
@@ -523,20 +576,16 @@ int CClass::SerializeForRemoting(void* _soObj, char* buf, int bufSize, struct SS
             return MSG_TOO_LARGE;
         }
 
-        // Special case for strings: marshalled "by bleed" as they're immutable.
-        // Only the internal Skizo object is marshalled by bleed as it is, Skizo wrappers still have
-        // to be recreated since they belong to different memory managers.
-
-        const CString* strByBleed = soObj? so_string_of(soObj): nullptr; // can be null
-        if(strByBleed) {
-            // The internal Skizo string is ref'd to make it independent from any memory manager.
-            // The target domain will unref it once it creates a Skizo wrapper for it, or when
-            // a remote call error happens.
-            strByBleed->Ref();
+        // Strings can be quite large and aren't sharable anymore, so a pointer to cloned contents is passed instead.
+        if(soObj) {
+            const CString* str = so_string_of(soObj);
+            so_char16* strContents = new so_char16[str->Length() + 1];
+            so_wcscpy_16bit(strContents, str->Chars());
+            *((const void**)buf) = strContents;
+        } else {
+            *((const void**)buf) = nullptr;
         }
 
-        // Simply passes the pointer.
-        *((const void**)buf) = strByBleed;
         return sizeof(CString*);
 
     } else if(!m_structDef.IsEmpty() || this->PrimitiveType() == E_PRIMTYPE_INTPTR) {
@@ -768,12 +817,13 @@ int CClass::DeserializeForRemoting(char* buf, int bufSize, void* output) const
             return MSG_TOO_LARGE;
         }
 
-        const CString* strByBleed = *((const CString**)buf);
-        if(strByBleed) {
-            *((void**)output) = m_declaringDomain->CreateString(strByBleed);
-            strByBleed->Unref(); // Marshalled-by-bleed strings need to be unref'd by spec.
+        so_char16* strContents = *((so_char16**)buf);
+        if(strContents) {
+            Auto<const CString> str (CString::FromUtf16(strContents));
+            delete [] strContents;
+            *((void**)output) = m_declaringDomain->CreateString(str);
         } else {
-            *((void**)output) = 0;
+            *((void**)output) = nullptr;
         }
 
         return sizeof(CString*);
@@ -886,10 +936,9 @@ void SKIZO_API _soX_msgsnd_sync(void* _hDomain, void* soObjName, void* _pMethod,
     CDomainHandle* hDomain = ((SDomainHandleHeader*)_hDomain)->wrapped;
 
     Auto<CDomainMessage> msg (new CDomainMessage());
-    msg->ObjectName.SetVal(so_string_of(soObjName));
-    msg->MethodName = pMethod->Name();
+    coreStringToFlatString(&msg->ObjectName[0], SKIZO_OBJECTNAME_SIZE, so_string_of(soObjName), "Object name too large.");
+    stringSliceToFlatString(&msg->MethodName[0], SKIZO_METHODNAME_SIZE, pMethod->Name(), "Method name too large.");
     msg->ResultWaitObject.SetVal(pDomain->ResultWaitObject());
-    msg->MethodName.String->Ref();
 
     SSerializationContext context (hDomain);
 
@@ -944,15 +993,6 @@ void SKIZO_API _soX_msgsnd_sync(void* _hDomain, void* soObjName, void* _pMethod,
         if(bytesRead < 0) {
             CDomain::Abort(MSG_FROM_RETURN(bytesRead));
         }
-    }
-}
-
-CDomainMessage::~CDomainMessage()
-{
-    this->MethodName.String->Unref();
-
-    if(FreeErrorMessage) {
-        CString::FreeUtf8((char*)FreeErrorMessage);
     }
 }
 
@@ -1043,7 +1083,7 @@ void* CDomainHandle::ImportObject(void* soHandle, void* soName)
 
     // NOTE As long as "Auto" holds a reference to the target domain, it's not deleted, so we're safe
     // touching it here, from the client domain.
-    Auto<CDomain> foreignDomain (this->GetDomain());
+    Auto<CDomain> foreignDomain (getDomain());
     if(!foreignDomain) {
         return nullptr; // Target domain terminated or is not available.
     }
@@ -1122,7 +1162,7 @@ void* CDomainHandle::ImportObject(void* soHandle, void* soName)
 
 void* SKIZO_API _soX_findmethod2(void* objptr, void* _msg)
 {
-    // objptr is guaranted to be non null in the usual emitted function prolog of a server stub
+    // objptr is guaranted to be non-null in the usual emitted function prolog of a server stub.
     SKIZO_REQ_PTR(objptr);
 
     const CClass* pClass = so_class_of(objptr);
@@ -1132,14 +1172,12 @@ void* SKIZO_API _soX_findmethod2(void* objptr, void* _msg)
         return nullptr;
     }
 
-    {
-        const CArrayList<CMethod*>* instanceMethods = pClass->InstanceMethods();
-        for(int i = 0; i < instanceMethods->Count(); i++) {
-            const CMethod* pMethod = instanceMethods->Array()[i];
+    const CArrayList<CMethod*>* instanceMethods = pClass->InstanceMethods();
+    for(int i = 0; i < instanceMethods->Count(); i++) {
+        const CMethod* pMethod = instanceMethods->Array()[i];
 
-            if(pMethod->Name().Equals(msg->MethodName)) {
-                return so_virtmeth_of(objptr, pMethod->VTableIndex());
-            }
+        if(pMethod->Name().Equals(&msg->MethodName[0])) {
+            return so_virtmeth_of(objptr, pMethod->VTableIndex());
         }
     }
 
@@ -1151,23 +1189,22 @@ void* SKIZO_API _soX_findmethod2(void* objptr, void* _msg)
 //   Message queues.
 // *******************
 
-struct SkizoDomainMessageQueue
+struct DomainMessageQueuePrivate
 {
-    Auto<CMutex> m_mutex;
-    Auto<CWaitObject> m_waitObject; // automatic/non-signaled by default
+    Auto<CMutex> m_queueMutex;
+    Auto<CWaitObject> m_newMessageWaitObject;
     Auto<CQueue<CDomainMessage*> > m_backingQueue;
-    STextBuilder m_textBuilder; // to form native function names
 
-    SkizoDomainMessageQueue()
-        : m_mutex(new CMutex()),
-          m_waitObject(new CWaitObject()),
+    DomainMessageQueuePrivate()
+        : m_queueMutex(new CMutex()),
+          m_newMessageWaitObject(new CWaitObject()), // automatic/non-signaled by default
           m_backingQueue(new CQueue<CDomainMessage*>())
     {
     }
 };
 
 SDomainMessageQueue::SDomainMessageQueue()
-    : p(new SkizoDomainMessageQueue())
+    : p(new DomainMessageQueuePrivate())
 {
 }
 
@@ -1178,29 +1215,26 @@ SDomainMessageQueue::~SDomainMessageQueue()
 
 void SDomainMessageQueue::Enqueue(CDomainMessage* msg)
 {
-    SKIZO_LOCK_AB(p->m_mutex)
+    SKIZO_LOCK_AB(p->m_queueMutex)
     {
         p->m_backingQueue->Enqueue(msg);
-        p->m_waitObject->Pulse();
     }
-    SKIZO_END_LOCK_AB(p->m_mutex);
+    SKIZO_END_LOCK_AB(p->m_queueMutex);
+
+    p->m_newMessageWaitObject->Pulse();
 }
 
-CDomainMessage* SDomainMessageQueue::Poll(int timeout)
+CDomainMessage* SDomainMessageQueue::tryRetrieveMessage()
 {
-    const bool b = CThread::Wait(p->m_waitObject, timeout);
-    if(!b) {
-        return nullptr;
-    }
     Auto<CDomainMessage> msg;
 
-    SKIZO_LOCK_AB(p->m_mutex)
+    SKIZO_LOCK_AB(p->m_queueMutex)
     {
-        if(!p->m_backingQueue->IsEmpty()) { // To be sure again.
+        if(!p->m_backingQueue->IsEmpty()) {
             msg.SetPtr(p->m_backingQueue->Dequeue());
         }
     }
-    SKIZO_END_LOCK_AB(p->m_mutex);
+    SKIZO_END_LOCK_AB(p->m_queueMutex);
 
     if(msg) {
         msg->Ref();
@@ -1208,18 +1242,49 @@ CDomainMessage* SDomainMessageQueue::Poll(int timeout)
     return msg;
 }
 
+CDomainMessage* SDomainMessageQueue::Poll(int timeout)
+{
+    // Maybe already something in the queue.
+    CDomainMessage* msg = tryRetrieveMessage();
+    if(msg) {
+        return msg;
+    }
+
+    // If not -- wait for a new message.
+    const bool b = CThread::Wait(p->m_newMessageWaitObject, timeout);
+    if(!b) {
+        return nullptr;
+    }
+
+    return tryRetrieveMessage();
+}
+
 typedef _so_bool (SKIZO_API * _FPredicate)(void*);
-// WARNING synchronize with the emitter!
 typedef void (SKIZO_API * _FServerStubFunc)(void*, void*, void*);
+
 static _so_bool SKIZO_API nullPred(void* self)
 {
     return true;
 }
 
+void* CMethod::GetServerStubImpl() const
+{
+    if(!m_serverStubImpl) {
+        CClass* pClass = this->DeclaringClass();
+        CDomain* pDomain = pClass->DeclaringDomain();
+
+        STextBuilder textBuilder;
+        textBuilder.Emit("_soX_server_%s_%s", &pClass->FlatName(), &this->Name());
+
+        m_serverStubImpl = pDomain->GetSymbolThreadSafe(textBuilder.Chars());
+    }
+
+    return m_serverStubImpl;
+}
+
 void CDomain::Listen(void* soStopPred)
 {
     _FPredicate predFunc = soStopPred? (_FPredicate)so_invokemethod_of(soStopPred): nullPred;
-    STextBuilder& textBuilder = m_msgQueue.p->m_textBuilder;
 
     while(predFunc(soStopPred)) {
         Auto<CDomainMessage> msg (m_msgQueue.Poll(MESSAGEQUEUE_TIMEOUT));
@@ -1227,36 +1292,34 @@ void CDomain::Listen(void* soStopPred)
             const bool isBlocking = msg->ResultWaitObject? true: false;
 
             // Extracts the target object by its name.
+            // WARNING `targetObj` may get garbage-collected while inside serverStubImpl.
             void* targetObj = nullptr;
-            SKIZO_LOCK_AB(m_memMngr.ExportedObjsMutex) {
-                m_memMngr.ExportedObjs->TryGet(msg->ObjectName, &targetObj);
-            } SKIZO_END_LOCK_AB(m_memMngr.ExportedObjsMutex);
+            {
+                Auto<const CString> objectName (CString::FromUtf16(&msg->ObjectName[0]));
+                SKIZO_LOCK_AB(m_memMngr.ExportedObjsMutex) {
+                    m_memMngr.ExportedObjs->TryGet(objectName, &targetObj);
+                } SKIZO_END_LOCK_AB(m_memMngr.ExportedObjsMutex);
+            }
 
             if(targetObj) {
                 const CClass* pClass = so_class_of(targetObj);
-                const CMethod* targetMethod = pClass->MyMethod(msg->MethodName, false, E_METHODKIND_NORMAL);
+                const CMethod* targetMethod;
+                {
+                    Auto<const CString> methodName (CString::FromUtf16(&msg->MethodName[0]));
+                    targetMethod = pClass->MyMethod(SStringSlice(methodName), false, E_METHODKIND_NORMAL);
+                }
 
                 if(targetMethod) {
-                    // Builds the name for the required symbol.
-                    textBuilder.Clear();
-                    textBuilder.Emit("_soX_server_%s_%s", &pClass->FlatName(), &msg->MethodName);
-                    char* cs = textBuilder.Chars();
 
-                    _FServerStubFunc methodImpl;
-                    // The method isn't automatically guarded with g_globalMutex (TCC requires it since we extract a native pointer
-					// from TCC-generated image)
-                    SKIZO_LOCK_AB(CDomain::g_globalMutex) {
-                        methodImpl = (_FServerStubFunc)GetSymbol(cs);
-                    } SKIZO_END_LOCK_AB(CDomain::g_globalMutex);
-
-                    if(methodImpl) {
+                    void* serverStubImpl = targetMethod->GetServerStubImpl();
+                    if(serverStubImpl) {
 
                         // The server stub places stuff into this buffer as it is (without serialization).
                         char buf[SKIZO_DOMAINMESSAGE_SIZE];
 
                         try {
-                            methodImpl(targetObj, msg, buf); // <== ACTUAL CALL TO THE SERVER STUB
-                            // aborts that stem here are caught a bit below (see)
+                            ((_FServerStubFunc)serverStubImpl)(targetObj, msg, buf); // <== ACTUAL CALL TO THE SERVER STUB
+                            // Aborts that originate here are caught a bit below (see).
 
                             // Finds the type of the method.
                             SKIZO_REQ_PTR(targetMethod->Signature().ReturnType.ResolvedClass);
@@ -1278,7 +1341,6 @@ void CDomain::Listen(void* soStopPred)
                             }
 
                         } catch (const SoDomainAbortException& e) {
-
                             // NOTE aborts are redirected to the caller.
                             // The current target domain is responsible for deleting the error message
                             // (see g_lastError in SkizoDomain.cpp), we can't safely share the message

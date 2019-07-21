@@ -687,15 +687,14 @@ bool CDomain::InvokeEntryPoint()
             return false;
         }
 
-        SStringSlice _epMethodName (epMethodName);
-        CMethod* epMethod = epClass->MyMethod(_epMethodName, true, E_METHODKIND_NORMAL);
+        CMethod* epMethod = epClass->MyMethod(SStringSlice(epMethodName), true, E_METHODKIND_NORMAL);
         if(!epMethod) {
             ScriptUtils::Fail_("Entrypoint method not found.", 0, 0);
             return false;
         }
 
         if(!epMethod->IsValidEntryPoint()) {
-            ScriptUtils::Fail_("Entrypoints must return nothing, accept 0 arguments and have CDECL convention.", 0, 0);
+            ScriptUtils::Fail_("Entrypoints must return nothing, accept zero arguments and have CDECL convention.", 0, 0);
             return false;
         }
 
@@ -723,7 +722,7 @@ bool CDomain::InvokeEntryPoint()
             mainFunc();
         }
 
-    } catch (const SoDomainAbortException& e) {
+    } catch (const SoDomainAbortException& e) { // IMPORTANT don't leak domain abort exceptions to CThread, it can't handle them
         printf("ABORT (runtime): %s\n", e.Message); // TODO generic error/output interface
         _so_StackTrace_print();
 
