@@ -14,6 +14,7 @@
 #ifndef DOMAIN_H_INCLUDED
 #define DOMAIN_H_INCLUDED
 
+#include "Activator.h"
 #include "ArrayInitializationType.h"
 #include "ArrayList.h"
 #include "Class.h"
@@ -85,6 +86,7 @@ public:
     SThunkManager& ThunkManager() { return m_thunkMngr; }
     SSecurityManager& SecurityManager() { return m_securityMngr; }
     const SECallCache& ECallCache() const { return m_ecallCache; }
+    SActivator& Activator() { return m_activator; }
 
     // ***********************
     //    Type resolution.
@@ -641,6 +643,8 @@ private:
 
     // External call (nmodules) cache.
     SECallCache m_ecallCache;
+
+    SActivator m_activator;
 
     // *************************************************************
     //   Various flags and states remembered from SDomainCreation.

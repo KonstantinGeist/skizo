@@ -94,4 +94,8 @@ public
 
 	/* If the predicate is null, the method is endless. */
 	static native method (listen stopPred: Predicate);
+
+	static native method (addDependency intrfc:any impl:any);
+	static native method (getDependency intrfc: any): any;
+	static native method (createInstance intrfc: any): any;
 }

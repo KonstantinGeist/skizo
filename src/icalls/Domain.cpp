@@ -127,7 +127,7 @@ _so_bool SKIZO_API _so_DomainHandle_waitImpl(void* _handle, int timeout)
 void SKIZO_API _so_Domain_exportObject(void* name, void* obj)
 {
     SKIZO_NULL_CHECK(name);
-    // NOTE obj can be null.
+    // NOTE `obj` can be null.
 
     CDomain::ForCurrentThread()->ExportObject(so_string_of(name), obj);
 }
@@ -136,6 +136,25 @@ void* SKIZO_API _so_DomainHandle_importObjectImpl(void* daHandle, void* soHandle
 {
     CDomainHandle* handle = (CDomainHandle*)daHandle;
     return handle->ImportObject(soHandle, name);
+}
+
+void SKIZO_API _so_Domain_addDependency(void* intrfc, void* impl)
+{
+    SKIZO_NULL_CHECK(intrfc);
+    SKIZO_NULL_CHECK(impl);
+    CDomain::ForCurrentThread()->Activator().AddDependency(so_string_of(intrfc), so_string_of(impl));
+}
+
+void* SKIZO_API _so_Domain_getDependency(void* intrfc)
+{
+    SKIZO_NULL_CHECK(intrfc);
+    return CDomain::ForCurrentThread()->Activator().GetDependency(so_string_of(intrfc));
+}
+
+void* SKIZO_API _so_Domain_createInstance(void* intrfc)
+{
+    SKIZO_NULL_CHECK(intrfc);
+    return CDomain::ForCurrentThread()->Activator().CreateInstance(so_string_of(intrfc));
 }
 
 }

@@ -129,6 +129,9 @@ _so_bool SKIZO_API _so_Domain_isBaseDomain();
 void SKIZO_API _so_Domain_listen(void* soStopPred);
 _so_bool SKIZO_API _so_Domain_isTrusted();
 void* SKIZO_API _so_Domain_permissions();
+void SKIZO_API _so_Domain_addDependency(void* intrfc, void* impl);
+void* SKIZO_API _so_Domain_getDependency(void* intrfc);
+void* SKIZO_API _so_Domain_createInstance(void* intrfc);
 
 _so_bool SKIZO_API _so_DomainHandle_isAliveImpl(void* handle);
 void SKIZO_API _so_DomainHandle_dtorImpl(void* handle);

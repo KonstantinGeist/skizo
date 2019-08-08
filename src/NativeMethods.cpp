@@ -117,6 +117,9 @@ void CDomain::registerStandardICalls()
         registerICall("_so_Domain_listen", (void*)_so_Domain_listen);
         registerICall("_so_Domain_isTrusted", (void*)_so_Domain_isTrusted);
         registerICall("_so_Domain_permissions", (void*)_so_Domain_permissions);
+        registerICall("_so_Domain_addDependency", (void*)_so_Domain_addDependency);
+        registerICall("_so_Domain_getDependency", (void*)_so_Domain_getDependency);
+        registerICall("_so_Domain_createInstance", (void*)_so_Domain_createInstance);
     }
 
     if(isClassLoaded("GC")) {

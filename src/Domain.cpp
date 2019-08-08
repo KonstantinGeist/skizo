@@ -193,6 +193,7 @@ CDomain::CDomain()
      m_arrayInitHelperRegistry(new CHashMap<CArrayInitializationType*, int>()),
      m_icallMethodSet(new CHashMap<void*, void*>()),
      m_eCalls(new CArrayList<void*>()),
+     m_activator(this),
      m_stackTraceEnabled(false),
      m_profilingEnabled(false),
      m_softDebuggingEnabled(false),
