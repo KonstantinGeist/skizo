@@ -24,10 +24,10 @@ namespace skizo { namespace script {
 using namespace skizo::core;
 using namespace skizo::collections;
 
-        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        // WARNING don't introduce RAII in any of runtime helpers: longjmp will
-        // ignore automatic C++ objects on stack
-        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        // WARNING don't introduce RAII in any of runtime helpers: stack unwinding
+        //  will ignore automatic C++ objects on stack
+        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 extern "C" {
 
@@ -299,7 +299,7 @@ void SKIZO_API _soX_addhandler(void* _event, void* handler)
     }
     // Adds the new handler to the end of the list.
     ((void**)&newArray->firstItem)[origElemCount] = handler;
-    // Sets the new array as the new handler array. The old one is going to be garbage collected eventually.
+    // Sets the new array as the new handler array. The old one is going to be garbage-collected eventually.
     event->array = newArray;
 }
 

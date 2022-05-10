@@ -51,7 +51,7 @@ typedef int EClassFlags;
 #define E_CLASSFLAGS_IS_SIZE_CALCULATED (1 << 6)
 // Used by ::BorrowAttributes()
 #define E_CLASSFLAGS_ATTRIBUTES_BORROWED (1 << 7)
-// During the transformation phase, we don't want a class be added to the transformation queue twice.
+// During the transformation phase, we don't want a class to be added to the transformation queue twice.
 #define E_CLASSFLAGS_IS_INFERRED (1 << 8)
 // True by default; false if an abort is issued in the static constructor of the class.
 #define E_CLASSFLAGS_IS_INITIALIZED (1 << 9)
@@ -116,10 +116,10 @@ struct SGCInfo
      * Total size:
      *   a) used by the GC to know the size of the object
      *   b) used when calculating GC maps in CClass::CalcGCMap() for valuetypes (they have variable sizes)
-     *   c) if the special class is "binary blob", this value stores the forced native size as specified by the [nativeSize]
+     *   c) if the special class is a "binary blob", this value stores the forced native size as specified by the [nativeSize]
      *      attribute. Attribute "[nativeSize]" forces a valuetype to be a binary blob of a certain size (used for interop
      *      with native code).
-     *      Aborts if nativeSize=0 declared in the code.
+     *      Aborts if nativeSize=0 is declared in the code.
      *      @note The value type must declare zero fields; otherwise, if [nativeSize=N] is found, aborts.
      */
     size_t ContentSize;
@@ -203,7 +203,7 @@ public:
     bool FreeVTable() const { return m_flags & E_CLASSFLAGS_FREE_VTABLE; }
 
     /**
-     * Tells if this class is "Error" or one of its descendants.
+     * Tells if this class is an "Error" or one of its descendants.
      */
     bool IsErrorClass() const;
 
@@ -254,8 +254,8 @@ public:
     /**
      * Remembers where the method was declared for nicer errors.
      *
-     * @note "internal" access depends on it, too. If an internal method belongs to the declaring
-	 * class defined in the same module as the method which calls it, then such method is given
+     * @note "Internal" access depends on it, too. If an internal method belongs to the declaring
+	 * class defined in the same module as the method which calls it, then such a method is given
 	 * access to the internal method.
 	 *
 	 * @note Cross-domain method calls depend on it, too (checks class versions)
@@ -275,7 +275,7 @@ public:
     void SetFlatName(const SStringSlice& value) { m_flatName = value; }
 
     /**
-     * This field should usually be zero for anything other than built-in classes like "string" or "Array".
+     * This field should usually be zero for everything except for built-in classes like "string" or "Array".
      * If this value is not zero, then the emitter emits this code instead of relying on the list of
      * fields.
      * @note No static fields automatically emitted.
@@ -357,7 +357,7 @@ public:
     void CalcGCMap();
 
     /**
-     * Retrieves a pointer to the destructor (if any) implementation in machine code.
+     * Retrieves a pointer to the destructor implementation in machine code (if any).
      * Used by the GC to call destructors during the finalization phase.
      */
     void* DtorImpl() const;
@@ -461,7 +461,7 @@ public:
     SResolvedIdentType ResolveIdent(const SStringSlice& ident);
 
     /**
-     * Used by the parser, as it's parsing a class definition, it's checking if a given member name is unique.
+     * Used by the parser: as it's parsing a class definition, it's checking if a given member name is unique.
      * @note Doesn't check if it's conflicting with class names, since this function is used by the parser as it goes
      * which may not have yet parsed all the classes. Checks so in the transformer.
      */
@@ -469,7 +469,7 @@ public:
     bool IsMemberDefined(const char* name) const;
 
     // ****************************************
-    //   Attribute-controled code generation
+    //   Attribute-controlled code generation
     // ****************************************
 
     /**

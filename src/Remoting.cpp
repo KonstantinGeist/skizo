@@ -518,8 +518,8 @@ int CClass::SerializeForRemoting(void* _soObj, char* buf, int bufSize, struct SS
 
     } else if(specialClass == E_SPECIALCLASS_INTERFACE) {
 
-        // Special case for interfaces: interfaces are a mere compile time feature; in runtime the actual type
-        // depends on the object. Objects cast to interfaces are always reference-type. What we do here is to
+        // Special case for interfaces: interfaces are a mere compile time feature; at runtime the actual type
+        // depends on the object. Objects cast to interfaces are always reference-type. What we do here is
         // find the actual type of the argument and redirect serialization to it.
         // It's all good and all, but the target domain can't know what the underlying type is in order to correctly
         // read serialized data. So we have to also serialize the nice name of the type in front of serialized

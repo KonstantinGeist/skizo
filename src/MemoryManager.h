@@ -161,7 +161,7 @@ private:
     so_long m_minGCThreshold;
     so_long m_customMemoryPressure;
 
-    // During the sweeping phase, the GC remembers objects with dtors to this list to iterate over them later
+    // During the sweeping phase, the GC saves objects with dtors to this list to iterate over them later
 	// and call their respective dtors.
     skizo::core::Auto<skizo::collections::CArrayList<void*> > m_destructables;
 

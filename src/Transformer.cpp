@@ -28,7 +28,7 @@
 // * subclass => parentclass (cast)
 // * anonymous method => method class
 //
-// Try unify code?
+// Try unify code? Transformer and Parser are a bit of a mess, should be refactored.
 
 namespace skizo { namespace script {
 using namespace skizo::core;
@@ -349,7 +349,7 @@ void SkizoTransform(CDomain* domain)
     transformer.inferHierarchies();
     transformer.inferForcedTypeRefs();
 
-    // The the rest of the classes.
+    // The rest of the classes.
     const CArrayList<CClass*>* klasses = domain->Classes();
     for(int i = 0; i < klasses->Count(); i++) {
         CClass* klass = klasses->Array()[i];

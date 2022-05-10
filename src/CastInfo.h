@@ -63,7 +63,7 @@ struct SCastInfo
 
     /**
      * Some cast types require explicit casting only. For example, DOWNCAST must always be an explicit cast, as it
-	 * can abort if types don't match.
+	   * can abort if types don't match.
      */
     bool DoesRequireExplicitCast() const
     {

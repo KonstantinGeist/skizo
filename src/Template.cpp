@@ -159,7 +159,7 @@ public:
                     return m_method->InvokeDynamic(obj, m_anyArray.Array());
                     
                 } else if(argType == E_VARIANTTYPE_INT) {
-                    
+
                     // The first optimized solution which was tried was allocating boxed integers outside of the heap.
                     // However, 2 problems were found a) the fake boxed int can be retained in the target method in certain
                     // scenarios, which will lead to crashes b) VTables of boxed classes are generated on demand in ThunkManager.
@@ -557,7 +557,7 @@ CTemplate::~CTemplate()
     delete p;
 }
 
-// NOTE Can use boxed classes, but the user can't refer to the boxed class directly, hence it's ommited here.
+// NOTE Can use boxed classes, but the user can't refer to the boxed class directly, hence it's omitted here.
 // TODO should we support E_SPECIALCLASS_FOREIGN, E_SPECIALCLASS_ALIAS?
 static bool isRenderableClass(const CClass* klass)
 {

@@ -95,12 +95,12 @@ constexpr size_t GetElementSize(size_t objectSize)
     return AlignUp(AlignUp(sizeof(SElementHeader)) + objectSize);
 }
 
-constexpr char* GetObjectStart(SElementHeader* header)
+char* GetObjectStart(SElementHeader* header)
 {
     return reinterpret_cast<char*>(header) + AlignUp(sizeof(SElementHeader));
 }
 
-constexpr SElementHeader* GetElementHeader(void* objectStart)
+SElementHeader* GetElementHeader(void* objectStart)
 {
     return reinterpret_cast<SElementHeader*>(reinterpret_cast<char*>(objectStart) - AlignUp(sizeof(SElementHeader)));
 }

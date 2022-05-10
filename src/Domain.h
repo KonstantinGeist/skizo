@@ -53,6 +53,9 @@ class CMethod;
  * A domain is an isolated instance of the runtime that consists of a set of modules, a separate memory manager, its own thread,
  * and a set if permissions.
  * If you want to dynamically load new modules (chunks of code), you have to create new domains.
+ * For convenience (as a domain is the root of everything, and it's easy to retrieve it via CDomain::ForCurrentThread()),
+ * this class manages many things at once: it allows to register classes, create objects, etc. However, actual implementations
+ * are split between separate files, which is fine.
  */
 class CDomain: public skizo::core::CObject
 {
@@ -164,7 +167,7 @@ public:
     CClass* ClassByFlatName(const SStringSlice& name) const;
 
     /**
-     * Returns a class by a nice name.
+     * Returns a class by its nice name.
      * @note If "int" is specified, the the actual int is returned. Boxed classes (whose nice names are identical to the
      * nice names of their corresponding plain valuetypes) report same nice names, and we ignore them in this function
      * (for a good reason).
@@ -330,7 +333,7 @@ public:
     int RuntimeVersion() const { return m_runtimeVersion; }
 
     /**
-     * Exports the given GC-allocated object allowing other domains to be able to import it as a foreign object.
+     * Exports the given GC-allocated object, allowing other domains to be able to import it as a foreign object.
      * Implemented in Remoting.cpp
      */
     void ExportObject(const skizo::core::CString* name, void* soObj);
@@ -510,7 +513,7 @@ private:
     // with the native representation. Hence this function to check it.
     void verifyIntrinsicClasses();
 
-    // After a stackoverflow is detected, this function removes repeated elements from the stack trace.
+    // After a stack overflow is detected, this function removes repeated elements from the stack trace.
     // Used by _soX_abort0 right before aborting.
     void correctStackTraceAfterStackOverflow();
 
@@ -675,7 +678,7 @@ private:
 
     // *****************************************************
 
-    // A stack of references to CMethod*, populated in runtime by _soX_pushframe/
+    // A stack of references to CMethod*, populated at runtime by _soX_pushframe/
     // _soX_popframe only, and if only SDomainCreation::StackTraceEnabled is set to true.
     // Allows to print nicer errors.
     skizo::core::Auto<skizo::collections::CStack<void*>> m_stackFrames;

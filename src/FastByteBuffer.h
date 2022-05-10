@@ -86,7 +86,7 @@ private:
     {
         if(((float)(m_size + count) / (float)m_cap) >= SKIZO_FASTBYTEBUFFER_GROW_FACTOR) {
             m_cap = m_cap * 2 + count;
-            m_bytes = (so_byte*)realloc(m_bytes, m_cap *= 2);
+            m_bytes = (so_byte*)realloc(m_bytes, m_cap);
             if(!m_bytes) {
                 SKIZO_THROW(skizo::core::EC_OUT_OF_RESOURCES);
             }

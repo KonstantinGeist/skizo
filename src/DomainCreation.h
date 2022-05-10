@@ -130,6 +130,7 @@ public:
 
     /**
      * Registers a new icall. Every native method defined in the Skizo code must have a corresponding ICall.
+     * TODO the name is lowercause, unlike the other public methods.
      */
     void registerICall(const char* name, void* impl);
 

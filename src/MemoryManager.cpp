@@ -254,7 +254,7 @@ void SMemoryManager::gcMark(void* obj_ptr)
         } else {
 
             // General case.
-            
+
             const SGCInfo& gcInfo = pClass->GCInfo();
             gcMap = gcInfo.GCMap;
             gcMapSize = gcInfo.GCMapSize;

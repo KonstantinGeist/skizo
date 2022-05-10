@@ -379,7 +379,7 @@ void SEmitter::emitVCH(const CMethod* method, bool headerOnly)
         mainCB.Emit("self->_soX_vtable[%d])(self", method->VTableIndex() + 1); // skips the vtable
 
         // Dumps arguments.
-        int paramCount = sig->Params->Count();
+        const int paramCount = sig->Params->Count();
         for(int i = 0; i < paramCount; i++) {
             if(i < paramCount) {
                 mainCB.Emit(", ");
@@ -492,8 +492,7 @@ void SEmitter::emitFunctionHeader(const CMethod* method, EMethodKind methodKind,
     }
 
     // Params.
-    int i;
-    for(i = 0; i < method->Signature().Params->Count(); i++) {
+    for(int i = 0; i < method->Signature().Params->Count(); i++) {
         const CParam* param = method->Signature().Params->Array()[i];
 
         mainCB.Emit("%t ", &param->Type);
@@ -712,7 +711,7 @@ void SEmitter::emitReturnExpr(STextBuilder& cb, const CMethod* method, const CEx
     const CReturnExpression* returnExpr = static_cast<const CReturnExpression*>(expr);
 
     if(method->ShouldEmitReglocalsCode()) {
-        // With soft-debugging, we register/unregister locals in runtime.
+        // With soft-debugging, we register/unregister locals at runtime.
         cb.Emit("_soX_unreglocals();\n");
     }
 
@@ -871,7 +870,8 @@ void SEmitter::emitArrayInitExpr(STextBuilder& cb, const CMethod* method, const 
 void SEmitter::emitValueExpr(STextBuilder& cb,
                              const CMethod* method,
                              const CExpression* subExpr,
-                             const STypeRef* expectedType, bool isTopLevel)
+                             const STypeRef* expectedType,
+                             bool isTopLevel)
 {
     bool typesMatch = true;
     if(expectedType && !expectedType->Equals(subExpr->InferredType)) {
@@ -969,7 +969,7 @@ void SEmitter::emitCallExpr(STextBuilder& cb, const CMethod* method, const CExpr
         const CMethod* targetMethod = callExpr->uTargetMethod;
 
         // *****************************************************************************************
-        // Checks if it's a built-in primitive operation, such as addition between integers.
+        // Checks if it's a built-in primitive operation, such as addition of integers.
         // In that case, we can emit C arithmetics directly.
         SStringSlice primOpName;
         if(targetMethod->DeclaringClass()->PrimitiveType() != E_PRIMTYPE_OBJECT) {
@@ -1070,7 +1070,7 @@ void SEmitter::emitCallExpr(STextBuilder& cb, const CMethod* method, const CExpr
 
                     // ******************************************************************************
                     // If the self-expression is a call expression, (consider "(MyClass create)
-                    // doSomething" where the element itself ia a complex expression), we need to
+                    // doSomething" where the element itself is a complex expression), we need to
                     // create a temporary variable to hold the result of such a complex expression
                     // because virtual methods have the form "self->vtable[1](self, x, y)" where 'self' is
                     // repeated twice. In the case of call expressions, that would mean two actual calls.
@@ -1233,10 +1233,10 @@ void SEmitter::emitIsExpr(STextBuilder& cb, const CMethod* method, const CExpres
     const CClass* targetClass = isExpr->TypeAsInCode.ResolvedClass;
 
     if(actualClass->IsValueType()) {
-        // Type checks for valuetypes can be done in compile-time.
+        // Type checks for valuetypes can be done at compile time.
         cb.Emit(actualClass->Is(targetClass)? "_soX_TRUE": "_soX_FALSE");
     } else {
-        // FIX We used to emit literals directly if we could prove in compile time the types were OK.
+        // FIX We used to emit literals directly if we could prove at compile time the types were OK.
         // That introduced a problem:
         //
         //    s: string = null;
@@ -1299,7 +1299,7 @@ void SEmitter::emitBreakExpr(STextBuilder& cb, const CMethod* method, const CExp
 {
     SKIZO_REQ_EQUALS(expr->Kind(), E_EXPRESSIONKIND_BREAK);
 
-    // NOTE For domains without soft debugging enabled, break statements are null statements.
+    // NOTE For domains without soft debugging enabled, break statements are no-op statements.
     if(method->HasBreakExprs()) {
         cb.Emit("_soX_break();\n");
     }
@@ -1571,7 +1571,7 @@ void SEmitter::emitRemoteMethodServerStub(const CMethod* method, const CClass* s
     // Finds the method impl. NOTE that if nothing was found, simply ignores the method call instead of
     // aborting the whole domain. This is to prevent other domains from maliciously trying to crash this domain.
     // NOTE It's also important to emit _soX_findmethod2(..) *after* _soX_unpack(..) as _soX_unpack unref's
-    // marshaled-by-bleed strings.
+    // marshaled-by-bleed strings (TODO: verify if this statement is correct)
     mainCB.Emit("void* methodImpl = _soX_findmethod2(self, msg);\n"
                 "if(!methodImpl) return;\n");
 
@@ -1765,7 +1765,7 @@ void SEmitter::emitFunctionBody(STextBuilder& cb, const CMethod* method)
         //   Soft debugging.
         // IMPORTANT the order of variables should be synchronized with the CWatchIterator::NextWatch
         if(method->ShouldEmitReglocalsCode()) {
-            // With soft-debugging, we register/unregister locals in runtime.
+            // With soft-debugging, we register/unregister locals at runtime.
 
             Auto<CArrayList<CLocal*> > localList (new CArrayList<CLocal*>());
             if(!method->Signature().IsStatic) {
@@ -1829,7 +1829,7 @@ void SEmitter::emitFunctionBody(STextBuilder& cb, const CMethod* method)
             // *****************************************************************
             //   Soft debugging.
             if(method->ShouldEmitReglocalsCode()) {
-                // With soft-debugging, we register/unregister locals in runtime.
+                // With soft-debugging, we register/unregister locals at runtime.
                 cb.Emit("_soX_unreglocals();\n");
             }
             // *****************************************************************
@@ -1997,7 +1997,7 @@ void SEmitter::emitStaticCtorDtor(const CClass* klass)
     // Emits constructors/destructors.
     // Emits static ctors/dtors.
     // NOTE Emits the static ctor if there are static fields in the class no matter whether the static ctor was explicitly
-    // defined or not -- because we need to register static fields as roots, and we do it in static ctors (stage 0).
+    // defined or not -- because we need to register static fields as GC roots, and we do it in static ctors (stage 0).
     if(klass->StaticCtor() || klass->StaticFields()->Count() > 0) {
 
         staticHeapFields->Clear();
@@ -2017,7 +2017,7 @@ void SEmitter::emitStaticCtorDtor(const CClass* klass)
         mainCB.Emit("void _so_%s_static_ctor(int stage) {\n", &klass->FlatName());
             mainCB.Emit("if(stage == 0) {\n");
                 // ******************************************************************
-                //   Registers static heap fields' locations as gc roots (stage 0).
+                //   Registers static heap fields' locations as GC roots (stage 0).
                 // ******************************************************************
 
                 if(staticHeapFields->Count()) {
@@ -2298,7 +2298,7 @@ void SEmitter::emit()
     mainCB.Emit("_soX_patchstrings();\n");
 
     // Static ctors employ a two-stage system.
-    // The first stage: registers static fields as gc roots.
+    // The first stage: registers static fields as GC roots.
     for(int i = 0; i < klasses->Count(); i++) {
         const CClass* klass = klasses->Array()[i];
 

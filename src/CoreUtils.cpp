@@ -53,8 +53,8 @@ bool ValidateRange(int startIndex, int* rangeCount, int totalCount)
 
 bool AreObjectsEqual(const CObject* obj1, const CObject* obj2)
 {
-    if(!obj1 || !obj2) { // someone is null
-        return obj1 == obj2; // then simply check pointers.
+    if(!obj1 || !obj2) {
+        return obj1 == obj2;
     } else {
         return obj1->Equals(obj2);
     }
@@ -229,7 +229,8 @@ bool IsLetter(so_char16 c)
 bool IsControl(so_char16 c)
 {
     // http://www.cplusplus.com/reference/cctype/iscntrl/
-    // For the standard ASCII character set (used by the "C" locale), control characters are those between ASCII codes 0x00 (NUL) and 0x1f (US), plus 0x7f (DEL).
+    // For the standard ASCII character set (used by the "C" locale), control characters are
+    // those between ASCII codes 0x00 (NUL) and 0x1f (US), plus 0x7f (DEL).
     return (c <= 0x1f) || (c == 0x7f);
 }
 

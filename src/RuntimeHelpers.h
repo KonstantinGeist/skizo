@@ -129,7 +129,7 @@ void* SKIZO_API _soX_downcast(void* targetClass, void* objptr);
 void SKIZO_API _soX_unbox(void* vt, int vtSize, void* vtClass, void* intrfcObj);
 
 /**
- * Dispatches methods in runtime. The driving force behind interface calls.
+ * Dispatches methods at runtime. The driving force behind interface calls.
  * pMethod is used to retrieve the name of the method and the signature.
  * Found method is stored in a per-class cache.
  */
@@ -161,10 +161,9 @@ void SKIZO_API _soX_zero(void* a, int sz);
 /**
  * If soft debugging is enabled, this function is inserted in every method to keep track of all locals
  * in a given context.
- * pMethod refers to the current CMethod*, the same object which is referred to by _soX_pushframe et alia.
- * localRefs is a stack-allocated buffer which holds references to all variables in this method
+ * localRefs is a stack-allocated buffer which holds references to all variables in the current method
  * (including 'this' and captured ones). The names of the locals, and their count -- everything is
- * inferred from pMethod which already contains all the relevant information.
+ * inferred from the current method which already contains all the relevant information.
  */
 void SKIZO_API _soX_reglocals(void** localRefs, int sz);
 
@@ -173,7 +172,8 @@ void SKIZO_API _soX_reglocals(void** localRefs, int sz);
  */
 void SKIZO_API _soX_unreglocals();
 
-/** If soft debugging is enabled, this function is inserted for every "break" statement.
+/**
+ * If soft debugging is enabled, this function is inserted for every "break" statement.
  * The logic on each break depends on the registered debugging callback. There are also built-in
  * debugging callbacks, if none were registered.
  * Implemented in Debugging.cpp
@@ -260,7 +260,7 @@ void SKIZO_API _soX_popframe_prf(void* domain, int tc);
 void SKIZO_API _soX_addhandler(void* event, void* handler);
 
 /**
- * Checks in runtime if "b" is zero -- and aborts in that case.
+ * Checks at runtime if "b" is zero -- and aborts in that case.
  * Avoids crashing the whole process (with all the domains inside) due to divide by zero
  * (OS-specific handlers are hard to deal with).
  */

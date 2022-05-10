@@ -27,7 +27,7 @@ void CByteBuffer::appendBytesGeneric(const so_byte* bytes, so_long count)
 
     if(((float)(m_size + count) / (float)m_cap) >= SKIZO_BYTEBUFFER_GROW_FACTOR) {
         m_cap = m_cap * 2 + count;
-        m_bytes = CoreUtils::ReallocArray<so_byte>(m_bytes, m_size, m_cap *= 2);
+        m_bytes = CoreUtils::ReallocArray<so_byte>(m_bytes, m_size, m_cap);
     }
 
     if(bytes) {

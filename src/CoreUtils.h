@@ -90,7 +90,6 @@ void ThrowHelper(int exCode, const char* msg, const char* file, int line);
  */
 inline int AtomicIncrement(so_atomic_int* vari)
 {
-	// Already atomic.
 	// NOTE: uses 'relaxed' just like std::shared_ptr
 	return vari->fetch_add(1, std::memory_order_relaxed) + 1;
 }
@@ -100,7 +99,6 @@ inline int AtomicIncrement(so_atomic_int* vari)
  */
 inline int AtomicDecrement(so_atomic_int* vari)
 {
-	// Already atomic.
 	// NOTE: uses 'relaxed' just like std::shared_ptr
 	return vari->fetch_sub(1, std::memory_order_relaxed) - 1;
 }

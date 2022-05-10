@@ -347,7 +347,7 @@ void CClass::CalcGCMap()
         }
     }
 
-    // Recursively makes sure all the referenced classes in fields and base classes are calculated their maps, too.
+    // Recursively makes sure all the referenced classes in fields and base classes have their maps calculated, too.
     // NOTE Foreign proxies don't inherit fields (unlike vtables), so we ignore it here.
     if(!m_baseClass.IsVoid() && m_specialClass != E_SPECIALCLASS_FOREIGN) {
         m_baseClass.ResolvedClass->CalcGCMap();
@@ -710,6 +710,7 @@ void CClass::MakeSureMethodsFinalized()
                 CMethod* newMethod = m_instanceMethods->Array()[i];
 
                 // Looks if there's a method with a similar name in the parent.
+                // TODO quadratic complexity
                 int baseMethodIndex = -1;
                 for(int j = 0; j < newMethodList->Count(); j++) {
                     CMethod* oldMethod = newMethodList->Array()[j];
@@ -768,8 +769,8 @@ void CClass::MakeSureMethodsFinalized()
 
         // Copies all the virtual methods into a hashmap for faster interface calls.
         // NOTE Population of the method map is done in CDomain::::boxedClass for boxed
-        // classes, because they can be dynamically generated in runtime. Here, it's the compilation
-        // phase.
+        // classes, because they can be dynamically generated at runtime. If we're, we're
+        // in the compilation phase.
         if(m_specialClass != E_SPECIALCLASS_BOXED) {
             for(int i = 0; i < m_instanceMethods->Count(); i++) {
                 CMethod* instanceMethod = m_instanceMethods->Array()[i];
@@ -1020,7 +1021,7 @@ bool CClass::DoesImplementInterfaceNoCache(const CClass* intrfc) const
             if(myMethod->Access() == E_ACCESSMODIFIER_INTERNAL) {
                 // some built-in classes may have no module assigned
                 if(!myMethod->Source().Module || !interfaceMethod->Source().Module) {
-                    return false; // regarded as non accessible
+                    return false; // regarded as non-accessible
                 }
                 if(!myMethod->Source().Module->Matches(interfaceMethod->Source().Module)) {
                     return false;
@@ -1240,7 +1241,7 @@ void CClass::AddAccessMethodsForField(CField* pField,
     }
 
     // Generates the setter method.
-    // NOTE None for valuetypes as it's explicitly disallowed to change fields of immutable valutypes outside of
+    // NOTE None for valuetypes because it's explicitly disallowed to change fields of immutable valuetypes outside of
     // constructors (it doesn't even make sense anyway).
 
     if(!IsValueType() && !forceGetterOnly) {

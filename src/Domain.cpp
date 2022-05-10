@@ -74,7 +74,7 @@ namespace
 // Supporting functionality for SKIZOGetLastError(): every abort also fills in this
 // CDomainError structure so that C code could extract the message without
 // touching C++ exceptions.
-// Note that the error is associated with the current thread (via thread locals) rathen
+// Note that the error is associated with the current thread (via thread locals) instead of
 // the current domain as the error can happen during domain creation, i.e. there can be
 // no domain for this thread at all.
 class CDomainError: public CObject
@@ -213,7 +213,7 @@ CDomain::CDomain()
         SKIZO_THROW_WITH_MSG(EC_EXECUTION_ERROR, "More than one domain per thread not allowed.");
     }
 
-    // NOTE The use of blob data avoids the problem when the threadlocal holds a reference to the domain
+    // NOTE The use of blob data avoids the problem when the thread local holds a reference to the domain
     // so that it's destroyed only when the thread is killed, not when the CDomain object itself
     // is out of scope.
     g_domain->SetBlob((void*)this);
@@ -244,7 +244,7 @@ CDomain::~CDomain()
     m_memMngr.CollectGarbage(true);
 
     // Frees everything it can in advance.
-    // IMPORTANT Not doing so leads to segfaults (something to do with the bump pointer allocator released too early (if compiled with it)).
+    // IMPORTANT Not doing so leads to segfaults (something to do with the bump pointer allocator releasing too early (if compiled with it)).
 
     m_modules->Clear();
     m_klasses->Clear();
@@ -269,7 +269,7 @@ CDomain::~CDomain()
 
     // WARNING DON'T do this. If an abort exception is thrown, the domain is destroyed,
     // destroying this message. When a handler is found, the message is corrupted.
-    //g_lastError->SetNothing();
+    // g_lastError->SetNothing();
 
     if(tccState) {
         SKIZO_LOCK_AB(CDomain::g_globalMutex) {
@@ -389,7 +389,7 @@ CDomain* CDomain::CreateDomain(const SDomainCreation& creation)
         domain->m_stackTraceEnabled = true;
     }
 
-    // Untrusted domains always use stack traces because we must detect stackoverflows inside them.
+    // Untrusted domains always use stack traces because we must detect stack overflows inside them.
     if(creation.IsUntrusted) {
         domain->m_stackTraceEnabled = true;
     }
@@ -600,7 +600,7 @@ CDomain* CDomain::CreateDomain(const SDomainCreation& creation)
         }
 
     #ifdef SKIZO_WIN
-        // Sets an exception handler to catch null reference errors without testing for them in runtime.
+        // Sets an exception handler to catch null reference errors without testing for them at runtime.
         // NOTE One handler for all threads. See MSDN:
         // "Issuing SetUnhandledExceptionFilter replaces the existing top-level exception filter for all
         // existing and all future threads in the calling process".
@@ -696,7 +696,7 @@ bool CDomain::InvokeEntryPoint()
         }
 
         if(!epMethod->IsValidEntryPoint()) {
-            ScriptUtils::Fail_("Entrypoints must return nothing, accept zero arguments and have CDECL convention.", 0, 0);
+            ScriptUtils::Fail_("Entrypoints must return nothing, accept zero arguments and have the CDECL convention.", 0, 0);
             return false;
         }
 

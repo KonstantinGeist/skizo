@@ -62,7 +62,7 @@ struct SSecurityManager
     bool IsPermissionGranted(const char* name) const;
 
     /**
-     * For each new untrusted domain with a FileIOPermission granted, the executing engine creates a temporary
+     * For each new untrusted domain with a FileIOPermission granted, the execution engine creates a temporary
      * folder the domain is restricted to.
      * @warning Should be called inside the global domain mutex because it accesses a shared static structure.
      * @see ::SecurePath

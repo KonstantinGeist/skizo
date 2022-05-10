@@ -23,12 +23,12 @@
 namespace skizo { namespace core {
 
 /**
- * Initializes the runtime's per-process  structures.
+ * Initializes the runtime's per-process structures.
  */
 void InitSkizo();
 
 /**
- * Deinitializes the runtime's per-process  structures.
+ * Deinitializes the runtime's per-process structures.
  *
  * @warning All known skizo threads should be aborted and joined to make sure
  * none of them are active during this call to prevent potential crashes on exit.

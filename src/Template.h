@@ -34,7 +34,7 @@ public:
      * that is being rendered.
      */
     static CTemplate* CreateForClass(const skizo::core::CString* source, const CClass* klass);
-     
+
     ~CTemplate();
 
     const skizo::core::CString* Render(void* obj) const;

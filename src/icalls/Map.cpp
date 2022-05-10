@@ -46,7 +46,7 @@ static void getMapKey(void* _mapObj, void* key, SkizoMapObjectKey* mapKey)
 
         keyClass->GetMapMethods(key, &hashCodeMethodPtr, &equalsMethodPtr);
         if(!hashCodeMethodPtr || !equalsMethodPtr) {
-            CDomain::Abort("Passed key doesn't implement '(hashCode):int' or '(equals obj:any):bool'.");
+            CDomain::Abort("Passed key doesn't implement '(hashCode):int' or '(equals obj: any): bool'.");
         }
 
         mapObj->KeyClassCache = keyClass;

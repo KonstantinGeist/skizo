@@ -61,7 +61,12 @@ struct SDebuggerCommandContext
     const CLocalDebugInfoMap* DebugInfoMap;
     const class CDebuggerCommandList* CommandList;
 
-    SDebuggerCommandContext(const CDomain* domain, const CArrayList<const CString*>* cmdArgs, const CLocalDebugInfoMap* debugInfoMap, const CDebuggerCommandList* cmdList)
+    SDebuggerCommandContext(
+        const CDomain* domain,
+        const CArrayList<const CString*>* cmdArgs,
+        const CLocalDebugInfoMap* debugInfoMap,
+        const CDebuggerCommandList* cmdList
+    )
         : Domain(domain),
           CmdArgs(cmdArgs),
           DebugInfoMap(debugInfoMap),
@@ -395,7 +400,6 @@ const CString* CDomain::GetStringRepresentation(const void* obj, const CClass* o
         }
 
     } else {
-
         // Can't find "toString": print the pointer.
         retValue = CString::Format("<ref-obj at %p>", obj);
     }
@@ -767,7 +771,7 @@ void CDomain::Break()
     }
 
     // Temporarily disables breakpoints so that the user callback didn't try enter a new breakpoint while we're still
-    // inside this break (stackoverflow could happen).
+    // inside this break (otherwise, a stack overflow would happen).
     m_disableBreak = true;
 
     try {
