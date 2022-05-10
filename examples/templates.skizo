@@ -1,0 +1,51 @@
+import console;
+import template;
+import application;
+import stringbuilder;
+import runtime;
+
+alias PostId = string;
+
+class Post
+{
+    field m_title: string;
+    field m_body: string;
+    field m_imageUrl: string;
+
+    method (title): string { return m_title; }
+    method (body): string { return m_body; }
+    method (imageUrl): string { return m_imageUrl; }
+
+    ctor (create title:string body:string imageUrl:string) {
+        m_title = title;
+        m_body = body;
+        m_imageUrl = imageUrl;
+    }
+}
+
+class Posts
+{
+    field m_posts: Map;
+
+    ctor (create) {
+        m_posts = (Map create);
+    }
+
+    method (createPost title:string body:string imageUrl:string): PostId {
+        p := (Post create title body imageUrl);
+        uid := (Posts generateUid);
+        m_posts set uid p;
+        return uid;
+    }
+
+    static method (generateUid): PostId {
+        return "TODO";
+    }
+}
+
+static class Program {
+    static method (main) {
+        t := (Template create "Name: {name} Age: {age} Custom: {custom}" "Person");
+        Console print (t render (Person create 99 "Peter"));
+    }
+}

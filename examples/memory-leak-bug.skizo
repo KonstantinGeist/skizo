@@ -1,0 +1,51 @@
+import console;
+import domain;
+import map;
+import stopwatch;
+
+class AdderService {
+    static field g_shouldStop: bool;
+
+    field m_taskId: int;
+    field m_taskMap: Map;
+
+    ctor (create) {
+        m_taskMap = (Map create);
+    }
+
+    method (add a: string b: string): string {
+        return (a + b);
+    }
+
+    method (stop) {
+        g_shouldStop = true;
+    }
+
+    static method (start) {
+        Domain listen ^(): bool {
+            return (g_shouldStop not);
+        };
+    }
+
+    static ctor {
+        ((Domain isBaseDomain) not) then ^{
+            Domain exportObject "service" (AdderService create);
+        };
+    }
+}
+
+class Program {
+public
+   static method (main) {
+       domain := (Domain runMethod "AdderService/start");
+       service := (cast AdderService* (domain importObject "service"));
+
+       sw := (Stopwatch start);
+       Domain try ^{
+            Console print (service add "Hello, " "World!");
+       };
+
+       service stop;
+       domain wait 0;
+   }
+}

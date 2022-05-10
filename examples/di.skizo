@@ -1,0 +1,53 @@
+import console;
+import domain;
+
+class Person {
+    property name: string;
+    property age: int;
+}
+
+interface IPersonProvider  {
+    method (getPerson): Person;
+}
+
+class PersonProvider {
+    ctor (create) {
+        Console print "PersonProvider created!\n";
+    }
+
+    method (getPerson): Person {
+        p := (Person createDefault);
+        p setName "Peter";
+        p setAge 25;
+        return p;
+    }
+}
+
+class PersonService {
+    field m_personProvider: IPersonProvider;
+
+    ctor (create personProvider: IPersonProvider) {
+        m_personProvider = personProvider;
+    }
+
+    method (getPerson): Person {
+        return (m_personProvider getPerson);
+    }
+}
+
+class Program {
+public
+    static method (createPeter) {
+        service := (cast PersonService (Domain createInstance "PersonService"));
+        person := (service getPerson);
+        Console print (person name);
+        Console print "\n";
+        break;
+    }
+
+    static method (main) {
+        Domain addDependency "IPersonProvider" "PersonProvider";
+        Program createPeter;
+        Program createPeter;
+    }
+}

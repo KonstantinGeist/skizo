@@ -1,0 +1,18 @@
+class Foo {
+    field a: int;
+    field b: int;
+    field c: int;
+    field d: int;
+    field e: int;
+    field f: int;
+    field g: int;
+    field h: int;
+}
+
+static class Program {
+    static method (main) {
+        (0 to 10000000) loop ^(i: int) {
+            Foo createDefault;
+        };
+    }
+}
