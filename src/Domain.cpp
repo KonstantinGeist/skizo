@@ -30,10 +30,6 @@
 #include <assert.h>
 #include <stdarg.h>
 
-#ifdef SKIZO_X
-    #include "native/unix/unwind.unix.cpp"
-#endif
-
 namespace skizo { namespace script {
 using namespace skizo::core;
 using namespace skizo::collections;
@@ -752,10 +748,6 @@ const char* CDomain::GetLastError()
 
 void CDomain::abortImpl(char* msg, bool free)
 {
-#ifdef SKIZO_X
-    unwindHack(msg, free);
-#endif
-
     // The message is also saved globally for the current thread.
     // SKIZOGetLastError() from the C interface relies on it, as C doesn't have the notion of
     // exceptions.
