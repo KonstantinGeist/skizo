@@ -93,6 +93,12 @@ LIBTCCAPI int tcc_relocate(TCCState *s1, void *ptr);
 /* return symbol value or NULL if not found */
 LIBTCCAPI void *tcc_get_symbol(TCCState *s, const char *name);
 
+// ***********************
+//      Skizo change
+// ***********************
+LIBTCCAPI int tcc_is_symbol(TCCState *s, const void* ptr);
+// ***********************
+
 #ifdef __cplusplus
 }
 #endif

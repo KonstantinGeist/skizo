@@ -22,7 +22,7 @@
 #include <typeinfo>
 
 namespace skizo { namespace core {
-    
+
     // *************************
     //   Basic leak detector.
     // *************************
@@ -55,7 +55,7 @@ struct BasicLeakDetector
             printf("WARNING: basic leak detector found %d objects unreleased."
                    " Note that some static objects may be still alive, so a small"
                    " fixed number of live objects doesn't mean you have a leak. Also, certain systems"
-                   " don't free objects when an unhandled exception is thrown.", (int)ObjectCount);
+                   " don't free objects when an unhandled exception is thrown.\n", (int)ObjectCount);
         }
     }
 
@@ -105,7 +105,7 @@ void CObject::Ref() const
 {
 #ifdef DSKIZO_DEBUG_MODE
     SKIZO_REQ_NOT_EQUALS(m_refCount, 0);
-#endif    
+#endif
 
 #ifdef SKIZO_SINGLE_THREADED
     m_refCount++;

@@ -78,4 +78,19 @@ void CExecutablePageAllocator::DeallocatePage(void* page)
     p->m_addressToSizeMap->Remove(page);
 }
 
+bool CExecutablePageAllocator::HasPointer(void* ptr) const
+{
+    SHashMapEnumerator<void*, int> mapEnum (p->m_addressToSizeMap);
+    void* address;
+    int size;
+
+    while(mapEnum.MoveNext(&address, &size)) {
+        if(ptr >= (char*)address && ptr < (char*)address+size) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 } }

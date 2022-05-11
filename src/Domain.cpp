@@ -30,6 +30,10 @@
 #include <assert.h>
 #include <stdarg.h>
 
+#ifdef SKIZO_X
+    #include "native/unix/unwind.unix.cpp"
+#endif
+
 namespace skizo { namespace script {
 using namespace skizo::core;
 using namespace skizo::collections;
@@ -58,11 +62,11 @@ void __DeinitDomain()
     assert(CDomain::g_globalMutex);
     CDomain::g_globalMutex->Unref();
     CDomain::g_globalMutex = nullptr;
-    
+
     assert(g_lastError);
     delete g_lastError;
     g_lastError = nullptr;
-    
+
     assert(g_domain);
     delete g_domain;
     g_domain = nullptr;
@@ -107,6 +111,7 @@ public:
 
 }
 
+// TODO move this to native/win32
 #ifdef SKIZO_WIN
 static LONG WINAPI unhandledExceptionFilter(struct _EXCEPTION_POINTERS *lpTopLevelExceptionFilter)
 {
@@ -747,6 +752,10 @@ const char* CDomain::GetLastError()
 
 void CDomain::abortImpl(char* msg, bool free)
 {
+#ifdef SKIZO_X
+    unwindHack(msg, free);
+#endif
+
     // The message is also saved globally for the current thread.
     // SKIZOGetLastError() from the C interface relies on it, as C doesn't have the notion of
     // exceptions.
@@ -948,6 +957,11 @@ void* CDomain::GetSymbolThreadSafe(char* name) const
         r = GetSymbol(name);
     } SKIZO_END_LOCK_AB(CDomain::g_globalMutex);
     return r;
+}
+
+bool CDomain::IsSymbol(void* ptr) const
+{
+    return m_tccState? tcc_is_symbol(m_tccState, ptr): false;
 }
 
     // ******************

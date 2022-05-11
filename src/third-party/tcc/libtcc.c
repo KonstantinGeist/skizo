@@ -1975,3 +1975,25 @@ PUB_FUNC void tcc_print_stats(TCCState *s, int64_t total_time)
            tt, (int)(total_lines / tt),
            total_bytes / tt / 1000000.0);
 }
+
+// ***********************
+//      Skizo change
+// ***********************
+LIBTCCAPI int tcc_is_symbol(TCCState *s1, const void* ptr_to_compare)
+{
+    for(int i = 1; i < s1->nb_sections; i++) {
+        Section* s = s1->sections[i];
+        if (0 == (s->sh_flags & SHF_ALLOC))
+            continue;
+        unsigned long length = s->data_offset;
+        char* ptr = (char*)s->sh_addr;
+        if (s->sh_flags & SHF_EXECINSTR) {
+            //set_pages_executable(ptr, length);
+            if ((char*)ptr_to_compare >= ptr && (char*)ptr_to_compare < ptr+length) {
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+// ***********************

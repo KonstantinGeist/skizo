@@ -24,6 +24,10 @@ public:
     void* AllocatePage(size_t sz) override;
     void DeallocatePage(void* page) override;
 
+#ifdef SKIZO_X
+    bool HasPointer(void* ptr) const;
+#endif
+
 private:
     struct ExecutablePageAllocatorPrivate* p;
 };

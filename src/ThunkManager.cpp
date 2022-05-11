@@ -916,4 +916,11 @@ void SThunkManager::CompileAndLinkMethods(CDomain* domain)
     p->m_boxedCtors->Clear();
 }
 
+#ifdef SKIZO_X
+bool SThunkManager::IsThunk(void* ptr) const
+{
+    return p->m_execAllocator->HasPointer(ptr);
+}
+#endif
+
 } }

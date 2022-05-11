@@ -16,7 +16,7 @@
 
 namespace skizo { namespace script {
 
-class CDomain;    
+class CDomain;
 class CMethod;
 
 #ifdef SKIZO_X
@@ -104,6 +104,14 @@ struct SThunkManager
      * Used by CDomain::CreateDomain(..)
      */
     void CompileAndLinkMethods(CDomain* domain);
+
+#ifdef SKIZO_X
+    /**
+     * Returns true if the pointer points to ThunkJIT-generated machine code.
+     * So far only used by unwind.unix.cpp and not implemented for other platforms.
+     */
+    bool IsThunk(void* ptr) const;
+#endif
 };
 
 } }

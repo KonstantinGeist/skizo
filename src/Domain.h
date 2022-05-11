@@ -63,7 +63,7 @@ class CDomain: public skizo::core::CObject
     friend void __DeinitDomain();
     friend struct SVirtualUnwinder;
     friend struct SThunkManager;
-    
+
 public:
     CDomain();
     virtual ~CDomain();
@@ -206,6 +206,11 @@ public:
      * Thread-safe variant of GetSymbol(..)
      */
     void* GetSymbolThreadSafe(char* name) const;
+
+    /**
+     * Returns true if the symbol is found *pointer points to TCC-allocated machine code).
+     */
+    bool IsSymbol(void* ptr) const;
 
     /**
      * The id is guaranteed to be unique across the entire domain (until we hit the 2 bln limit, which isn't going to
