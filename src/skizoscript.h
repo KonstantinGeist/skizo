@@ -78,7 +78,7 @@ typedef struct {
     so_bool useSourceAsPath;
     char* name;
     void* stackBase;
-    int minGCThreshold;
+    int maxGCMemory;
     so_bool dumpCCode;
     so_bool stackTraceEnabled;
     so_bool profilingEnabled;

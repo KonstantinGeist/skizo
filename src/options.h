@@ -65,8 +65,8 @@
 #define SKIZO_SECURE_PATH "secure"
 
 /**
- * @see SMemoryManager::MinGCThreshold
+ * @see SMemoryManager::MaxGCMemory
  */
-#define SKIZO_MIN_GC_THRESHOLD (10 * 1024 * 1024)
+#define SKIZO_MAX_GC_MEMORY (10 * 1024 * 1024)
 
 #endif // OPTIONS_H_INCLUDED

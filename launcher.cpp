@@ -74,7 +74,7 @@ static int mainImpl(int argc, char **argv)
     addOptionDescr(descrs, "safecallbacks", "closures passed as C callbacks to native code are checked for being called in correct domains", "false");
     addOptionDescr(descrs, "permissions", "makes the base domain untrusted and specifies a list of permissions", 0);
     addOptionDescr(descrs, "inline", "inlines branching", "true");
-    addOptionDescr(descrs, "mingcthreshold", "sets minimal GC threshold", 0);
+    addOptionDescr(descrs, "maxgcmemory", "sets maximum GC memory", "134217728");
     addOptionDescr(descrs, "gcstats", "gc stats on every garbage collection", "false");
 
     Auto<const CString> source;
@@ -83,7 +83,7 @@ static int mainImpl(int argc, char **argv)
     bool dumpCode, profilingEnabled, stackTraceEnabled, softDebuggingEnabled,
          explicitNullCheck, safeCallbacks, doinline, gcstats;
     bool isSecure = false;
-    int mingcthreshold = -1;
+    int maxGCMemory = -1;
 
     try {
 
@@ -125,8 +125,8 @@ static int mainImpl(int argc, char **argv)
         explicitNullCheck = options->GetBoolOption("nullcheck");
         safeCallbacks = options->GetBoolOption("safecallbacks");
         doinline = options->GetBoolOption("inline");
-        mingcthreshold = options->GetIntOption("mingcthreshold");
-        if(mingcthreshold < 1 && mingcthreshold != -1) {
+        maxGCMemory = options->GetIntOption("maxgcmemory");
+        if(maxGCMemory < 1 && maxGCMemory != -1) {
             printf("Min GC threshold must be greater than zero.\n");
             return 1;
         }
@@ -173,8 +173,8 @@ static int mainImpl(int argc, char **argv)
     domainCreation.ExplicitNullCheck = explicitNullCheck;
     domainCreation.SafeCallbacks = safeCallbacks;
     domainCreation.InlineBranching = doinline;
-    if(mingcthreshold != -1) {
-        domainCreation.MinGCThreshold = mingcthreshold;
+    if(maxGCMemory != -1) {
+        domainCreation.MaxGCMemory = maxGCMemory;
     }
     domainCreation.GCStatsEnabled = gcstats;
 

@@ -370,7 +370,7 @@ CDomain* CDomain::CreateDomain(const SDomainCreation& creation)
     // *******************************************************************************
 
     domain->m_memMngr.SetStackBase(creation.StackBase);
-    domain->m_memMngr.SetMinGCThreshold(creation.MinGCThreshold);
+    domain->m_memMngr.SetMaxGCMemory(creation.MaxGCMemory);
 
     domain->m_entryPointClass.SetVal(creation.EntryPointClass);
     domain->m_entryPointMethod.SetVal(creation.EntryPointMethod);

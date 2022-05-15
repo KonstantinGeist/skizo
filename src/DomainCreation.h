@@ -73,9 +73,9 @@ public:
     void* StackBase;
 
     /**
-     * See SMemoryManager::Threshold
+     * See SMemoryManager::MaxGCMemory
      */
-    so_long MinGCThreshold;
+    so_long MaxGCMemory;
 
     /**
      * Creates a file named "skizodump.c" in the current directory where it dumps emitted C code.
@@ -159,7 +159,7 @@ public:
           EntryPointMethod(0),
           IsUntrusted(false),
           StackBase(nullptr),
-          MinGCThreshold(SKIZO_MIN_GC_THRESHOLD),
+          MaxGCMemory(SKIZO_MAX_GC_MEMORY),
           DumpCCode(false),
           StackTraceEnabled(false),
           ProfilingEnabled(false),

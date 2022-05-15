@@ -31,7 +31,7 @@ SMemoryManager::SMemoryManager():
     m_roots(new CLinkedList<void*>()),
     m_gcRootHolders(new CArrayList<CGCRootHolder*>()),
     m_heapStart(nullptr), m_heapEnd(nullptr), m_stackBase(nullptr),
-    m_allocdMemory(0), m_minGCThreshold(SKIZO_MIN_GC_THRESHOLD), m_customMemoryPressure(0),
+    m_allocdMemory(0), m_maxGCMemory(SKIZO_MAX_GC_MEMORY), m_customMemoryPressure(0),
     m_destructables(new CArrayList<void*>()),
     m_stringLiterals(new CArrayList<void*>()),
     m_disableGC(false),
@@ -59,20 +59,25 @@ void* SMemoryManager::Allocate(int sz, void** vtable)
 
     so_long usedMemory = m_allocdMemory + m_customMemoryPressure;
 
-    // See the header in GC.h
-    if(usedMemory > m_minGCThreshold) {
+    if(usedMemory > m_maxGCMemory) {
 
         if(m_gcStatsEnabled) {
-            printf("[GC reason] alloc'd memory: %ld; memory pressure: %ld; threshold: %ld\n",
+            printf("[GC reason] alloc'd memory: %ld; memory pressure: %ld; max GC memory: %ld\n",
                     (long int)m_allocdMemory,
                     (long int)m_customMemoryPressure,
-                    (long int)m_minGCThreshold);
+                    (long int)m_maxGCMemory);
         }
 
         CollectGarbage(false); // IMPORTANT 'judgement day' flag set to false
 
         // Recalculate used memory.
         usedMemory = m_allocdMemory + m_customMemoryPressure;
+
+        // If the amount of allocated memory is still above the maximum allowed GC memory size,
+        // abort the domain.
+        if(usedMemory + sz >= m_maxGCMemory) {
+            _soX_abort0(SKIZO_ERRORCODE_OUT_OF_MEMORY);
+        }
     }
 
     // **************************

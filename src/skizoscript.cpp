@@ -70,7 +70,7 @@ skizo_domain SKIZO_API SKIZOCreateDomain(SKIZO_DOMAINCREATION* cDC)
 
         domainCreation.StackBase = cDC->stackBase;
 
-        domainCreation.MinGCThreshold = cDC->minGCThreshold;
+        domainCreation.MaxGCMemory = cDC->maxGCMemory;
         domainCreation.DumpCCode = cDC->dumpCCode;
         domainCreation.StackTraceEnabled = cDC->stackTraceEnabled;
         domainCreation.ProfilingEnabled = cDC->profilingEnabled;
@@ -156,7 +156,7 @@ skizo_result SKIZO_API SKIZOAddGCRoot(skizo_domain domain, void* pObj)
     if(!domain) {
         return SKIZO_FAILURE;
     }
-    
+
     SKIZO_GUARD_BEGIN_AB
         ((CDomain*)domain)->MemoryManager().AddGCRoot(pObj);
     SKIZO_GUARD_END_AB
@@ -167,7 +167,7 @@ skizo_result SKIZO_API SKIZORemoveGCRoot(skizo_domain domain, void* pObj)
     if(!domain) {
         return SKIZO_FAILURE;
     }
-    
+
     SKIZO_GUARD_BEGIN_AB
         ((CDomain*)domain)->MemoryManager().RemoveGCRoot(pObj);
     SKIZO_GUARD_END_AB
@@ -178,7 +178,7 @@ skizo_result SKIZO_API SKIZOCollectGarbage(skizo_domain domain)
     if(!domain) {
         return SKIZO_FAILURE;
     }
-    
+
     SKIZO_GUARD_BEGIN_AB
         ((CDomain*)domain)->MemoryManager().CollectGarbage();
     SKIZO_GUARD_END_AB

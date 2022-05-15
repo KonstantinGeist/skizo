@@ -95,12 +95,11 @@ public:
     void SetStackBase(void* value) { m_stackBase = value; }
 
     /**
-     * The initial threshold is SKIZO_MIN_GC_THRESHOLD bytes. If AllocdMemory is higher than the threshold,
-     * GC occurs. If AllocdMemory is still higher than the threshold even after a GC, increase the threshold
-     * 2 times and deal with it. If AllocdMemory is twice less than the threshold after GC, decrease the threshold
-     * 2 times (but it should not be less than SKIZO_MIN_GC_THRESHOLD bytes).
+     * The maximum allowed memory is SKIZO_MAX_GC_MEMORy bytes. If AllocdMemory is higher than the max value,
+     * a GC cycle occurs. If AllocdMemory is still higher than the threshold even after a GC, aborts with an out
+     * of memory error.
      */
-    void SetMinGCThreshold(so_long value) { m_minGCThreshold = value; }
+    void SetMaxGCMemory(so_long value) { m_maxGCMemory = value; }
 
     /**
      * String literals are stored in a separate section of the memory manager.
@@ -158,7 +157,7 @@ private:
 
     void* m_stackBase;
     so_long m_allocdMemory;
-    so_long m_minGCThreshold;
+    so_long m_maxGCMemory;
     so_long m_customMemoryPressure;
 
     // During the sweeping phase, the GC saves objects with dtors to this list to iterate over them later
