@@ -242,7 +242,7 @@ void SParser::parseConst(CClass* klass, const CToken* errorToken)
         ScriptUtils::FailT("Consts can't be marked unsafe, static, abstract or native.", errorToken);
     }
     if(attrs->Count()) {
-        ScriptUtils::FailT("Consts can't have attributes (as of version 1.0)", errorToken);
+        ScriptUtils::FailT("Consts can't have attributes (as of version 0.1)", errorToken);
     }
 
     const CToken* token = nullptr;

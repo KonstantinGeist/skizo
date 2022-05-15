@@ -91,7 +91,7 @@ static int mainImpl(int argc, char **argv)
 
         bool helpRequired = (options->GetBoolOption("help"));
         if(helpRequired || options->Size() == 0) {
-            printf("SkizoScript 1.0\n\n"); // TODO extract the version from the runtime
+            printf("SkizoScript v0.1\n\n"); // TODO extract the version from the runtime
             options->PrintHelp();
 
             if(options->Size() == 0) {
