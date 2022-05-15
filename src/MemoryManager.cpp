@@ -73,21 +73,6 @@ void* SMemoryManager::Allocate(int sz, void** vtable)
 
         // Recalculate used memory.
         usedMemory = m_allocdMemory + m_customMemoryPressure;
-
-        if(usedMemory > (int)(m_minGCThreshold * 0.75f)) {
-            m_minGCThreshold = usedMemory + usedMemory / 2;
-            if(m_gcStatsEnabled) {
-                printf("GC threshold set to: %ld\n", (long int)m_minGCThreshold);
-            }
-        } else if(usedMemory < (m_minGCThreshold / 2)) {
-            m_minGCThreshold /= 2;
-            if(m_minGCThreshold < SKIZO_MIN_GC_THRESHOLD) {
-                m_minGCThreshold = SKIZO_MIN_GC_THRESHOLD;
-            }
-            if(m_gcStatsEnabled) {
-                printf("GC threshold set to: %ld\n", (long int)m_minGCThreshold);
-            }
-        }
     }
 
     // **************************
@@ -152,7 +137,7 @@ void SMemoryManager::AddGCRoots(void** rootRefs, int count)
 {
     for(int i = 0; i < count; i++) {
         m_roots->Add(rootRefs[i]);
-    }    
+    }
 }
 
 void SMemoryManager::InitializeStaticValueTypeField(void* obj, CClass* objClass)
@@ -207,7 +192,7 @@ void SMemoryManager::gcMark(void* obj_ptr)
             // A separate code path for arrays, they have unique GC maps per array.
             const CClass* const pWrappedClass = pClass->ResolvedWrappedClass();
             const SGCInfo& wrappedGCInfo = pWrappedClass->GCInfo();
-            
+
             gcMap = wrappedGCInfo.GCMap;
             const SArrayHeader* array = (SArrayHeader*)obj_ptr;
             size_t offset = offsetof(SArrayHeader, firstItem);
@@ -294,7 +279,7 @@ void SMemoryManager::scanStack()
 {
     void** start = (void**)m_stackBase;
     void** end = (void**)&start;
- 
+
     // The descending order for X86/64-based CPUs.
     SKIZO_REQ(end < start, EC_PLATFORM_DEPENDENT);
     for(void** i = end; i < start; i++) {

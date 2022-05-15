@@ -67,6 +67,6 @@
 /**
  * @see SMemoryManager::MinGCThreshold
  */
-#define SKIZO_MIN_GC_THRESHOLD (5 * 1024)
+#define SKIZO_MIN_GC_THRESHOLD (10 * 1024 * 1024)
 
 #endif // OPTIONS_H_INCLUDED
