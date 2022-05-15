@@ -102,6 +102,11 @@ namespace Application {
 void Exit(int code);
 
 /**
+ * Prints a message and quickly terminates the currently running process.
+ */
+void FailFast(const char* msg);
+
+/**
  * Gets the filename of the currently running executable. The returned
  * string can be used to spawn another instance of the running program.
  */

@@ -130,8 +130,7 @@ static LONG WINAPI unhandledExceptionFilter(struct _EXCEPTION_POINTERS *lpTopLev
             // Can get here if proactive stack overflow detection is disabled or there's a bug in the runtime.
             // Not recoverable.
             // TODO don't kill other threads
-            printf("Stack overflow.");
-            exit(1);
+            Application::FailFast("Stack overflow.")
         }
         break;
     }

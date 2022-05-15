@@ -84,7 +84,7 @@ extern "C" {
 
 #ifdef SKIZO_ALLOC_DL
     void* operator new(std::size_t sz)
-    {       
+    {
         void* r = dlmalloc(sz);
         if(!r) {
             throw std::bad_alloc();
@@ -186,7 +186,7 @@ extern "C" {
     // **********************************************************
     //   Default through malloc/free + checks heap consistency.
     // **********************************************************
-    
+
     // ***************************************************************
     // Useful to test how the application restores from OOM scenarios.
     //#define SKIZO_TEST_OUT_OF_MEMORY
@@ -207,7 +207,7 @@ extern "C" {
     // non-aligned access
 
     void* operator new(std::size_t sz)
-    {       
+    {
         static_assert(sizeof(std::size_t) <= ALIGN_CONSTANT, "sizeof(std::size_t) <= ALIGN_CONSTANT");
 
         sz += ALIGN_CONSTANT * 2; // expands to be able to fit both the pre-header
@@ -217,8 +217,7 @@ extern "C" {
 
     #ifdef SKIZO_TEST_OUT_OF_MEMORY
         if((g_allocated + sz) > (300 * 1024 * 1024)) { // 500 MB
-            printf("Memory limit (SKIZO_TEST_OUT_OF_MEMORY defined).\n");
-            exit(1); // fail fast
+            Application::FailFast("Memory limit (SKIZO_TEST_OUT_OF_MEMORY defined).");
         }
     #endif
 
@@ -232,7 +231,7 @@ extern "C" {
 
         // Fills the pre-header and the post-header with magic values. They will
         // be checked in delete(..) for consistency.
-        std::memset(r, 
+        std::memset(r,
                     PREHEADER_MAGIC,
                     ALIGN_CONSTANT);
         std::memset(reinterpret_cast<uint8_t*>(r) + sz - ALIGN_CONSTANT,

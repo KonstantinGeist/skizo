@@ -75,6 +75,12 @@ void Exit(int code)
     exit(code);
 }
 
+void FailFast(const char* msg)
+{
+    printf("%s\n", msg);
+    exit(1);
 }
 
-} } 
+}
+
+} }

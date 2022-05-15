@@ -110,7 +110,7 @@ static __cdecl void closureChecker(void* origDomain)
                                 TEXT("Skizo"),
                                 MB_YESNO | MB_ICONERROR);
         if(result == IDNO) {
-            Application::Exit(1);
+            Application::FailFast("A Skizo closure was found to be called on a foreign domain or thread (via native code).");
         }
     #else
         // TODO ?

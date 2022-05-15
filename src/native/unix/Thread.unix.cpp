@@ -41,7 +41,7 @@ static pthread_mutex_t g_cs; // To secure access to the thread list (CoreCLR
 
 // The list of known skizo threads. Required for Thread::GetThreads()
 // void* is used as a weak reference with no ref counting.
-static CArrayList<void*>* g_knownThreadList = nullptr;                                                
+static CArrayList<void*>* g_knownThreadList = nullptr;
 
 struct ThreadPrivate
 {
@@ -241,7 +241,7 @@ void* PosixToSkizo(void* arg)
 
     } catch (const SException& e) {
 
-        // Exceptions need to be caught, or they will propagate to foreign 
+        // Exceptions need to be caught, or they will propagate to foreign
         // OS stacks. Also we need to unregister the thread instance from the
         // thread list below.
         printf("Uncaught thread exception: '%s'.", e.Message());
@@ -309,7 +309,7 @@ void CThread::Start()
     // Sets the thread affinity and the priority.
     // ******************************************
 
-    // TODO Thread priorities ignores for Linux yet.
+    // TODO Thread priorities ignored for Linux yet.
 }
 
 void CThread::Join(const CThread* thread, int timeout)
