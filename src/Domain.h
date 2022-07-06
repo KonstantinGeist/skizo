@@ -51,7 +51,7 @@ class CMethod;
 
 /**
  * A domain is an isolated instance of the runtime that consists of a set of modules, a separate memory manager, its own thread,
- * and a set if permissions.
+ * and a set of permissions.
  * If you want to dynamically load new modules (chunks of code), you have to create new domains.
  * For convenience (as a domain is the root of everything, and it's easy to retrieve it via CDomain::ForCurrentThread()),
  * this class manages many things at once: it allows to register classes, create objects, etc. However, actual implementations

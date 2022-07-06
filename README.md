@@ -17,7 +17,7 @@ Extending the runtime with new features is very easy, and I tried to make the co
 * Unsafe methods, which allow to work with native memory, taking pointers etc.
 * Uniform method call syntax and "everything is a method call": math operations, method calls, language constructs, all have same syntax. There's no special syntax for "if" or "for" constructs, they are implemented as method calls as well.
 * A few built-in collections (array, map).
-* A tiny standard library: string, stringbuilder path, console, stopwatch, marshal, application, guid, math, random, stream etc.
+* A tiny standard library: string, stringbuilder, path, console, stopwatch, marshal, application, guid, math, random, stream etc.
 * Failables (a sum type of "value" and "error").
 * Autoboxing/unboxing.
 * Reflection.
@@ -33,7 +33,7 @@ Extending the runtime with new features is very easy, and I tried to make the co
 * The quirky method call syntax was originally invented to simplify the implementation and to make it more extendable/flexible. I was envisioning the notion of "transformers" which would allow to transform the AST at compile time, including being able to process custom syntax.
 * This release contains ideas such as "foreign objects", "domains", "permissions". Originally, I envisioned a system where a program is divided into sandboxed single-threaded "domains" which are tied to their respective threads of execution and protected with their own permission sets, and interoperate via "foreign object pointers". I'm planning to revise it.
 * The project doesn't make use of idiomatic C++, it reinvents the standard library and has a few of its own idioms. There were several reasons behind it:
-1) It's easier to reason about a simple subset of C++, a contributor does't need to be an expert of C++, however they have access to some of C++'s nice features such as RAII and templates.
+1) It's easier to reason about a simple subset of C++, a contributor does't need to be an expert at C++, however they have access to some of C++'s nice features such as RAII and templates.
 2) You have full control of the implementation and the semantics, good for learning.
 3) When the semantics and the implementation are well understood, it's trivial to pass pointers to C++ memory to Skizo and back, and assume certain things.
 4) Parts of the runtime can be reused to implement Skizo's standard library. Since those classes are already heavily used by the compiler/runtime itself, there's additional test coverage at no cost.
@@ -45,14 +45,14 @@ Extending the runtime with new features is very easy, and I tried to make the co
 ## Known limitations
 
 * So far, it's x86 only, because it generates x86-specific JIT thunks for closures, reflection and boxed object methods.
-* Aborts don't properly work on Linux, because on Linux, C++ exceptions (which implement "abort") cannot unwind through JIT-generated stacks (I once came up with a hack to fiddle with stack memory, but it was lost in time). Abort on Linux cannot be caught and will crash the entire application.
+* Aborts don't properly work on Linux, because on Linux, C++ exceptions (which implement "abort") cannot unwind through JIT-generated stacks. Abort on Linux cannot be caught and will crash the entire application. I'm planning to revise this.
 * The GC I wrote is pretty sketchy and not very performant.
 * Compilation time is OK for small scripts but grows considerably on large inputs.
 * No incremental compilation.
-* For compilation, it currently uses an outdated version of TCC, which is not very fast and not actively maintained.
+* For compilation, it currently uses an outdated version of TCC, which is not very fast and not actively maintained. Perhaps, eventually I'll move to AOT where we can reuse GCC or clang.
 * No generics.
 * "Dependency injection" is an incompleted work in progress.
-* Foreign objects don't work on Linux.
+* Foreign objects don't properly work on Linux.
 
 ## Plans
 
@@ -87,6 +87,6 @@ Tested on Ubuntu 20.04.
 You need CMake and MinGW (with 32-bit support) installed on your system.
 
 Then compile it with (debug mode):
-    ./build_win32d.sh
-    
+./build_win32d.sh
+
 Release mode scripts end with -r suffix: for example, build_win32r.sh
