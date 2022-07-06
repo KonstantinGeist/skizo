@@ -1,88 +1,88 @@
 import stringbuilder;
 
 extend string {
-	method (reverse): string {
-		sb := (StringBuilder create (this length));
-		(0 to (this length)) loop ^(i: int) {
-			sb append (this get (((this length) - i) - 1));
-		};
-		return (sb toString);
-	}
+    method (reverse): string {
+        sb := (StringBuilder create (this length));
+        (0 to (this length)) loop ^(i: int) {
+            sb append (this get (((this length) - i) - 1));
+        };
+        return (sb toString);
+    }
 }
 
 static class StringTest {
-	[test]
-	static method (run) {
-		assert (("Hi\n!" get 2) == '\n');
+    [test]
+    static method (run) {
+        assert (("Hi\n!" get 2) == '\n');
 
-		assert (("" length) == 0);
-		assert (("Hello, World!" length) == 13);
+        assert (("" length) == 0);
+        assert (("Hello, World!" length) == 13);
 
-		assert (("ABC" get 0) == 'A');
-		assert (("ABC" get 1) == 'B');
-		assert (("ABC" get 2) == 'C');
+        assert (("ABC" get 0) == 'A');
+        assert (("ABC" get 1) == 'B');
+        assert (("ABC" get 2) == 'C');
 
-		assert (("Brook" + "lyn") == "Brooklyn");
-		assert (("" + "Brooklyn") == "Brooklyn");
-		assert (("Brooklyn" + "") == "Brooklyn");
+        assert (("Brook" + "lyn") == "Brooklyn");
+        assert (("" + "Brooklyn") == "Brooklyn");
+        assert (("Brooklyn" + "") == "Brooklyn");
 
-		assert (("Moscow" toString) == "Moscow");
-		assert (("Moscow" toString) === "Moscow");
+        assert (("Moscow" toString) == "Moscow");
+        assert (("Moscow" toString) === "Moscow");
 
-		assert (("Moscow" substring 3 3) == "cow");
-		assert (("Moscow" substring 2 0) == "scow");
+        assert (("Moscow" substring 3 3) == "cow");
+        assert (("Moscow" substring 2 0) == "scow");
 
-		assert (("Moscow" hashCode) == ("Moscow" hashCode));
+        assert (("Moscow" hashCode) == ("Moscow" hashCode));
 
-		assert ("Moscow" equals ("Mos" + "cow"));
-		assert (("Moscow" equals 1) not);
+        assert ("Moscow" equals ("Mos" + "cow"));
+        assert (("Moscow" equals 1) not);
 
-		split := ("1|2|3|4" split "|");
-		assert ((split length) == 4);
-		assert ((split get 0) == "1");
-		assert ((split get 1) == "2");
-		assert ((split get 3) == "4");
-		/*split = ("|" split "|");
-		split = ("" split "|");
-		split = ("|" split "");
-		split = ("" split "");*/
+        split := ("1|2|3|4" split "|");
+        assert ((split length) == 4);
+        assert ((split get 0) == "1");
+        assert ((split get 1) == "2");
+        assert ((split get 3) == "4");
+        /*split = ("|" split "|");
+        split = ("" split "|");
+        split = ("|" split "");
+        split = ("" split "");*/
 
-		assert (("HELlO" toLowerCase) == "hello");
-		assert (("hEllo" toUpperCase) == "HELLO");
+        assert (("HELlO" toLowerCase) == "hello");
+        assert (("hEllo" toUpperCase) == "HELLO");
 
-		assert (("Hello, World" findSubstring "ll" 0) == 2);
-		assert (("Hello, World" findSubstring "o" 0) == 4);
-		assert (("Hello, World" findSubstring "o" 5) == 8);
-		assert (("Hello, World" findSubstring "z" 0) == -1);
-		assert (("Hello, World" findSubstring "" 0) == 0);
-		assert (("s" findSubstring "HelloWorld" 0) == -1);
+        assert (("Hello, World" findSubstring "ll" 0) == 2);
+        assert (("Hello, World" findSubstring "o" 0) == 4);
+        assert (("Hello, World" findSubstring "o" 5) == 8);
+        assert (("Hello, World" findSubstring "z" 0) == -1);
+        assert (("Hello, World" findSubstring "" 0) == 0);
+        assert (("s" findSubstring "HelloWorld" 0) == -1);
 
-		assert ("Bob" startsWith "B");
-		assert (("Bob" startsWith "Z") not);
-		assert (("B" startsWith "Bob") not);
+        assert ("Bob" startsWith "B");
+        assert (("Bob" startsWith "Z") not);
+        assert (("B" startsWith "Bob") not);
 
-		assert ("Bob" endsWith "b");
-		assert (("Bob" endsWith "z") not);
+        assert ("Bob" endsWith "b");
+        assert (("Bob" endsWith "z") not);
 
-		assert ((" Bob" trim) == "Bob");
-		assert ((" Bob " trim) == "Bob");
-		assert (("Bob " trim) == "Bob");
-		assert (("   Bob  " trim) == "Bob");
+        assert ((" Bob" trim) == "Bob");
+        assert ((" Bob " trim) == "Bob");
+        assert (("Bob " trim) == "Bob");
+        assert (("   Bob  " trim) == "Bob");
 
-		/* A small stress test. */
-		s := "";
-		(0 to 1000) loop ^(i: int) {
-			s = (s + "A");
-		};
-		(0 to 1000) loop ^(i: int) {
-			assert ((s get i) == 'A');
-		};
+        /* A small stress test. */
+        s := "";
+        (0 to 1000) loop ^(i: int) {
+            s = (s + "A");
+        };
+        (0 to 1000) loop ^(i: int) {
+            assert ((s get i) == 'A');
+        };
 
-		/* Checks if "extend" correctly works on strings. */
-		assert (("ABC" reverse) == "CBA");
+        /* Checks if "extend" correctly works on strings. */
+        assert (("ABC" reverse) == "CBA");
 
-		/* Комментарий. */
-		/* Verifies Unicode works for string literals. */
-		assert (("Привет, " + "мир!") == "Привет, мир!");
-	}
+        /* Комментарий. */
+        /* Verifies Unicode works for string literals. */
+        assert (("Привет, " + "мир!") == "Привет, мир!");
+    }
 }

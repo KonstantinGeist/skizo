@@ -1,23 +1,23 @@
 import stringbuilder;
 
 static class StringBuilderTest {
-	[test]
-	static method (run) {
-		sb := (StringBuilder create 16);
-		(0 to 10) loop ^(i: int) {
-			sb append "A";
-		};
-		s := (sb toString);
-		(0 to 10) loop ^(i: int) {
-			assert ((s get i) == 'A');
-		};
+    [test]
+    static method (run) {
+        sb := (StringBuilder create 16);
+        (0 to 10) loop ^(i: int) {
+            sb append "A";
+        };
+        s := (sb toString);
+        (0 to 10) loop ^(i: int) {
+            assert ((s get i) == 'A');
+        };
 
-		sb = (StringBuilder create 1);
-		sb append "HELLO";
-		assert ((sb toString) == "HELLO");
+        sb = (StringBuilder create 1);
+        sb append "HELLO";
+        assert ((sb toString) == "HELLO");
 
-		assert ((sb length) == 5);
-		sb clear;
-		assert ((sb length) == 0);
-	}
+        assert ((sb length) == 5);
+        sb clear;
+        assert ((sb length) == 0);
+    }
 }

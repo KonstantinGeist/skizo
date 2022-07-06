@@ -25,7 +25,6 @@ class CDomain;
 /**
  * The activator manages dependencies and allows to create object instances through built-in
  * dependency injection.
- * It is exposed to Skizo through the static activator class.
  */
 struct SActivator
 {
@@ -48,8 +47,7 @@ public:
      * If the given class is an interface, then the call is similar to ::GetDependency, except the instance
      * is not cached (a new instance is returned every time). If it's a concrete class, then a concrete class instance
      * is returned.
-     * An instance is created by finding a constructor with the attribute [inject]. All parameters in this
-     * constructor must be depedency interfaces. Otherwise, the method aborts.
+     * All parameters in this constructor must be depedency interfaces. Otherwise, the method aborts.
      */
     void* CreateInstance(const skizo::core::CString* className) const;
     void* CreateInstance(CClass* klass) const;

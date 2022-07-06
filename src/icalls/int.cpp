@@ -23,12 +23,12 @@ extern "C" {
 void* SKIZO_API _so_int_toString(int i)
 {
     CDomain* domain = CDomain::ForCurrentThread();
-	void* r = nullptr;
-	SKIZO_GUARD_BEGIN
-		Auto<const CString> source (CoreUtils::IntToString(i));
-		r = domain->CreateString(source, false);
-	SKIZO_GUARD_END
-	return r;
+    void* r = nullptr;
+    SKIZO_GUARD_BEGIN
+        Auto<const CString> source (CoreUtils::IntToString(i));
+        r = domain->CreateString(source, false);
+    SKIZO_GUARD_END
+    return r;
 }
 
 int SKIZO_API _so_int_hashCode(int i)

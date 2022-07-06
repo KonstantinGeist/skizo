@@ -6,15 +6,15 @@ import stringbuilder;
 force StringBuilder*;
 
 class Program {
-	static ctor {
-		Domain exportObject "sharedObject" (StringBuilder create 10);
-	}
+    static ctor {
+        Domain exportObject "sharedObject" (StringBuilder create 10);
+    }
 
-	static method(main) {
-		c: any = 0; /* emulation of "force boxed T;" */ /* TODO */
-		d: any = true; /* emulation of "force boxed T;" */ /* TODO */
-		e: any = 'c'; /* emulation of "force boxed T;" */ /* TODO */
+    static method(main) {
+        c: any = 0; /* emulation of "force boxed T;" */ /* TODO */
+        d: any = true; /* emulation of "force boxed T;" */ /* TODO */
+        e: any = 'c'; /* emulation of "force boxed T;" */ /* TODO */
 
-		Domain listen null;
-	}
+        Domain listen null;
+    }
 }

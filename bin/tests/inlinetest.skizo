@@ -1,33 +1,33 @@
 import console;
 
 extend bool {
-	unsafe static method (while2 cond: Predicate
-			                    action: Action)
-	{
-		b: bool = true;
+    unsafe static method (while2 cond: Predicate
+                                action: Action)
+    {
+        b: bool = true;
 
-		@
-		while(l_b) {
-		@
-			((cond invoke) not) then ^{
-				b = false;
-			};
-			b then ^{
-				action invoke;
-			};
-		@
-		};
-		@
-	}
+        @
+        while(l_b) {
+        @
+            ((cond invoke) not) then ^{
+                b = false;
+            };
+            b then ^{
+                action invoke;
+            };
+        @
+        };
+        @
+    }
 }
 
 static class InlineTest {
-	[test]
-	static method (run) {
-		i: int = 0;
-		bool while2 ^(): bool { return (i < 5); } ^{
-			i = (i + 1);
-		};
-		assert (i == 5);
-	}
+    [test]
+    static method (run) {
+        i: int = 0;
+        bool while2 ^(): bool { return (i < 5); } ^{
+            i = (i + 1);
+        };
+        assert (i == 5);
+    }
 }

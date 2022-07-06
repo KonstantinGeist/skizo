@@ -8,27 +8,27 @@ struct for
         m_cond = cond;
     }
 
-	unsafe method (do action: Action) {
-		b: bool = true;
+    unsafe method (do action: Action) {
+        b: bool = true;
 
-		@
-		while(l_b) {
-		@
-			((m_cond invoke) not) then ^{
-				b = false;
-			};
-			b then ^{
-				action invoke;
-			};
-		@
-		};
-		@
-	}
+        @
+        while(l_b) {
+        @
+            ((m_cond invoke) not) then ^{
+                b = false;
+            };
+            b then ^{
+                action invoke;
+            };
+        @
+        };
+        @
+    }
 }
 
 static class FactorialTest {
     [test]
-	static method (run) {
+    static method (run) {
         i: int = 1;
         acc: int = 1;
 
@@ -38,5 +38,5 @@ static class FactorialTest {
         };
 
         assert (acc == 362880);
-	}
+    }
 }

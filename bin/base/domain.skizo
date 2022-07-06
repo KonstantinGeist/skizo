@@ -1,101 +1,101 @@
 /* WARNING! Don't change this file! The runtime depends on the exact layout. */
 
 class DomainHandle {
-	field m_ptr: intptr;
-	static native method (dtorImpl ptr: intptr);
-	static native method (isAliveImpl ptr: intptr): bool;
-	static native method (waitImpl ptr:intptr timeout:int): bool;
-	static native method (importObjectImpl ptr:intptr soObj:DomainHandle name:string): any;
+    field m_ptr: intptr;
+    static native method (dtorImpl ptr: intptr);
+    static native method (isAliveImpl ptr: intptr): bool;
+    static native method (waitImpl ptr:intptr timeout:int): bool;
+    static native method (importObjectImpl ptr:intptr soObj:DomainHandle name:string): any;
 
 internal
-	ctor (wrap ptr: intptr) {
-		m_ptr = ptr;
-	}
+    ctor (wrap ptr: intptr) {
+        m_ptr = ptr;
+    }
 
-	dtor {
-		DomainHandle dtorImpl m_ptr;
-	}
+    dtor {
+        DomainHandle dtorImpl m_ptr;
+    }
 
 public
-	/* This is just to check things. Shouldn't be used for logic. */
-	method (isAlive): bool {
-		return (DomainHandle isAliveImpl m_ptr);
-	}
+    /* This is just to check things. Shouldn't be used for logic. */
+    method (isAlive): bool {
+        return (DomainHandle isAliveImpl m_ptr);
+    }
 
-	method (wait timeout: int): bool {
-		return (DomainHandle waitImpl m_ptr timeout);
-	}
+    method (wait timeout: int): bool {
+        return (DomainHandle waitImpl m_ptr timeout);
+    }
 
-	method (importObject name: string): any {
-		return (DomainHandle importObjectImpl m_ptr this name);
-	}
+    method (importObject name: string): any {
+        return (DomainHandle importObjectImpl m_ptr this name);
+    }
 }
 
 static class Domain {
 private
-	static native method (runGenericImpl source:any
-										 sourceKind:int
-										 permissions:[string]): intptr;
+    static native method (runGenericImpl source:any
+                                         sourceKind:int
+                                         permissions:[string]): intptr;
 
 public
-	static native method (sleep i: int);
-	static native method (name): string;
-	static native method (isBaseDomain): bool;
-	static native method (isTrusted): bool;
-	static native method (permissions): [string];
+    static native method (sleep i: int);
+    static native method (name): string;
+    static native method (isBaseDomain): bool;
+    static native method (isTrusted): bool;
+    static native method (permissions): [string];
 
-	static method (runPath source: string): DomainHandle {
-		return (DomainHandle wrap (Domain runGenericImpl source 1 null));
-	}
+    static method (runPath source: string): DomainHandle {
+        return (DomainHandle wrap (Domain runGenericImpl source 1 null));
+    }
 
-	static method (runString source: string): DomainHandle
-	{
-		return (DomainHandle wrap (Domain runGenericImpl source 0 null));
-	}
+    static method (runString source: string): DomainHandle
+    {
+        return (DomainHandle wrap (Domain runGenericImpl source 0 null));
+    }
 
-	static method (runPathUntrusted source:string permissions:[string]): DomainHandle {
-		/* 'permissions' is required: without it, runGenericImpl treats the call as trusted */
-		(permissions === null) then ^{ permissions = []; };
-		return (DomainHandle wrap (Domain runGenericImpl source 1 permissions));
-	}
+    static method (runPathUntrusted source:string permissions:[string]): DomainHandle {
+        /* 'permissions' is required: without it, runGenericImpl treats the call as trusted */
+        (permissions === null) then ^{ permissions = []; };
+        return (DomainHandle wrap (Domain runGenericImpl source 1 permissions));
+    }
 
-	static method (runStringUntrusted source:string permissions:[string]): DomainHandle
-	{
-		(permissions === null) then ^{ permissions = []; };
-		return (DomainHandle wrap (Domain runGenericImpl source 0 permissions));
-	}
+    static method (runStringUntrusted source:string permissions:[string]): DomainHandle
+    {
+        (permissions === null) then ^{ permissions = []; };
+        return (DomainHandle wrap (Domain runGenericImpl source 0 permissions));
+    }
 
-	/*
-		Expects a method name known in the current context, for example "Program/remoteMethod".
-	*/
-	static method (runMethod source: string): DomainHandle {
-		return (DomainHandle wrap (Domain runGenericImpl source 2 null));
-	}
+    /*
+        Expects a method name known in the current context, for example "Program/remoteMethod".
+    */
+    static method (runMethod source: string): DomainHandle {
+        return (DomainHandle wrap (Domain runGenericImpl source 2 null));
+    }
 
-	static method (runMethodUntrusted source: string permissions:[string]): DomainHandle
-	{
-		(permissions === null) then ^{ permissions = []; };
-		return (DomainHandle wrap (Domain runGenericImpl source 2 permissions));
-	}
+    static method (runMethodUntrusted source: string permissions:[string]): DomainHandle
+    {
+        (permissions === null) then ^{ permissions = []; };
+        return (DomainHandle wrap (Domain runGenericImpl source 2 permissions));
+    }
 
-	/* All aborts are returned as an error string (if any). */
-	static native method (try action: Action): string;
+    /* All aborts are returned as an error string (if any). */
+    static native method (try action: Action): string;
 
-	/*
-		Same as ::try(..), except temporarily makes this domain untrusted.
-		Nested calls to this function are disallowed.
-		NOTE If "FileIOPermission" is passed, every such calls creates a separate secure
-		directory.
-	*/
-	/*static native method (tryUntrusted permissions:[string] action:Action): string;*/
+    /*
+        Same as ::try(..), except temporarily makes this domain untrusted.
+        Nested calls to this function are disallowed.
+        NOTE If "FileIOPermission" is passed, every such calls creates a separate secure
+        directory.
+    */
+    /*static native method (tryUntrusted permissions:[string] action:Action): string;*/
 
-	/* To unregister the object, pass null for obj. */
-	static native method (exportObject name:string obj:any);
+    /* To unregister the object, pass null for obj. */
+    static native method (exportObject name:string obj:any);
 
-	/* If the predicate is null, the method is endless. */
-	static native method (listen stopPred: Predicate);
+    /* If the predicate is null, the method is endless. */
+    static native method (listen stopPred: Predicate);
 
-	static native method (addDependency intrfc:any impl:any);
-	static native method (getDependency intrfc: any): any;
-	static native method (createInstance intrfc: any): any;
+    static native method (addDependency intrfc:any impl:any);
+    static native method (getDependency intrfc: any): any;
+    static native method (createInstance intrfc: any): any;
 }

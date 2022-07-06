@@ -107,21 +107,21 @@ void Launch(const CString* path, const CString* args, const SLaunchOptions& opti
         si.cb = sizeof(si);
 
         if(options.InheritConsole) {
-			if (!isWindows8OrGreater()) {
-				// This fails under Windows 10 for some reason. With these flags enabled, "cmd.exe" is never really run
-				// (even under administrator) although it is reported as successfully launched and WaitForSingleObject doesn't
-				// complain either.
-				// According to https://github.com/rprichard/win32-console-docs "Starting with Windows 8, console
-				// handles are true NT kernel handles that reference NT kernel objects". This may be the reason for
-				// the breaking change.
-				// It seems to work OK without these flags anyway, so we leave it as that.
+            if (!isWindows8OrGreater()) {
+                // This fails under Windows 10 for some reason. With these flags enabled, "cmd.exe" is never really run
+                // (even under administrator) although it is reported as successfully launched and WaitForSingleObject doesn't
+                // complain either.
+                // According to https://github.com/rprichard/win32-console-docs "Starting with Windows 8, console
+                // handles are true NT kernel handles that reference NT kernel objects". This may be the reason for
+                // the breaking change.
+                // It seems to work OK without these flags anyway, so we leave it as that.
 
-				si.dwFlags |= STARTF_USESTDHANDLES;
+                si.dwFlags |= STARTF_USESTDHANDLES;
 
-				si.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
-				si.hStdOutput =  GetStdHandle(STD_OUTPUT_HANDLE);
-				si.hStdError = GetStdHandle(STD_ERROR_HANDLE);
-			}
+                si.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
+                si.hStdOutput =  GetStdHandle(STD_OUTPUT_HANDLE);
+                si.hStdError = GetStdHandle(STD_ERROR_HANDLE);
+            }
         } else {
             si.dwFlags = STARTF_USESHOWWINDOW;
             si.wShowWindow = SW_SHOWNORMAL;

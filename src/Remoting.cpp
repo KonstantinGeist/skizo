@@ -463,7 +463,7 @@ int CClass::SerializeForRemoting(void* _soObj, char* buf, int bufSize, struct SS
 
             if(!context->TargetHDomain) { // if context->TargetHDomain == null, we're serializing the return,
                                           // meaning we're trying to return a foreign object to a foreign domain
-										  // (which is explicitly disallowed by the spec)
+                                          // (which is explicitly disallowed by the spec)
                 return FOREIGN_TO_FOREIGN_DISALLOWED;
             }
 
@@ -578,8 +578,8 @@ int CClass::SerializeForRemoting(void* _soObj, char* buf, int bufSize, struct SS
         }
 
         // Boxed values are only created through interfaces. We have just serialized the interface up in the call stack
-		// by outputting the nice name of the actual type (boxed type), so at this point, the deserializer knows what the
-		// actual type is.
+        // by outputting the nice name of the actual type (boxed type), so at this point, the deserializer knows what the
+        // actual type is.
         memcpy(buf, SKIZO_GET_BOXED_DATA(soObj), dataSize);
         return dataSize;
 
@@ -666,7 +666,7 @@ int CClass::SerializeForRemoting(void* _soObj, char* buf, int bufSize, struct SS
 
     } else {
 
-		SKIZO_REQ_NOT_EQUALS(this->PrimitiveType(), E_PRIMTYPE_VOID);
+        SKIZO_REQ_NOT_EQUALS(this->PrimitiveType(), E_PRIMTYPE_VOID);
 
         const size_t sizeForUse = m_gcInfo.SizeForUse;
         SKIZO_REQ_POS(sizeForUse);

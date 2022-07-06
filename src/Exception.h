@@ -145,7 +145,7 @@ enum EExceptionCode
     /**
      * Access denied to perform the action.
      */
-	EC_ACCESS_DENIED = 21
+    EC_ACCESS_DENIED = 21
 };
 
 /**

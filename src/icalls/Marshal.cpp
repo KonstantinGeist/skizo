@@ -106,7 +106,7 @@ void SKIZO_API _so_Marshal_nativeMemoryToArray(void* pArray, void* soArray)
     SKIZO_NULL_CHECK(pArray);
     SKIZO_NULL_CHECK(soArray);
 
-	// Retrieves the array header and verifies everything is correct.
+    // Retrieves the array header and verifies everything is correct.
     const SArrayHeader* soArrayHeader = (SArrayHeader*)soArray;
     const CClass* klass = so_class_of(soArray);
     if(klass->SpecialClass() != E_SPECIALCLASS_ARRAY) {

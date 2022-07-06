@@ -339,7 +339,7 @@ void* SKIZO_API _so_Path_getFullPath(void* path);
     // Skizo's maps are thin wrappers around internal SkizoMapObjects written in C++ which
     // themselves are thin wrappers around Skizo's HashMaps, with some infrastructure to cache
     // classes and their methods, which allows maps with identically-typed keys to be accesed faster.
-	// NOTE GC has a special knowledge of Map internals to correctly scan them for references.
+    // NOTE GC has a special knowledge of Map internals to correctly scan them for references.
     // **********************************************************************************************
 
 struct SkizoMapObjectKey

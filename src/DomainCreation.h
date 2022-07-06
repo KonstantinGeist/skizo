@@ -104,13 +104,13 @@ public:
      * Explicit null check, as it's clear from the name, explicitly checks in every instance method if 'this' is null
      * (in generated machine code) except for valuetypes as they're never null.
      * Implicit null check relies on more efficient memory protection mechanisms the OS provides, but they're less
-	 * reliable and harder to debug.
+     * reliable and harder to debug.
      *
      * Explicit null check can be turned off in applications practically proved to be stable/safe enough to get away
-	 * without this feature.
+     * without this feature.
      *
      * NOTE Ignored by native methods, as they check for null explicitly using the SKIZO_NULL_CHECK macro
-	 * disregarding whether this flag is set or not.
+     * disregarding whether this flag is set or not.
      *
      * True by default.
      */
@@ -141,7 +141,7 @@ public:
      */
     void AddSearchPath(const char* path);
 
-	/**
+    /**
      * Every 'break' statement ends up in this callback.
      */
     SKIZO_BREAKPOINTCALLBACK BreakpointCallback;

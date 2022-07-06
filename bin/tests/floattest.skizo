@@ -1,11 +1,11 @@
 static class FloatTest {
-	[test]
-	static method (run) {
-		f: float = 5.0;
-		f = (f + 2.0);
-		assert (f == 7.0);
-		f = (f - 2.0);
-		assert (f == 5.0);
-		assert (f == f);
-	}
+    [test]
+    static method (run) {
+        f: float = 5.0;
+        f = (f + 2.0);
+        assert (f == 7.0);
+        f = (f - 2.0);
+        assert (f == 5.0);
+        assert (f == f);
+    }
 }

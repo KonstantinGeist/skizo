@@ -1,5 +1,4 @@
 // *****************************************************************************
-//
 //  Copyright (c) Konstantin Geist. All rights reserved.
 //
 //  The use and distribution terms for this software are contained in the file

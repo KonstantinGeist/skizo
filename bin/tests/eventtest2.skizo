@@ -2,52 +2,52 @@ import console;
 import reflection;
 
 struct GenCoord {
-	property x: int;
-	property y: int;
+    property x: int;
+    property y: int;
 
-	ctor (create x:int y:int) { m_x = x; m_y = y; }
+    ctor (create x:int y:int) { m_x = x; m_y = y; }
 }
 
 event class (GenMouseEvent coord: GenCoord);
 
 class GenButton {
-	[doc="testme"]
-	event mouseEvent: GenMouseEvent;
-	[doc="testme2"]
-	property text: string;
+    [doc="testme"]
+    event mouseEvent: GenMouseEvent;
+    [doc="testme2"]
+    property text: string;
 
-	method (simulateMouseClick coord: GenCoord) {
-		m_mouseEvent fire coord;
-	}
+    method (simulateMouseClick coord: GenCoord) {
+        m_mouseEvent fire coord;
+    }
 }
 
 static class GenerativeEventTest {
-	[test]
-	static method (run) {
-		b := (GenButton createDefault);
-		(b mouseEvent) addHandler ^(coord: GenCoord) {
-			assert ((coord x) == 10);
-			assert ((coord y) == 20);
-		};
-		b simulateMouseClick (GenCoord create 10 20);
+    [test]
+    static method (run) {
+        b := (GenButton createDefault);
+        (b mouseEvent) addHandler ^(coord: GenCoord) {
+            assert ((coord x) == 10);
+            assert ((coord y) == 20);
+        };
+        b simulateMouseClick (GenCoord create 10 20);
 
-		/*
-			Checks that the event and the property share the attributes with their fields.
-		*/
+        /*
+            Checks that the event and the property share the attributes with their fields.
+        */
 
-		t: Type = ((Type forName "GenButton") unwrap);
-		meths := (t instanceMethods);
-		(0 to (meths length)) loop ^(i: int) {
-			meth := (meths get i);
-			attr: string? = null;
-			((meth name) == "mouseEvent") then ^{
-				attr = (meth getAttribute "doc");
-				assert ((attr unwrap) == "testme");
-			};
-			((meth name) == "text") then ^{
-				attr = (meth getAttribute "doc");
-				assert ((attr unwrap) == "testme2");
-			};
-		};
-	}
+        t: Type = ((Type forName "GenButton") unwrap);
+        meths := (t instanceMethods);
+        (0 to (meths length)) loop ^(i: int) {
+            meth := (meths get i);
+            attr: string? = null;
+            ((meth name) == "mouseEvent") then ^{
+                attr = (meth getAttribute "doc");
+                assert ((attr unwrap) == "testme");
+            };
+            ((meth name) == "text") then ^{
+                attr = (meth getAttribute "doc");
+                assert ((attr unwrap) == "testme2");
+            };
+        };
+    }
 }

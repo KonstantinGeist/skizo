@@ -1265,22 +1265,22 @@ void CClass::AddAccessMethodsForField(CField* pField,
             }
         }
 
-		// **********************************************************************************************
+        // **********************************************************************************************
         // Generates the name of the setter.
         // TODO optimize?
-		{
-			Auto<CStringBuilder> sb (new CStringBuilder());
-			sb->Append((char*)"set");
-			sb->Append(CoreUtils::CharToUpperCase(propertyName.String->Chars()[propertyName.Start + offset]));
+        {
+            Auto<CStringBuilder> sb (new CStringBuilder());
+            sb->Append((char*)"set");
+            sb->Append(CoreUtils::CharToUpperCase(propertyName.String->Chars()[propertyName.Start + offset]));
 
-			const int lengthOfTheRest = propertyName.End - propertyName.Start - 1 - offset;
-			if(lengthOfTheRest) {
-				sb->Append(propertyName.String, propertyName.Start + 1 + offset, lengthOfTheRest);
+            const int lengthOfTheRest = propertyName.End - propertyName.Start - 1 - offset;
+            if(lengthOfTheRest) {
+                sb->Append(propertyName.String, propertyName.Start + 1 + offset, lengthOfTheRest);
             }
-			nMethod->SetName(m_declaringDomain->NewSlice(sb));
-			this->VerifyUniqueMemberName(nMethod->Name());
-		}
-		// **********************************************************************************************
+            nMethod->SetName(m_declaringDomain->NewSlice(sb));
+            this->VerifyUniqueMemberName(nMethod->Name());
+        }
+        // **********************************************************************************************
 
         SStringSlice valueSS (m_declaringDomain->NewSlice("_0value"));
         {

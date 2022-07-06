@@ -2,8 +2,8 @@ import text;
 
 static class Console {
    static method (print obj: StringRepresentable) {
-		tmp := (obj toString);
-		tmp print;
+        tmp := (obj toString);
+        tmp print;
    }
 
    static native method (readLine): string;

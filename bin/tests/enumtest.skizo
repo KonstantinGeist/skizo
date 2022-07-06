@@ -1,11 +1,11 @@
 enum Season2 {
-	WINTER; SPRING; AUTUMN; SUMMER;
+    WINTER; SPRING; AUTUMN; SUMMER;
 }
 
 class EnumTest {
 
-	[test]
-	static method (run) {
-		assert (((Season2 WINTER) toString) == "WINTER");
-	}
+    [test]
+    static method (run) {
+        assert (((Season2 WINTER) toString) == "WINTER");
+    }
 }

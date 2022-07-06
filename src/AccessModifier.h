@@ -18,22 +18,22 @@ namespace skizo { namespace script {
 
 enum EAccessModifier
 {
-	/**
+    /**
      * Accessible by the declaring class only.
      */
     E_ACCESSMODIFIER_PRIVATE = 0,
 
-	/**
+    /**
      * Accessible by subclasses and from extended code.
      */
     E_ACCESSMODIFIER_PROTECTED = 1,
 
-	/**
+    /**
      * Accessible by anyone in all modules.
      */
     E_ACCESSMODIFIER_PUBLIC = 2,
 
-	/**
+    /**
      * Accessibly by anyone in the same module.
      */
     E_ACCESSMODIFIER_INTERNAL = 3

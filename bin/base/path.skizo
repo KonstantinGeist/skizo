@@ -4,10 +4,10 @@ static class Path {
     static native method (hasExtension path:string ext:string): bool;
     static native method (combine path1:string path2:string): string;
 
-	[doc="Returns the short name of the directory this path refers to. For example, for 'C:\mydir', returns 'mydir'."]
+    [doc="Returns the short name of the directory this path refers to. For example, for 'C:\mydir', returns 'mydir'."]
     static native method (getDirectoryName path:string): string;
 
-	[doc="Returns the short name of the file this path refers to. For example, for 'C:\myprogram.exe', returns 'myprogram.exe'."]
+    [doc="Returns the short name of the file this path refers to. For example, for 'C:\myprogram.exe', returns 'myprogram.exe'."]
     static native method (getFileName path:string): string;
 
     static native method (getParent path:string): string;

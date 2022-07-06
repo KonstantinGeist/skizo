@@ -3,43 +3,43 @@ import console;
 event class (Event);
 
 class Button {
-	field m_clickEvent: Event;
-	method (clickEvent): Event {
-		return m_clickEvent;
-	}
+    field m_clickEvent: Event;
+    method (clickEvent): Event {
+        return m_clickEvent;
+    }
 
-	ctor (create) {
-		m_clickEvent = (Event create);
-	}
+    ctor (create) {
+        m_clickEvent = (Event create);
+    }
 
-	method (simulateClickEvent) {
-		m_clickEvent fire;
-	}
+    method (simulateClickEvent) {
+        m_clickEvent fire;
+    }
 }
 
 class Form {
-	field m_button: Button;
+    field m_button: Button;
 
-	field m_targetValue: int;
-	method (targetValue): int {
-		return m_targetValue;
-	}
+    field m_targetValue: int;
+    method (targetValue): int {
+        return m_targetValue;
+    }
 
-	ctor (create) {
-		m_button = (Button create);
-		(m_button clickEvent) addHandler ^{
-			this buttonOnClick;
-		};
-	}
+    ctor (create) {
+        m_button = (Button create);
+        (m_button clickEvent) addHandler ^{
+            this buttonOnClick;
+        };
+    }
 private
-	method (buttonOnClick) {
-		m_targetValue = 13666;
-	}
+    method (buttonOnClick) {
+        m_targetValue = 13666;
+    }
 
 public
-	method (simulateStuff) {
-		m_button simulateClickEvent;
-	}
+    method (simulateStuff) {
+        m_button simulateClickEvent;
+    }
 }
 
 /* *************************** */
@@ -49,36 +49,36 @@ event class (EventWith4Args a:int b:int c:int d:int);
 /* *************************** */
 
 static class EventTest {
-	[test]
-	static method (run) {
-		f := (Form create);
-		f simulateStuff;
-		assert ((f targetValue) == 13666);
+    [test]
+    static method (run) {
+        f := (Form create);
+        f simulateStuff;
+        assert ((f targetValue) == 13666);
 
-		/* *************************** */
+        /* *************************** */
 
-		e: EventWith4Args = (EventWith4Args create);
-		output1: int = 0;
-		output2: int = 0;
-		e addHandler ^(a:int b:int c:int d:int) {
-			output1 = (((a + b) + c) + d);
-		};
-		e addHandler ^(a:int b:int c:int d:int) {
-			output2 = (((a * b) * c) * d);
-		};
-		e fire 1 2 3 4;
-		assert (output1 == 10);
-		assert (output2 == 24);
+        e: EventWith4Args = (EventWith4Args create);
+        output1: int = 0;
+        output2: int = 0;
+        e addHandler ^(a:int b:int c:int d:int) {
+            output1 = (((a + b) + c) + d);
+        };
+        e addHandler ^(a:int b:int c:int d:int) {
+            output2 = (((a * b) * c) * d);
+        };
+        e fire 1 2 3 4;
+        assert (output1 == 10);
+        assert (output2 == 24);
 
-		/* Tests if an event with 0 zero handlers compiles OK. */
-		e = (EventWith4Args create);
-		e fire 1 2 3 4;
+        /* Tests if an event with 0 zero handlers compiles OK. */
+        e = (EventWith4Args create);
+        e fire 1 2 3 4;
 
-		/* Tests if it's OK to add handlers inside handlers. */
-		e addHandler ^(a:int b:int c:int d:int) {
-			e addHandler ^(a1:int b1:int c1:int d1:int) {
-			};
-		};
-		e fire 1 2 3 4;
-	}
+        /* Tests if it's OK to add handlers inside handlers. */
+        e addHandler ^(a:int b:int c:int d:int) {
+            e addHandler ^(a1:int b1:int c1:int d1:int) {
+            };
+        };
+        e fire 1 2 3 4;
+    }
 }

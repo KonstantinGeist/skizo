@@ -7,7 +7,7 @@ static class GC {
     static native method (addMemoryPressure i: int);
     static native method (removeMemoryPressure i: int);
 
-	static native method (isValidObject obj: any): bool;
+    static native method (isValidObject obj: any): bool;
 }
 
 static class StackTrace {

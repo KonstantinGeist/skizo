@@ -9,9 +9,9 @@ static class Math {
     static native method (acos f: float): float;
     static native method (fmod x:float y:float): float;
     static native method (floor x: float): float;
-	
-	static native method (min a:float b:float): float;
-	static native method (max a:float b:float): float;
+
+    static native method (min a:float b:float): float;
+    static native method (max a:float b:float): float;
 
     static method (toDegrees v: float): float {
         return (v * (180.0 / PI));

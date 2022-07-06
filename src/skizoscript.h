@@ -24,9 +24,9 @@
 extern "C" {
 #endif
 
-	// ******************************************
-	//   			   Types.
-	// ******************************************
+    // ******************************************
+    //   			   Types.
+    // ******************************************
 
 typedef void* skizo_domain;
 typedef void* skizo_class;
@@ -98,9 +98,9 @@ typedef struct {
     char** permissions;
 } SKIZO_DOMAINCREATION;
 
-	// **********************************************
-	//   			   Functions.
-	// **********************************************
+    // **********************************************
+    //   			   Functions.
+    // **********************************************
 
 /** A special helper function for systems/languages that have no easy way to get the stack base.
  * @param reserved can be any value.

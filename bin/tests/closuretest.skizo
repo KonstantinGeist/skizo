@@ -1,26 +1,26 @@
 class BaseClass {
 protected
-	const STRING_CONSTANT: string = "Hello!";
+    const STRING_CONSTANT: string = "Hello!";
 
-	method (setMessage o:any) { }
+    method (setMessage o:any) { }
 }
 
 class SubClass: BaseClass {
 protected
-	method (setMessage2 o:any) { }
+    method (setMessage2 o:any) { }
 
-	method (foo) {
-		/* This is just a test to make sure a closure can access protected methods
-		   defined in baseclasses of the enclosing class as well as the methods of 
-		   the enclosing class itself. Before a fix, the compiler used to break here. */
-		(true then ^{
-			this setMessage2 (BaseClass STRING_CONSTANT);
-			this setMessage null;
-		}) else ^{
-			this setMessage2 null;
-			this setMessage (BaseClass STRING_CONSTANT);
-		};
-	}
+    method (foo) {
+        /* This is just a test to make sure a closure can access protected methods
+           defined in baseclasses of the enclosing class as well as the methods of
+           the enclosing class itself. Before a fix, the compiler used to break here. */
+        (true then ^{
+            this setMessage2 (BaseClass STRING_CONSTANT);
+            this setMessage null;
+        }) else ^{
+            this setMessage2 null;
+            this setMessage (BaseClass STRING_CONSTANT);
+        };
+    }
 }
 
 /* ******************************************* */
@@ -29,116 +29,116 @@ method class (Incrementor a:int): int;
 method class (PersonInfoProvider): PersonInfo;
 
 class PersonInfo {
-	property name: string;
-	property age: int;
+    property name: string;
+    property age: int;
 }
 
 class Person2 {
-	field m_name: string;
-	field m_age: int;
+    field m_name: string;
+    field m_age: int;
 private
-	method (name): string {
-		return m_name;
-	}
+    method (name): string {
+        return m_name;
+    }
 
 public
-	ctor (create name:string age:int) {
-		m_name = name;
-		m_age = age;
-	}
+    ctor (create name:string age:int) {
+        m_name = name;
+        m_age = age;
+    }
 
-	method (getInfoProvider): PersonInfoProvider {
-		return ^(): PersonInfo {
-			r := (PersonInfo createDefault);
-			r setName (this name);
-			r setAge m_age;
-			return r;
-		};
-	}
+    method (getInfoProvider): PersonInfoProvider {
+        return ^(): PersonInfo {
+            r := (PersonInfo createDefault);
+            r setName (this name);
+            r setAge m_age;
+            return r;
+        };
+    }
 }
 
 method class (IntGetter): int;
 
 class ClosureTest {
-	static method (getIncrementor constant: int): Incrementor {
-		return ^(i: int): int {
-			return (i + constant);
-		};
-	}
+    static method (getIncrementor constant: int): Incrementor {
+        return ^(i: int): int {
+            return (i + constant);
+        };
+    }
 
-	static method (getIncrementor2 constant: int): Incrementor {
-		z: int = 1;
-		return ^(i: int): int {
-			return ((i + constant) + z);
-		};
-	}
+    static method (getIncrementor2 constant: int): Incrementor {
+        z: int = 1;
+        return ^(i: int): int {
+            return ((i + constant) + z);
+        };
+    }
 
-	static field m_staticData: int;
-	static method (getDeeplyNestedAction): Action {
-		z: int = 662;
-		return ^{
-			z = (z + 1);
-			a: Action = ^{
-				z = (z + 1);
-				b: Action = ^{
-					z = (z + 1);
-					c: Action = ^{
-						z = (z + 1);
-						m_staticData = z;
-					};
-					c invoke;
-				};
-				b invoke;
-			};
-			a invoke;
-		};
-	}
+    static field m_staticData: int;
+    static method (getDeeplyNestedAction): Action {
+        z: int = 662;
+        return ^{
+            z = (z + 1);
+            a: Action = ^{
+                z = (z + 1);
+                b: Action = ^{
+                    z = (z + 1);
+                    c: Action = ^{
+                        z = (z + 1);
+                        m_staticData = z;
+                    };
+                    c invoke;
+                };
+                b invoke;
+            };
+            a invoke;
+        };
+    }
 
-	[test]
-	static method (run) {
-		incr := (ClosureTest getIncrementor 6);
-		assert ((incr invoke 5) == 11);
-		incr = (ClosureTest getIncrementor 1);
-		assert ((incr invoke 5) == 6);
+    [test]
+    static method (run) {
+        incr := (ClosureTest getIncrementor 6);
+        assert ((incr invoke 5) == 11);
+        incr = (ClosureTest getIncrementor 1);
+        assert ((incr invoke 5) == 6);
 
-		incr = (ClosureTest getIncrementor2 6);
-		assert ((incr invoke 5) == 12);
-		incr = (ClosureTest getIncrementor2 1);
-		assert ((incr invoke 5) == 7);
+        incr = (ClosureTest getIncrementor2 6);
+        assert ((incr invoke 5) == 12);
+        incr = (ClosureTest getIncrementor2 1);
+        assert ((incr invoke 5) == 7);
 
-		p := (Person2 create "Peter" 45);
-		pip := (p getInfoProvider);
-		pi := (pip invoke);
-		assert ((pi name) == "Peter");
-		assert ((pi age) == 45);
+        p := (Person2 create "Peter" 45);
+        pip := (p getInfoProvider);
+        pi := (pip invoke);
+        assert ((pi name) == "Peter");
+        assert ((pi age) == 45);
 
-		a := (ClosureTest getDeeplyNestedAction);
-		a invoke;
-		assert (m_staticData == 666);
+        a := (ClosureTest getDeeplyNestedAction);
+        a invoke;
+        assert (m_staticData == 666);
 
-		ClosureTest checkFailables;
-	}
+        ClosureTest checkFailables;
+    }
 
-	/*
-		Checks if actions are correctly convertable to failables.
-	 */
+    /*
+        Checks if actions are correctly convertable to failables.
+     */
 
-	static method (foo1 ig: IntGetter?) {
-		unwrapped := (ig unwrap);
-		assert ((unwrapped invoke) == 777);
-	}
+    static method (foo1 ig: IntGetter?) {
+        unwrapped := (ig unwrap);
+        assert ((unwrapped invoke) == 777);
+    }
 
-	static method (foo2): IntGetter? {
-		return ^(): int { return 888; };
-	}
+    static method (foo2): IntGetter? {
+        return ^(): int { return 888; };
+    }
 
-	static method (checkFailables) {
-		ClosureTest foo1 ^(): int { return 777; };
-		unwrapped := ((ClosureTest foo2) unwrap);
-		assert ((unwrapped invoke) == 888);
+    static method (checkFailables) {
+        ClosureTest foo1 ^(): int { return 777; };
+        unwrapped := ((ClosureTest foo2) unwrap);
+        assert ((unwrapped invoke) == 888);
 
-		p: IntGetter? =  ^(): int { return 999; };
-		unwrapped = (p unwrap);
-		assert ((unwrapped invoke) == 999);
-	}
+        p: IntGetter? =  ^(): int { return 999; };
+        unwrapped = (p unwrap);
+        assert ((unwrapped invoke) == 999);
+    }
 }

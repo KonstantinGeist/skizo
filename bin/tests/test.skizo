@@ -7,30 +7,30 @@ static class Program {
     static method (main) {
         ts: [Type] = (Type allTypes);
 
-		(0 to (ts length)) loop ^(i: int) {
-			t: Type = (ts get i);
+        (0 to (ts length)) loop ^(i: int) {
+            t: Type = (ts get i);
 
-			((t isCompilerGenerated) not) then ^{
-				ms: [Method] = (t staticMethods);
+            ((t isCompilerGenerated) not) then ^{
+                ms: [Method] = (t staticMethods);
 
-				(0 to (ms length)) loop ^(j: int) {
-					m: Method = (ms get j);
+                (0 to (ms length)) loop ^(j: int) {
+                    m: Method = (ms get j);
 
-					params := (m parameters);
-					ret := (m returnParameter);
+                    params := (m parameters);
+                    ret := (m returnParameter);
 
-					(((params length) == 0) and (ret === null)) then ^{
-						((m getAttribute "test") success) then ^{
-							testName: string = (((t name) + "::") + (m name));
-							Console print "========================\n";
-							Console print (("Running '" + testName) + "'...\n");
-							Console print "========================\n";
+                    (((params length) == 0) and (ret === null)) then ^{
+                        ((m getAttribute "test") success) then ^{
+                            testName: string = (((t name) + "::") + (m name));
+                            Console print "========================\n";
+                            Console print (("Running '" + testName) + "'...\n");
+                            Console print "========================\n";
 
-							m invoke null null;
-						};
-					};
-				};
-			};
-		};
+                            m invoke null null;
+                        };
+                    };
+                };
+            };
+        };
     }
 }

@@ -303,7 +303,7 @@ static CToken* createToken(CDomain* domain, // for building errors and getting c
         tokenKind = E_TOKENKIND_CHAR_LITERAL;
 
         // The correctness of the token will be tested in parser where we will call EscapeString and then make sure the final
-		// string is 1 character long.
+        // string is 1 character long.
     } else if((end - start >= 2) && (string[start] == SKIZO_CHAR('@'))) {
         // Checks for it being a C code fragment, just like with the string.
         stringSlice.Start++;
@@ -521,11 +521,11 @@ const char* NameForTokenKind(ETokenKind kind)
         case E_TOKENKIND_BREAK: return "break";
         case E_TOKENKIND_FORCE: return "force";
         case E_TOKENKIND_EVENT: return "event";
-		case E_TOKENKIND_PROPERTY: return "property";
-		case E_TOKENKIND_BOXED: return "boxed";
-		case E_TOKENKIND_SIZEOF: return "sizeof";
-		case E_TOKENKIND_BIN_OR: return "|";
-		case E_TOKENKIND_BIN_AND: return "&";
+        case E_TOKENKIND_PROPERTY: return "property";
+        case E_TOKENKIND_BOXED: return "boxed";
+        case E_TOKENKIND_SIZEOF: return "sizeof";
+        case E_TOKENKIND_BIN_OR: return "|";
+        case E_TOKENKIND_BIN_AND: return "&";
         default: SKIZO_REQ_NEVER; break;
     }
     

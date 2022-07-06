@@ -23,11 +23,11 @@ extern "C" {
 void* SKIZO_API _so_float_toString(float f)
 {
     void* r = nullptr;
-	SKIZO_GUARD_BEGIN
-		Auto<const CString> source (CoreUtils::FloatToString(f, true));
-		r = CDomain::ForCurrentThread()->CreateString(source, false);
-	SKIZO_GUARD_END
-	return r;
+    SKIZO_GUARD_BEGIN
+        Auto<const CString> source (CoreUtils::FloatToString(f, true));
+        r = CDomain::ForCurrentThread()->CreateString(source, false);
+    SKIZO_GUARD_END
+    return r;
 }
 
 int SKIZO_API _so_float_hashCode(float f)

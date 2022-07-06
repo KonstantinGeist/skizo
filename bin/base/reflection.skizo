@@ -8,7 +8,7 @@ class ReflectionError: Error {
         this setMessage (("Element '" + name) + "' could not be resolved.");
     }
 
-	ctor (createFromAttribute name: string) {
+    ctor (createFromAttribute name: string) {
         this setMessage (("Attribute '" + name) + "' could not be found.");
     }
 }
@@ -18,119 +18,119 @@ enum AccessModifier { PRIVATE; PROTECTED; PUBLIC; INTERNAL; }
 
 /* TODO don't forget about attributes */
 class Parameter {
-	field m_name: string;
-	field m_type: Type;
+    field m_name: string;
+    field m_type: Type;
 
 public
-	method (name): string { return m_name; }
-	method (type): Type { return m_type; }
+    method (name): string { return m_name; }
+    method (type): Type { return m_type; }
 
-	ctor (create name:string type:Type) {
-		m_name = name;
-		m_type = type;
-	}
+    ctor (create name:string type:Type) {
+        m_name = name;
+        m_type = type;
+    }
 }
 
 class Method {
-	field m_methodHandle: intptr;
-	field m_returnParameter: Parameter;
-	field m_parameters: [Parameter];
+    field m_methodHandle: intptr;
+    field m_returnParameter: Parameter;
+    field m_parameters: [Parameter];
 
 private
-	static native method (getAttributeImpl handle:intptr name:string): string;
-	static native method (invokeImpl methodHandle:intptr thisObj:any args:[any]): any;
-	static native method (nameImpl handle: intptr): string;
+    static native method (getAttributeImpl handle:intptr name:string): string;
+    static native method (invokeImpl methodHandle:intptr thisObj:any args:[any]): any;
+    static native method (nameImpl handle: intptr): string;
 
-	/* The icalls are designed to generate zero garbage, even though they're awkward. */
-	/* NOTE index "-1" will return info for returnParameter */
-	static native method (getParameterCount methodHandle: intptr): int;
-	static native method (getParameterTypeHandle methodHandle:intptr index:int): intptr;
-	static native method (getParameterName methodHandle:intptr index:int): string;
+    /* The icalls are designed to generate zero garbage, even though they're awkward. */
+    /* NOTE index "-1" will return info for returnParameter */
+    static native method (getParameterCount methodHandle: intptr): int;
+    static native method (getParameterTypeHandle methodHandle:intptr index:int): intptr;
+    static native method (getParameterName methodHandle:intptr index:int): string;
 
-	static native method (getAccessModifierImpl methodHandle:intptr): int;
+    static native method (getAccessModifierImpl methodHandle:intptr): int;
 
 internal
-	ctor (wrap methodHandle: intptr) {
-		m_methodHandle = methodHandle;
-	}
+    ctor (wrap methodHandle: intptr) {
+        m_methodHandle = methodHandle;
+    }
 
 public
     method (getAttribute name: string): string? {
         tmp: string = (Method getAttributeImpl m_methodHandle name);
-		r: string? = null;
-		((tmp === null) then ^{
-			r = (ReflectionError createFromAttribute name);
-		}) else ^{
-			r = tmp;
-		};
-		return r;
+        r: string? = null;
+        ((tmp === null) then ^{
+            r = (ReflectionError createFromAttribute name);
+        }) else ^{
+            r = tmp;
+        };
+        return r;
     }
 
-	method (invoke thisObj:any args:[any]): any {
-		return (Method invokeImpl m_methodHandle thisObj args);
-	}
+    method (invoke thisObj:any args:[any]): any {
+        return (Method invokeImpl m_methodHandle thisObj args);
+    }
 
-	method (name): string {
-		return (Method nameImpl m_methodHandle);
-	}
+    method (name): string {
+        return (Method nameImpl m_methodHandle);
+    }
 
-	method (accessModifier): AccessModifier {
-		i: int = (Method getAccessModifierImpl m_methodHandle);
-		return (AccessModifier fromInt i);
-	}
+    method (accessModifier): AccessModifier {
+        i: int = (Method getAccessModifierImpl m_methodHandle);
+        return (AccessModifier fromInt i);
+    }
 
-	method (returnParameter): Parameter {
-		(m_returnParameter === null) then ^{
-			typeHandle: intptr = (Method getParameterTypeHandle m_methodHandle -1);
-			((typeHandle == null) not) then ^{
-				m_returnParameter = (Parameter create null (Type fromTypeHandle typeHandle));
-			};
-		};
-		return m_returnParameter;
-	}
+    method (returnParameter): Parameter {
+        (m_returnParameter === null) then ^{
+            typeHandle: intptr = (Method getParameterTypeHandle m_methodHandle -1);
+            ((typeHandle == null) not) then ^{
+                m_returnParameter = (Parameter create null (Type fromTypeHandle typeHandle));
+            };
+        };
+        return m_returnParameter;
+    }
 
-	method (parameters): [Parameter] {
-		(m_parameters === null) then ^{
-			paramCount: int = (Method getParameterCount m_methodHandle);
-			m_parameters = (array paramCount);
-			(0 to paramCount) loop ^(i: int) {
-				typeHandle: intptr = (Method getParameterTypeHandle m_methodHandle i);
-				type: Type = (Type fromTypeHandle typeHandle);
-				name: string = (Method getParameterName m_methodHandle i);
-				m_parameters set i (Parameter create name type);
-			};
-		};
-		return (cast [Parameter] (Arrays clone m_parameters));
-	}
+    method (parameters): [Parameter] {
+        (m_parameters === null) then ^{
+            paramCount: int = (Method getParameterCount m_methodHandle);
+            m_parameters = (array paramCount);
+            (0 to paramCount) loop ^(i: int) {
+                typeHandle: intptr = (Method getParameterTypeHandle m_methodHandle i);
+                type: Type = (Type fromTypeHandle typeHandle);
+                name: string = (Method getParameterName m_methodHandle i);
+                m_parameters set i (Parameter create name type);
+            };
+        };
+        return (cast [Parameter] (Arrays clone m_parameters));
+    }
 }
 
 class Property {
 private
-	field m_getter: Method;
-	field m_setter: Method;
+    field m_getter: Method;
+    field m_setter: Method;
 
 public
-	ctor (create g:Method s:Method) {
-		m_getter = g;
-		m_setter = s;
-	}
+    ctor (create g:Method s:Method) {
+        m_getter = g;
+        m_setter = s;
+    }
 
-	method (getter): Method { return m_getter; }
-	method (setter): Method { return m_setter; }
+    method (getter): Method { return m_getter; }
+    method (setter): Method { return m_setter; }
 }
 
 /* WARNING Internal code relies on this layout. */
 class Type {
     field m_typeHandle: intptr;
     static field g_allTypes: [Type];
-	field m_instanceMethods: [Method];
-	field m_staticMethods: [Method];
-	field m_instanceProps: [Property];
+    field m_instanceMethods: [Method];
+    field m_staticMethods: [Method];
+    field m_instanceProps: [Property];
 
 private
-	/* Keep in sync with internal enumerations. */
-	const INSTANCE_METHODS: int = 0;
-	const STATIC_METHODS: int = 1;
+    /* Keep in sync with internal enumerations. */
+    const INSTANCE_METHODS: int = 0;
+    const STATIC_METHODS: int = 1;
 
     static native method (typeHandleOf obj: any): intptr;
     static native method (forNameImpl obj: any): intptr;
@@ -140,9 +140,9 @@ private
     static native method (nameImpl handle: intptr): string;
     static native method (getAttributeImpl handle:intptr name:string): string;
     static native method (getBoolProp handle:intptr propName:string): bool;
-	static native method (methodsImpl handle:intptr kind:int): [intptr];
-	static native method (createInstanceImpl typeHandle:intptr ctorName:string args:[any]): any;
-	static native method (propertiesImpl typeHandle:intptr getters:bool isStatic:bool): [intptr];
+    static native method (methodsImpl handle:intptr kind:int): [intptr];
+    static native method (createInstanceImpl typeHandle:intptr ctorName:string args:[any]): any;
+    static native method (propertiesImpl typeHandle:intptr getters:bool isStatic:bool): [intptr];
 
     ctor (wrap typeHandle: intptr) {
         m_typeHandle = typeHandle;
@@ -151,13 +151,13 @@ private
     }
 
 internal
-	static method (fromTypeHandle typeHandle: intptr): Type {
+    static method (fromTypeHandle typeHandle: intptr): Type {
         type: Type = (Type fromTypeHandleImpl typeHandle);
         (type === null) then ^{
             type = (Type wrap typeHandle);
         };
         return type;
-	}
+    }
 
 public
     static method (of obj: any): Type {
@@ -192,59 +192,59 @@ public
         return (cast [Type] (Arrays clone g_allTypes));
     }
 
-	method (instanceMethods): [Method] {
-		(m_instanceMethods === null) then ^{
-			handles: [intptr] = (Type methodsImpl m_typeHandle INSTANCE_METHODS);
-			m_instanceMethods = (array (handles length));
-			(0 to (handles length)) loop ^(i: int) {
-				m_instanceMethods set i (Method wrap (handles get i));
-			};
-		};
-		return (cast [Method] (Arrays clone m_instanceMethods));
-	}
+    method (instanceMethods): [Method] {
+        (m_instanceMethods === null) then ^{
+            handles: [intptr] = (Type methodsImpl m_typeHandle INSTANCE_METHODS);
+            m_instanceMethods = (array (handles length));
+            (0 to (handles length)) loop ^(i: int) {
+                m_instanceMethods set i (Method wrap (handles get i));
+            };
+        };
+        return (cast [Method] (Arrays clone m_instanceMethods));
+    }
 
-	method (staticMethods): [Method] {
-		(m_staticMethods === null) then ^{
-			handles: [intptr] = (Type methodsImpl m_typeHandle STATIC_METHODS);
-			m_staticMethods = (array (handles length));
-			(0 to (handles length)) loop ^(i: int) {
-				m_staticMethods set i (Method wrap (handles get i));
-			};
-		};
-		return (cast [Method] (Arrays clone m_staticMethods));
-	}
+    method (staticMethods): [Method] {
+        (m_staticMethods === null) then ^{
+            handles: [intptr] = (Type methodsImpl m_typeHandle STATIC_METHODS);
+            m_staticMethods = (array (handles length));
+            (0 to (handles length)) loop ^(i: int) {
+                m_staticMethods set i (Method wrap (handles get i));
+            };
+        };
+        return (cast [Method] (Arrays clone m_staticMethods));
+    }
 
-	method (instanceProperties): [Property] {
-		(m_instanceProps === null) then ^{
-			pGetters: [intptr] = (Type propertiesImpl m_typeHandle true false);
-			pSetters: [intptr] = (Type propertiesImpl m_typeHandle false false);
-			m_instanceProps = (array (pGetters length));
+    method (instanceProperties): [Property] {
+        (m_instanceProps === null) then ^{
+            pGetters: [intptr] = (Type propertiesImpl m_typeHandle true false);
+            pSetters: [intptr] = (Type propertiesImpl m_typeHandle false false);
+            m_instanceProps = (array (pGetters length));
 
-			(0 to (pGetters length)) loop ^(i: int) {
-				getter := (Method wrap (pGetters get i));
-				setter := (Method wrap (pSetters get i));
+            (0 to (pGetters length)) loop ^(i: int) {
+                getter := (Method wrap (pGetters get i));
+                setter := (Method wrap (pSetters get i));
 
-				m_instanceProps set i (Property create getter setter);
-			};
-		};
-		return (cast [Property] (Arrays clone m_instanceProps));
-	}
+                m_instanceProps set i (Property create getter setter);
+            };
+        };
+        return (cast [Property] (Arrays clone m_instanceProps));
+    }
 
     method (getAttribute name: string): string? {
         tmp: string = (Type getAttributeImpl m_typeHandle name);
-		r: string? = null;
-		((tmp === null) then ^{
-			r = (ReflectionError createFromAttribute name);
-		}) else ^{
-			r = tmp;
-		};
-		return r;
+        r: string? = null;
+        ((tmp === null) then ^{
+            r = (ReflectionError createFromAttribute name);
+        }) else ^{
+            r = tmp;
+        };
+        return r;
     }
 
-	/* A shortcut. */
-	method (createInstance ctorName:string args:[any]): any {
-		return (Type createInstanceImpl m_typeHandle ctorName args);
-	}
+    /* A shortcut. */
+    method (createInstance ctorName:string args:[any]): any {
+        return (Type createInstanceImpl m_typeHandle ctorName args);
+    }
 
     method (name): string {
         return (Type nameImpl m_typeHandle);

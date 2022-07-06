@@ -15,7 +15,7 @@
 #define THREAD_H_INCLUDED
 
 #ifdef SKIZO_X
-	#include <pthread.h>
+    #include <pthread.h>
 #endif
 
 #ifdef SKIZO_SINGLE_THREADED

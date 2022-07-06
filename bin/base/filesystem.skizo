@@ -1,29 +1,29 @@
 static class FileSystem {
-	[doc="Determines whether the specified file exists. <br>
-	<i>path</i> The file to check.<br>
-	<i>return</i> Returns true if the path contains the name of an existing file; otherwise, false. This method also returns false if path is an invalid path, or a zero-length string."]
+    [doc="Determines whether the specified file exists. <br>
+    <i>path</i> The file to check.<br>
+    <i>return</i> Returns true if the path contains the name of an existing file; otherwise, false. This method also returns false if path is an invalid path, or a zero-length string."]
     static native method (fileExists path: string): bool;
 
     static native method (directoryExists path: string): bool;
 
-	[doc="Returns the fully qualified path of the current working directory."]
+    [doc="Returns the fully qualified path of the current working directory."]
     static native method (currentDirectory): string;
 
-	[doc="Creates a directory.<br>
-	<i>path</i> The path to the new directory."]
+    [doc="Creates a directory.<br>
+    <i>path</i> The path to the new directory."]
     static native method (createDirectory path: string);
 
-	static native method (deleteDirectory path: string);
+    static native method (deleteDirectory path: string);
 
-	[doc="Lists files in a given directory (short paths).<br>
-	 <i>path</i> The directory to list files in.
-	 <i>return</i> Returns a list of paths to the files in the current directory."]
+    [doc="Lists files in a given directory (short paths).<br>
+     <i>path</i> The directory to list files in.
+     <i>return</i> Returns a list of paths to the files in the current directory."]
     static native method (listFiles path:string): [string];
 
     static native method (listDirectories path:string returnFullPath:bool): [string];
     static native method (logicalDrives): [string];
 
-	[doc="Compares two paths to find out whether they refer to the same physical file (works wih hard links and other forms of indirection)."]
+    [doc="Compares two paths to find out whether they refer to the same physical file (works wih hard links and other forms of indirection)."]
     static native method (isSameFile path1:string path2:string): bool;
 
     static native method (copyFile oldPath:string newPath:string);

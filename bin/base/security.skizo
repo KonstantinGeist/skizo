@@ -1,11 +1,11 @@
 abstract class Permission {
 private
-	static native method (demandImpl obj: Permission);
+    static native method (demandImpl obj: Permission);
 
 public
-	method (demand) {
-		Permission demandImpl this;
-	}
+    method (demand) {
+        Permission demandImpl this;
+    }
 }
 
 /* Basic permissions. */

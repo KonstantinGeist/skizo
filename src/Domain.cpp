@@ -911,7 +911,7 @@ SStringSlice CDomain::NewSlice(CStringBuilder* sb) const
 int CDomain::NewUniqueId() const
 {
     if(m_uniqueIdCount == SKIZO_INT32_MAX) {
-		// Not going to happen anytime soon, as we have ~2 bln unique IDs per domain.
+        // Not going to happen anytime soon, as we have ~2 bln unique IDs per domain.
         SKIZO_THROW_WITH_MSG(EC_EXECUTION_ERROR, "Out of unique IDs.");
     }
     return m_uniqueIdCount++;
@@ -1019,19 +1019,19 @@ void CDomain::SetArrayElement(void* obj, int index, void* value)
 {
     SKIZO_NULL_CHECK(obj);
 
-	// Retrieves the class of the array.
+    // Retrieves the class of the array.
     CClass* pClass = so_class_of(obj);
     if(pClass->SpecialClass() != E_SPECIALCLASS_ARRAY) {
         CDomain::Abort("The target object must be an array.");
     }
 
-	// Retrieves the header of the array and verifies the index is not out of range.
+    // Retrieves the header of the array and verifies the index is not out of range.
     SArrayHeader* arrayHeader = (SArrayHeader*)obj;
     if(index < 0 || index >= arrayHeader->length) {
         _soX_abort0(SKIZO_ERRORCODE_RANGECHECK);
     }
 
-	// Retrieves the wrapped class of the array and verifies the value is valid.
+    // Retrieves the wrapped class of the array and verifies the value is valid.
     CClass* pSubClass = pClass->ResolvedWrappedClass();
     assert(pSubClass->GCInfo().SizeForUse);
     if(pSubClass->IsValueType()) {
@@ -1044,7 +1044,7 @@ void CDomain::SetArrayElement(void* obj, int index, void* value)
         }
     }
 
-	// Sets the item of the array (the pointer for reference types or the actual data for valuetypes).
+    // Sets the item of the array (the pointer for reference types or the actual data for valuetypes).
     void* offset = (char*)obj + offsetof(SArrayHeader, firstItem) + pSubClass->GCInfo().SizeForUse * index;
     if(pSubClass->IsValueType()) {
         memcpy(offset, value, pSubClass->GCInfo().SizeForUse);

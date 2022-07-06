@@ -103,7 +103,7 @@ public:
     void SetMethod(CMethod* method, bool ownsMethod);
 
     // ************************
-	//   Convenience methods.
+    //   Convenience methods.
     // ************************
 
     /**
@@ -166,10 +166,10 @@ typedef unsigned char ECallExpressionType;
 class CCallExpression: public CExpression
 {
 public:
-	/**
+    /**
      * First expression is "self" or the target class for static method calls.
-	 * Second expression is method.
-	 * The rest of expressions are arguments (depending on the signature).
+     * Second expression is method.
+     * The rest of expressions are arguments (depending on the signature).
      */
     skizo::core::Auto<skizo::collections::CArrayList<CExpression*> > Exprs;
 
@@ -257,7 +257,7 @@ public:
     bool IsEmpty;
 
     CCastExpression(const STypeRef& targetType)
-		: IsEmpty(true)
+        : IsEmpty(true)
     {
         InferredType = targetType;
     }

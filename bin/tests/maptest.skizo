@@ -1,61 +1,61 @@
 import map;
 
 static class MapTest {
-	static method (toSp i: any): StringRepresentable {
-		return (cast StringRepresentable i);
-	}
+    static method (toSp i: any): StringRepresentable {
+        return (cast StringRepresentable i);
+    }
 
-	[test]
-	static method (run) {
-		map := (Map create);
-		(0 to 100) loop ^(i: int) {
-			map set i i;
-		};
-		(0 to 100) loop ^(i: int) {
-			j: int = (cast int (map get i));
-			assert (j == i);
-		};
-		assert ((map size) == 100);
+    [test]
+    static method (run) {
+        map := (Map create);
+        (0 to 100) loop ^(i: int) {
+            map set i i;
+        };
+        (0 to 100) loop ^(i: int) {
+            j: int = (cast int (map get i));
+            assert (j == i);
+        };
+        assert ((map size) == 100);
 
-		/* ****************************** */
-		/* Checks differently typed keys. */
-		/* ****************************** */
+        /* ****************************** */
+        /* Checks differently typed keys. */
+        /* ****************************** */
 
-		map = (Map create);
-		map set "one" 1;
-		map set 2 2;
-		map set 3.0 3;
+        map = (Map create);
+        map set "one" 1;
+        map set 2 2;
+        map set 3.0 3;
 
-		assert ((cast int (map get "one")) == 1);
-		assert ((cast int (map get 2)) == 2);
-		assert ((cast int (map get 3.0)) == 3);
+        assert ((cast int (map get "one")) == 1);
+        assert ((cast int (map get 2)) == 2);
+        assert ((cast int (map get 3.0)) == 3);
 
-		/* ****************************** */
+        /* ****************************** */
 
-		map = (Map create2 [(MapCase create 1 2)
-							(MapCase create 2 4)]);
+        map = (Map create2 [(MapCase create 1 2)
+                            (MapCase create 2 4)]);
 
-		z: int = 0;
-		s: string = "";
-		map loop ^(key:MapKey value:any): bool {
-			s = (s + ((MapTest toSp key) toString));
-			s = (s + ((MapTest toSp value) toString));
+        z: int = 0;
+        s: string = "";
+        map loop ^(key:MapKey value:any): bool {
+            s = (s + ((MapTest toSp key) toString));
+            s = (s + ((MapTest toSp value) toString));
 
-			z = (z + 1);
-			r: bool = true;
-			(z == 1) then ^{
-				r = false;
-			};
-			return r;
-		};
-		assert (z == 1);
-		assert ((s length) == 2);
+            z = (z + 1);
+            r: bool = true;
+            (z == 1) then ^{
+                r = false;
+            };
+            return r;
+        };
+        assert (z == 1);
+        assert ((s length) == 2);
 
-		f: any? = (map tryGet 1);
-		assert (f success);
-		assert ((cast int (f unwrap)) == 2);
+        f: any? = (map tryGet 1);
+        assert (f success);
+        assert ((cast int (f unwrap)) == 2);
 
-		f = (map tryGet "hack!");
-		assert ((f success) not);
-	}
+        f = (map tryGet "hack!");
+        assert ((f success) not);
+    }
 }

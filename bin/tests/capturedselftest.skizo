@@ -3,42 +3,42 @@ import console;
 method class (FloatGetter): float;
 
 class ReferencePoint {
-	field m_x: float;
+    field m_x: float;
 
-	ctor (create x: float) {
-		m_x = x;
-	}
+    ctor (create x: float) {
+        m_x = x;
+    }
 
-	method (getGetter): FloatGetter {
-		return ^(): float {
-			return  m_x;
-		};
-	}
+    method (getGetter): FloatGetter {
+        return ^(): float {
+            return  m_x;
+        };
+    }
 }
 
 struct ValuetypePoint {
-	field m_x: float;
+    field m_x: float;
 
-	ctor (create x: float) {
-		m_x = x;
-	}
+    ctor (create x: float) {
+        m_x = x;
+    }
 
-	method (getGetter): FloatGetter {
-		return ^(): float {
-			return  m_x;
-		};
-	}
+    method (getGetter): FloatGetter {
+        return ^(): float {
+            return  m_x;
+        };
+    }
 }
 
 class CapturedSelfTest {
-	[test]
-	static method (run) {
-		p1 := (ReferencePoint create 666.0);
-		a := (p1 getGetter);
-		assert ((a invoke) == 666.0);
+    [test]
+    static method (run) {
+        p1 := (ReferencePoint create 666.0);
+        a := (p1 getGetter);
+        assert ((a invoke) == 666.0);
 
-		p2 := (ValuetypePoint create 666.0);
-		a = (p2 getGetter);
-		assert ((a invoke) == 666.0);
-	}
+        p2 := (ValuetypePoint create 666.0);
+        a = (p2 getGetter);
+        assert ((a invoke) == 666.0);
+    }
 }

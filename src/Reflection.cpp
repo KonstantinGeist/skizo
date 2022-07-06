@@ -79,7 +79,7 @@ void* CMethod::InvokeDynamic(void* thisObj, void* args) const
                 // Automatically perform dynamic method dispatch on the type of the target.
                 CMethod* overridenMethod = thisClass->MyMethod(this->m_name, false, E_METHODKIND_NORMAL);
                 if(overridenMethod && (overridenMethod != this)) { // call only if overriden
-					return overridenMethod->InvokeDynamic(thisObj, args);
+                    return overridenMethod->InvokeDynamic(thisObj, args);
                 }
             } else {
                 CDomain::Abort("Object does not match target type.");

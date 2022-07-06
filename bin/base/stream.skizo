@@ -1,13 +1,13 @@
-/* NOTE Some stuff here maps Danae's size_t to "int" which is not sufficient for some cases.
+/* NOTE Some stuff here maps size_t to "int" which is not sufficient for some cases.
    TODO nativeint? */
 
 alias ByteBufferPtr = intptr;
 
 abstract class Stream {
 private
-	static method (notSupported) {
-		abort "Functionality not supported (Stream).";
-	}
+    static method (notSupported) {
+        abort "Functionality not supported (Stream).";
+    }
 
 public
     method (canRead): bool { return false; }

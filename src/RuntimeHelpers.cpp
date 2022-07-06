@@ -275,14 +275,14 @@ void SKIZO_API _soX_addhandler(void* _event, void* handler)
     CDomain* domain = CDomain::ForCurrentThread();
     SEventHeader* event = (SEventHeader*)_event;
 
-	// Retrieves the target typeref for the array.
+    // Retrieves the target typeref for the array.
     // NOTE The array as defined in the event class is an array of abstract method classes, not specific
     // closure classes. This code relies on the fact that a closure is always a subclass of its target
     // method class.
     const CClass* genericMethodClass = so_class_of(handler)->ResolvedBaseClass();
     SKIZO_REQ_PTR(genericMethodClass); // to be sure
 
-	// Creates an array of the required size.
+    // Creates an array of the required size.
     const int origElemCount = event->array? event->array->length: 0;
     SArrayHeader* newArray;
     {

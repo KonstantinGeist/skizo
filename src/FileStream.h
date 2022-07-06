@@ -47,7 +47,7 @@ enum EFileAccess
      *
      * @note the file must exist.
      */
-	E_FILEACCESS_READ_WRITE
+    E_FILEACCESS_READ_WRITE
 };
 
 /**

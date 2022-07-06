@@ -198,7 +198,7 @@ again:
     // StringBuilder, however, since StringBuilder* was never inferred, its makeSureMethodsFinalized() was never
     // called and at that point, StringBuilder* doesn't contain inherited methods of StringBuilder."
     // The solution is, during parsing, any mention of a composite typeref will generate a ForcedTypeRef, forcing
-	// types to be enqueued for transforming (in Transformer.cpp) before they are accessed by random method bodies.
+    // types to be enqueued for transforming (in Transformer.cpp) before they are accessed by random method bodies.
     if(forcedTypeRef || typeRef.IsComposite()) {
         Auto<CForcedTypeRef> forcedTypeRef (new CForcedTypeRef(typeRef, token->FilePath, token->LineNumber));
         domain->AddForcedTypeRef(forcedTypeRef);
@@ -964,11 +964,11 @@ void SParser::parseMethodBody(CMethod* method)
             // *****************************************************************************************************
             //   LEFT BRACKET (array initialization)
             // NOTE array initializations in the form of [1 2 3] are internally processed as special-form call exprs
-			// to simplify parsing. They are marked with a ArrayInitExpr subelement as the first element of the
-			// call expr. E_TOKENKIND_RPARENTH and E_TOKENKIND_RBRACKET then check if the first element
-			// is ArrayInitExpr to tell between the two forms of callExpr (i.e. parenthesis-based and bracket-based).
+            // to simplify parsing. They are marked with a ArrayInitExpr subelement as the first element of the
+            // call expr. E_TOKENKIND_RPARENTH and E_TOKENKIND_RBRACKET then check if the first element
+            // is ArrayInitExpr to tell between the two forms of callExpr (i.e. parenthesis-based and bracket-based).
             // The E_TOKENKIND_RBRACKET codepath also converts such a temporary callexpr into a full-fledged
-			// ArrayInitExpr after it's completed parsing it.
+            // ArrayInitExpr after it's completed parsing it.
             // ******************************************************************************************************
             break; case E_TOKENKIND_LBRACKET:
             {
@@ -1030,14 +1030,14 @@ void SParser::parseMethodBody(CMethod* method)
 
                 // *****************************************************************************************
                 // A special case for []. Array initialization depends on the type of the first item. If the
-				// parser sees [1], it understands that, since the first element is an integer, then the
-				// whole expression must be [int].
+                // parser sees [1], it understands that, since the first element is an integer, then the
+                // whole expression must be [int].
                 // The above-mentioned approach doesn't work with []. The type of such an array is not
-				// inferrable at this point. Leaving it like that would require us to hard-code a new infer
-				// path for []. What we do instead is to automatically convert [] to (array 0) in advance,
-				// which is semantically identical to [].
-				// ArrayCreationExpr is already implemented to infer its type from the expected surroundings
-				// (assignment/argument passing/return).
+                // inferrable at this point. Leaving it like that would require us to hard-code a new infer
+                // path for []. What we do instead is to automatically convert [] to (array 0) in advance,
+                // which is semantically identical to [].
+                // ArrayCreationExpr is already implemented to infer its type from the expected surroundings
+                // (assignment/argument passing/return).
                 // *****************************************************************************************
                 // "-1" ignores the marker (first element of type).
                 if((curCallExpr->Exprs->Count() - 1) == 0) {
@@ -1985,7 +1985,7 @@ again:
                 break;
             default:
                 ScriptUtils::FailT(parseMsg, token);
-				break;
+                break;
         }
 
         goto again;

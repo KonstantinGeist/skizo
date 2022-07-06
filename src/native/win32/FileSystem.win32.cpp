@@ -72,7 +72,7 @@ void CreateDirectory(const CString* _path)
     // Thanks to http://blog.nuclex-games.com/2012/06/how-to-create-directories-recursively-with-win32/
     CoreUtils::ValidatePath(_path);
 
-	Auto<const CString> path (Path::Normalize(_path));
+    Auto<const CString> path (Path::Normalize(_path));
 
     // If the specified directory name doesn't exist, does our thing.
     DWORD fileAttributes = ::GetFileAttributes((LPCTSTR)path->Chars());

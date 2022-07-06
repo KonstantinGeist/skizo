@@ -54,11 +54,11 @@ public:
 
     /**
      * If the method is defined in an extension, separately from the rest of the class, this field is non-null.
-	 * @note The class object this field refers to is not complete and can't be used as usual. It's not listed in
-	 * Domain::m_klasses or Domain::m_klassMap. It's just a container holding extended
-	 * methods. Its unique pointer is used to differentiate extension methods defined in different 'extend' definitions
-	 * because extension methods are allowed to call only those private methods which were defined in the same
-	 * surrounding 'extend' block.
+     * @note The class object this field refers to is not complete and can't be used as usual. It's not listed in
+     * Domain::m_klasses or Domain::m_klassMap. It's just a container holding extended
+     * methods. Its unique pointer is used to differentiate extension methods defined in different 'extend' definitions
+     * because extension methods are allowed to call only those private methods which were defined in the same
+     * surrounding 'extend' block.
      */
     CClass* DeclaringExtClass() const { return m_declaringExtClass; }
     void SetDeclaringExtClass(CClass* value) { m_declaringExtClass = value; }
@@ -209,8 +209,8 @@ public:
 
     /**
      * Skizo grammar doesn't allow to directly refer to fields outside of the instance class, which forces a
-	 * programmer to wrap them with getter methods/properties. If we can detect that a method is a "simple getter",
-	 * the emitter can by-pass the usual slow method call semantics and emit a direct reference to the instance field.
+     * programmer to wrap them with getter methods/properties. If we can detect that a method is a "simple getter",
+     * the emitter can by-pass the usual slow method call semantics and emit a direct reference to the instance field.
      * Many getter methods are "simple", if they:
      * - return a value from an instance field and don't have any arguments
      * - the method is not truly virtual

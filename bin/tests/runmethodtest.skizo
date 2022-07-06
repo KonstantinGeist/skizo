@@ -2,32 +2,32 @@ import console;
 import domain;
 
 class Communicator {
-	method (getMagicValue1): int {
-		return 667;
-	}
+    method (getMagicValue1): int {
+        return 667;
+    }
 
-	method (getMagicValue2): int {
-		return 1;
-	}
+    method (getMagicValue2): int {
+        return 1;
+    }
 }
 
 class RunMethodTest {
-	static ctor {
-		((Domain isBaseDomain) not) then ^{
-			Domain exportObject "communicator" (Communicator createDefault);
-		};
-	}
+    static ctor {
+        ((Domain isBaseDomain) not) then ^{
+            Domain exportObject "communicator" (Communicator createDefault);
+        };
+    }
 
 public
    static method (remoteMain) {
-		Domain listen null;
+        Domain listen null;
    }
 
    [test]
    static method (run) {
        hdomain := (Domain runMethod "RunMethodTest/remoteMain");
-	   comm := (cast Communicator* (hdomain importObject "communicator"));
-	   assert ((comm getMagicValue1) == 667);
-	   assert ((comm getMagicValue2) == 1);
+       comm := (cast Communicator* (hdomain importObject "communicator"));
+       assert ((comm getMagicValue1) == 667);
+       assert ((comm getMagicValue2) == 1);
    }
 }

@@ -103,7 +103,7 @@ void* SMemoryManager::Allocate(int sz, void** vtable)
         m_allocdMemory += pClass->GCInfo().ContentSize;
     }
 
-	// Updates the bounds of the heap for faster pointer validation (see ::IsValidObject(..))
+    // Updates the bounds of the heap for faster pointer validation (see ::IsValidObject(..))
     if(m_heapStart > obj) {
         m_heapStart = obj;
     }
@@ -187,7 +187,7 @@ void SMemoryManager::gcMark(void* obj_ptr)
         CClass* pClass = static_cast<CClass*>(obj->vtable[0]);
 
         // Marks the object live by setting the least significant bit of its "vtable" pointer to 1.
-		// NOTE Corrupts the vtable for general use, will be reverted after GC (see below).
+        // NOTE Corrupts the vtable for general use, will be reverted after GC (see below).
         SET_LASTBIT(obj->vtable, 1);
 
         const int* gcMap;

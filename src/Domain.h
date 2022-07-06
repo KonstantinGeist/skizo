@@ -97,9 +97,9 @@ public:
 
     /**
      * This method should be called after performing parsing because resolution depends on a fully formed
-	 * list of classes. Normally, a resolved typeref becomes "flat", i.e. its ArrayLevel is 0 and it's not
-	 * a failable -- it was resolved as a new simple ('flat') generated class that implements the
-	 * array/failable etc.
+     * list of classes. Normally, a resolved typeref becomes "flat", i.e. its ArrayLevel is 0 and it's not
+     * a failable -- it was resolved as a new simple ('flat') generated class that implements the
+     * array/failable etc.
      * @note Fails with an error if no class with the given name is found.
      * @note Implemented in TypeResolution.cpp
      * @warning For use in the transformation phase.
@@ -197,8 +197,8 @@ public:
 
     /**
      * A workaround: as it turns out, TCC's tcc_get_symbol doesn't report extern functions that were registered from outside
-	 * the C code.
-	 * @warning The method isn't automatically guarded with g_globalMutex
+     * the C code.
+     * @warning The method isn't automatically guarded with g_globalMutex
      */
     void* GetSymbol(char* name) const;
 
@@ -240,7 +240,7 @@ public:
      * @note When this function is created before the code emission, the string's vtable is zero.
      * It should be patched with the correct vtable pointer after registering vtables.
      * NOTE Unlike createString/internString, this function doesn't alter allocated memory statistics,
-	 * neither it triggers garbage collection.
+     * neither it triggers garbage collection.
      * @warning Internal code should not schedule garbage collection before code emission.
      */
     void* InternStringLiteral(const skizo::core::CString* source);
@@ -500,13 +500,13 @@ private:
     bool isClassLoaded(const char* className) const;
 
     // A source may be found in different directories. This method takes the search pathes into
-	// consideration.
-	// out_isBaseModule returns if the source was found in the base module directory.
+    // consideration.
+    // out_isBaseModule returns if the source was found in the base module directory.
     const skizo::core::CString* readSource(const skizo::core::CString* source, bool* out_isBaseModule) const;
 
     // Aborts the current domain with a message.
     // @param free If true, uses CString::FreeUtf8 to destroy the string once the stack unwinds and
-	// the message is printed.
+    // the message is printed.
     static void abortImpl(char* msg, bool free);
 
     // Gets a property's machine code implementation.
@@ -531,7 +531,7 @@ private:
     // **************************
 
     // TCC (the C backend) was found to be potentially thread-unsafe according to various reports.
-	// We have to wrap the code generator with a mutex.
+    // We have to wrap the code generator with a mutex.
     static skizo::core::CMutex* g_globalMutex;
 
     skizo::core::CThread* m_thread;
@@ -554,7 +554,7 @@ private:
     // Same as "m_klasses", but allows to find classes by names much faster.
     // Don't use directly, use ::RegisterClass instead.
     // NOTE The classmap maps _internal_ (float, resolved) names to classes. To map _nice_ names to classes,
-	// use m_niceNameMap (for reflection).
+    // use m_niceNameMap (for reflection).
     skizo::collections::CHashMap<SStringSlice, CClass*> m_klassMap;
 
     // Unlike m_klassMap, uses nice names as keys instead of internal names (flat).
@@ -571,11 +571,11 @@ private:
     skizo::core::Auto<skizo::collections::CHashMap<SStringSlice, CClass*>> m_boxedClassMap;
 
     // Map of all generated failable wrappers (NOTE failable wrappers are present in m_klasses and m_klassMap
-	// as well).
+    // as well).
     skizo::collections::CHashMap<SStringSlice, CClass*> m_failableClassMap;
 
     // Map of all generated foreign proxies (NOTE failable wrappers are present in m_klasses and m_klassMap
-	// as well).
+    // as well).
     skizo::core::Auto<skizo::collections::CHashMap<SStringSlice, CClass*>> m_foreignProxyMap;
 
     // Map of all defined aliases (NOTE aliases are present in m_klasses and m_klassMap as well).
@@ -673,12 +673,12 @@ private:
     // ******************************************************
 
     // As we parse a source file, we find requests to add a new source to the program. All the new
-	// requests are enqueued to this queue. In CDomain::CreateDomain, after SParser finishes
-	// with a source, it checks if there are new sources added and parses again until the queue is empty.
+    // requests are enqueued to this queue. In CDomain::CreateDomain, after SParser finishes
+    // with a source, it checks if there are new sources added and parses again until the queue is empty.
     skizo::collections::CQueue<const skizo::core::CString*> m_sourceQueue;
 
     // Different files may want to request the same source for import, and we don't want to reparse
-	// the same file multiple times. This hashset remembers which sources were already imported.
+    // the same file multiple times. This hashset remembers which sources were already imported.
     skizo::collections::CHashMap<const skizo::core::CString*, const skizo::core::CString*> m_sourceSet;
 
     // *****************************************************

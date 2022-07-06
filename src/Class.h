@@ -221,7 +221,7 @@ public:
     /**
      * For reflection: a cached pointer to a runtime-allocated object on the Skizo side.
      * @note The runtime-allocated object has to be GC-rooted forever when created (GC-rooted by the Skizo
-	 * wrapper, re-check that!)
+     * wrapper, re-check that!)
      * See icalls _so_Type_fromTypeHandle and _so_Type_setToTypeHandle
      */
     void* RuntimeObject() const { return m_pRuntimeObj; }
@@ -255,10 +255,10 @@ public:
      * Remembers where the method was declared for nicer errors.
      *
      * @note "Internal" access depends on it, too. If an internal method belongs to the declaring
-	 * class defined in the same module as the method which calls it, then such a method is given
-	 * access to the internal method.
-	 *
-	 * @note Cross-domain method calls depend on it, too (checks class versions)
+     * class defined in the same module as the method which calls it, then such a method is given
+     * access to the internal method.
+     *
+     * @note Cross-domain method calls depend on it, too (checks class versions)
      */
     const SMetadataSource& Source() const { return m_source; }
     SMetadataSource& Source() { return m_source; }
@@ -351,7 +351,7 @@ public:
     const SGCInfo& GCInfo() const { return m_gcInfo; }
     SGCInfo& GCInfo() { return m_gcInfo; }
 
-	/**
+    /**
      * Calculates the GC map of this class. See SGCInfo::GCMap
      */
     void CalcGCMap();
@@ -398,15 +398,15 @@ public:
 
     /**
      * Checks for a cyclic dependency in this class. For example, if A inherits B, and B inherits A, there exists
-	 * an infinite loop, a cyclic dependency, which can crash the transformer when it will try to follow the
-	 * infinite chain.
+     * an infinite loop, a cyclic dependency, which can crash the transformer when it will try to follow the
+     * infinite chain.
      * Base classes should be resolved already.
      */
     void CheckCyclicDependencyInHierarchy(const CClass* pStartBase) const;
 
     /**
      * Makes sure virtual methods of this class are "finalized" i.e. virtual methods of the parent class are
-	 * inserted into the list of virtual methods of this class with some reindexing.
+     * inserted into the list of virtual methods of this class with some reindexing.
      * Used by the transformer.
      */
     void MakeSureMethodsFinalized();
@@ -482,9 +482,9 @@ public:
 
     /**
      * Generates access methods for this field (field+getter/setter for reference types and field+getter for valuetypes).
-	 * Nothing more.
+     * Nothing more.
      * @warning It's an internal method which should be called by the parser when it finds a field marked with the
-	 * [property] or [event] attribute.
+     * [property] or [event] attribute.
      * Paramater 'forceGetterOnly' is for events, they don't allow setters.
      */
     void AddAccessMethodsForField(CField* pField,
@@ -552,10 +552,10 @@ public:
 
 private:
     // Inits m_niceName. Called by CDomain::ClassByNiceName(..) which lazily constructs nice names of classes
-	// only if CDomain::ClassByNiceName is used (for example, in reflection code) + used by STextBuilder
+    // only if CDomain::ClassByNiceName is used (for example, in reflection code) + used by STextBuilder
     // Also lazily init'd in CProfilingInfo::_dumpImpl(..)
-	// See also ::m_niceName.
-	// NOTE The returned string isn't ref'd
+    // See also ::m_niceName.
+    // NOTE The returned string isn't ref'd
     const skizo::core::CString* makeSureNiceNameGenerated() const;
 
 private:

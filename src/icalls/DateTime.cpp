@@ -22,14 +22,14 @@ extern "C" {
 // WARNING! Should be synchronized with datetime.skizo!
 struct SkizoDateTime
 {
-	_so_bool isUtc SKIZO_FIELD;
-	int year SKIZO_FIELD;
-	int month SKIZO_FIELD;
-	int day SKIZO_FIELD;
-	int hour SKIZO_FIELD;
-	int minute SKIZO_FIELD;
-	int second SKIZO_FIELD;
-	int ms SKIZO_FIELD;
+    _so_bool isUtc SKIZO_FIELD;
+    int year SKIZO_FIELD;
+    int month SKIZO_FIELD;
+    int day SKIZO_FIELD;
+    int hour SKIZO_FIELD;
+    int minute SKIZO_FIELD;
+    int second SKIZO_FIELD;
+    int ms SKIZO_FIELD;
 };
 
 static SDateTime dateTimeSkizoToSkizo(SkizoDateTime* inputDt)

@@ -43,7 +43,7 @@ static class QSortTest {
     }
 
     [test]
-	unsafe static method (main) {
+    unsafe static method (main) {
         arr: [any] = [(cast any 3) (cast any 1) (cast any 2)];
         QSortTest qsort arr ^(a:any b:any): int {
             return ((cast int a) - (cast int b));
@@ -52,5 +52,5 @@ static class QSortTest {
         assert ((cast int (arr get 0)) == 1);
         assert ((cast int (arr get 1)) == 2);
         assert ((cast int (arr get 2)) == 3);
-	}
+    }
 }

@@ -61,9 +61,9 @@ public:
         delete [] m_items;
     }
 
-	/**
-	 * Gets the number of elements contained in the stack.
-	 */
+    /**
+     * Gets the number of elements contained in the stack.
+     */
     inline int Count() const
     {
         return m_index;

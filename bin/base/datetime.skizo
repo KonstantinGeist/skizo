@@ -2,71 +2,71 @@
 
 struct DateTime {
 private
-	static native method (verify dt: intptr);
-	static native method (toLocalTimeImpl src:intptr dst:intptr);
-	static native method (toStringImpl dt:intptr): string;
-	static native method (nowImpl dt:intptr);
+    static native method (verify dt: intptr);
+    static native method (toLocalTimeImpl src:intptr dst:intptr);
+    static native method (toStringImpl dt:intptr): string;
+    static native method (nowImpl dt:intptr);
 
-	ctor (dummy) { }
+    ctor (dummy) { }
 
 public
-	field isUtc: bool;
-	field year: int;
-	field month: int;
-	field day: int;
-	field hour: int;
-	field minute: int;
-	field second: int;
-	field ms: int;
+    field isUtc: bool;
+    field year: int;
+    field month: int;
+    field day: int;
+    field hour: int;
+    field minute: int;
+    field second: int;
+    field ms: int;
 
-	unsafe ctor (create _isUtc:bool
-				 _year:int _month:int _day:int
-				 _hour:int _minute:int _second:int _ms:int)
-	{
-		isUtc = _isUtc;
-		year = _year;
-		month = _month;
-		day = _day;
-		hour = _hour;
-		minute = _minute;
-		second = _second;
-		ms = _ms;
-		DateTime verify (ref this);
-	}
+    unsafe ctor (create _isUtc:bool
+                 _year:int _month:int _day:int
+                 _hour:int _minute:int _second:int _ms:int)
+    {
+        isUtc = _isUtc;
+        year = _year;
+        month = _month;
+        day = _day;
+        hour = _hour;
+        minute = _minute;
+        second = _second;
+        ms = _ms;
+        DateTime verify (ref this);
+    }
 
-	unsafe method (toLocalTime): DateTime {
-		r := (DateTime dummy);
-		DateTime toLocalTimeImpl (ref this) (ref r);
-		return r;
-	}
+    unsafe method (toLocalTime): DateTime {
+        r := (DateTime dummy);
+        DateTime toLocalTimeImpl (ref this) (ref r);
+        return r;
+    }
 
-	unsafe method (toString): string {
-		return (DateTime toStringImpl (ref this));
-	}
+    unsafe method (toString): string {
+        return (DateTime toStringImpl (ref this));
+    }
 
-	unsafe static method (now): DateTime {
-		r := (DateTime dummy);
-		DateTime nowImpl (ref r);
-		return r;
-	}
+    unsafe static method (now): DateTime {
+        r := (DateTime dummy);
+        DateTime nowImpl (ref r);
+        return r;
+    }
 
-	method (hashCode): int {
-		hash: int = 17;
-		hash = ((hash * 23) + year);
-		hash = ((hash * 23) + month);
-		hash = ((hash * 23) + day);
-		hash = ((hash * 23) + hour);
-		hash = ((hash * 23) + minute);
-		hash = ((hash * 23) + second);
-		hash = ((hash * 23) + ms);
-		return hash;
-	}
+    method (hashCode): int {
+        hash: int = 17;
+        hash = ((hash * 23) + year);
+        hash = ((hash * 23) + month);
+        hash = ((hash * 23) + day);
+        hash = ((hash * 23) + hour);
+        hash = ((hash * 23) + minute);
+        hash = ((hash * 23) + second);
+        hash = ((hash * 23) + ms);
+        return hash;
+    }
 
-	method (equals other: any): bool {
-		r: bool = false;
-		(other is DateTime) then ^{
-			r = (this === (cast DateTime other));
-		};
-		return r;
-	}
+    method (equals other: any): bool {
+        r: bool = false;
+        (other is DateTime) then ^{
+            r = (this === (cast DateTime other));
+        };
+        return r;
+    }
 }
