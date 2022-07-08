@@ -92,7 +92,7 @@ so_byte* DecodeBase64(const so_byte* src, size_t len, size_t* out_len)
     for(i = 0; i < sizeof(base64_table) - 1; i++) {
         dtable[base64_table[i]] = (so_byte) i;
     }
-    dtable['='] = 0;
+    dtable[int('=')] = 0;
 
     count = 0;
     for(i = 0; i < len; i++) {

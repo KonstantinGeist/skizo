@@ -55,7 +55,6 @@ public:
 
 private:
     CStream* m_wrapped;
-    int m_index;
     int m_lineNumber; // A hack to remove BOM's.
     so_byte m_buffer[SKIZO_STREAMREADER_BUFSIZE];
 

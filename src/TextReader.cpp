@@ -21,8 +21,7 @@ namespace skizo { namespace io {
 using namespace skizo::core;
 
 CTextReader::CTextReader(CStream* wrapped)
-    : m_index(0),
-      m_lineNumber(0),
+    : m_lineNumber(0),
       m_bb(nullptr)
 {
     // Pre-condition.

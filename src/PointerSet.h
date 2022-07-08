@@ -18,7 +18,7 @@
 
 namespace skizo { namespace script {
 
-struct SPointerSetEnumerator;
+class SPointerSetEnumerator;
 
 struct SPointerSetEntry
 {
@@ -34,7 +34,7 @@ struct SPointerSetEntry
 
 class SPointerSet
 {
-    friend struct SPointerSetEnumerator;
+    friend class SPointerSetEnumerator;
 
 private:
     SPointerSetEntry** m_buckets;

@@ -265,7 +265,6 @@ class CDynamicTemplatePart: public CTemplatePart
 {
 public:
     CDynamicTemplatePart(CDomain* domain, const CArrayList<CMethodWithArgument*>* methods)
-        : m_domain(domain)
     {
         m_methods.SetVal(methods);
     }
@@ -354,7 +353,6 @@ private:
         return retValue;
     }
 
-    CDomain* m_domain;
     Auto<const CArrayList<CMethodWithArgument*>> m_methods;
 
     // Function pointer retrieval may be quite slow (for TCC, it's also under a lock),

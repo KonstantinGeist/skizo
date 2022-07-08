@@ -18,7 +18,7 @@
 #include "TypeRef.h"
 
 namespace skizo { namespace core {
-    struct CString;
+    class CString;
 } }
 
 namespace skizo { namespace script {

@@ -25,15 +25,19 @@ using namespace skizo::script;
 #define SKIZO_GUARD_BEGIN_AB try {
 #define SKIZO_GUARD_END_AB return SKIZO_SUCCESS; } catch (...) { return SKIZO_FAILURE; }
 
+#ifndef __clang__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wreturn-local-addr"
+#endif
 void* __attribute__ ((noinline)) SKIZO_API SKIZOGetStackBase(int reserved)
 {
     // Machination to shut up the compiler about returning an address of an argument.
     void* r = &reserved;
     return r;
 }
+#ifndef __clang__
 #pragma GCC diagnostic pop
+#endif
 
 void SKIZO_API SKIZOInitDomainCreation(SKIZO_DOMAINCREATION* domainCreation,
                                      char* source,

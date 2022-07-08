@@ -206,11 +206,14 @@ public:
      */
     void Insert(int startOffset, const CString* str);
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Woverloaded-virtual"
     /**
      * Determines if the content of this string builder is identical to the content
      * of a string. Allows to avoid allocating another string instance.
      */
     bool Equals(const CString* str) const;
+#pragma GCC diagnostic pop
 
 private:
     // Character count.

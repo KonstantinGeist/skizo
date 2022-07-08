@@ -127,7 +127,11 @@ public:
            int lineNumber);
 
     virtual int GetHashCode() const override;
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Woverloaded-virtual"
     bool Equals(const CToken* token) const;
+#pragma GCC diagnostic pop
 };
 
 class CDomain;

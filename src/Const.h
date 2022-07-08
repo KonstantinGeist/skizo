@@ -65,7 +65,7 @@ public:
       * Consts have an exception for closures: closures are allowed to access private consts of enclosing
       * classes.
       */
-    bool IsAccessibleFromMethod(const struct CMethod* other) const;
+    bool IsAccessibleFromMethod(const class CMethod* other) const;
 };
 
 } }

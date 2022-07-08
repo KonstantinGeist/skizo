@@ -2141,7 +2141,7 @@ void SParser::parseForce(const CToken* token)
 {
     // parseTypeRef(..) takes care of adding ForcedTypeRef's.
     // Don't do here anything else.
-    STypeRef typeRef (parseTypeRef(false, true)); // isBaseClass=false, forcedTypeRef=true
+    parseTypeRef(false, true); // isBaseClass=false, forcedTypeRef=true
 
     // ';'
     reader.Expect(E_TOKENKIND_SEMICOLON);

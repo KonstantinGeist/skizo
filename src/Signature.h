@@ -40,7 +40,11 @@ public:
     {
     }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Woverloaded-virtual"
     bool Equals(const CSignature* other) const;
+#pragma GCC diagnostic pop
+
     bool HasParamByName(const SStringSlice& paramName) const;
 };
 
