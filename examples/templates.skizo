@@ -3,6 +3,7 @@ import template;
 import application;
 import stringbuilder;
 import runtime;
+import map;
 
 alias PostId = string;
 
@@ -43,9 +44,25 @@ class Posts
     }
 }
 
+class Person
+{
+    field m_age: int;
+    field m_name: string;
+
+    method (age): int { return m_age; }
+    method (name): string { return m_name; }
+    method (custom): int { return 666; }
+
+    ctor (create age:int name:string) {
+        m_age = age;
+        m_name = name;
+    }
+}
+
 static class Program {
     static method (main) {
         t := (Template create "Name: {name} Age: {age} Custom: {custom}" "Person");
         Console print (t render (Person create 99 "Peter"));
+        Console print "\n";
     }
 }
