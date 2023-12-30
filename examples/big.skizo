@@ -1,6 +1,6 @@
 import console;
 class class_0{
-method (foo): string { return "Hello, World!"; } 
+method (foo): string { return "Hello, World!\n"; } 
 }
 class class_1: class_0 {
 }
